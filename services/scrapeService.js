@@ -2,8 +2,8 @@ import { PlaywrightCrawler } from 'crawlee';
 import crypto from 'crypto';
 import { executeQuery } from '../config/database.js';
 
-// Get table name from environment variable, default to 'hotel_pages'
-const HOTEL_PAGES_TABLE = process.env.HOTEL_PAGES_TABLE || 'hotel_pages';
+// Get table name from environment variable, default to 'hotel_data'
+const HOTEL_DATA_TABLE = process.env.HOTEL_DATA_TABLE || 'hotel_data';
 
 /**
  * Save scraped page to database
@@ -11,31 +11,42 @@ const HOTEL_PAGES_TABLE = process.env.HOTEL_PAGES_TABLE || 'hotel_pages';
  * @param {string} url - Page URL
  * @param {string} html - Full HTML content
  * @param {string} checksum - SHA256 checksum of the HTML
- * @returns {Promise<number>} Insert ID
+ * @returns {Promise<number>} Insert ID or affected rows
  */
 async function saveScrapedPage(hotelUuid, url, html, checksum) {
-  const query = `
-    INSERT INTO ${HOTEL_PAGES_TABLE} (hotel_uuid, url, html_content, checksum, created_at)
-    VALUES (?, ?, ?, ?, NOW())
-    ON DUPLICATE KEY UPDATE
-      html_content = VALUES(html_content),
-      checksum = VALUES(checksum),
-      updated_at = NOW()
+  // Check if record already exists for this hotel_uuid and page_url
+  const checkQuery = `
+    SELECT id FROM ${HOTEL_DATA_TABLE}
+    WHERE hotel_uuid = ? AND page_url = ? AND active = 1
+    LIMIT 1
   `;
 
   try {
-    const result = await executeQuery(query, [hotelUuid, url, html, checksum]);
-    return result.insertId || result.affectedRows;
-  } catch (error) {
-    // If table doesn't exist or ON DUPLICATE KEY UPDATE fails, try simple INSERT
-    if (error.message.includes("doesn't exist") || error.message.includes("Duplicate")) {
-      const simpleQuery = `
-        INSERT INTO ${HOTEL_PAGES_TABLE} (hotel_uuid, url, html_content, checksum, created_at)
-        VALUES (?, ?, ?, ?, NOW())
+    const existing = await executeQuery(checkQuery, [hotelUuid, url]);
+    
+    if (existing && existing.length > 0) {
+      // Update existing record
+      const updateQuery = `
+        UPDATE ${HOTEL_DATA_TABLE}
+        SET content = ?,
+            checksum = ?,
+            updated_at = CURRENT_TIMESTAMP,
+            active = 1
+        WHERE id = ?
       `;
-      const result = await executeQuery(simpleQuery, [hotelUuid, url, html, checksum]);
+      const result = await executeQuery(updateQuery, [html, checksum, existing[0].id]);
+      return result.affectedRows;
+    } else {
+      // Insert new record
+      const insertQuery = `
+        INSERT INTO ${HOTEL_DATA_TABLE} (hotel_uuid, page_url, checksum, content, active)
+        VALUES (?, ?, ?, ?, 1)
+      `;
+      const result = await executeQuery(insertQuery, [hotelUuid, url, checksum, html]);
       return result.insertId || result.affectedRows;
     }
+  } catch (error) {
+    console.error(`❌ Error saving scraped page to database:`, error.message);
     throw error;
   }
 }

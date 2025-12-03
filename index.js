@@ -97,30 +97,6 @@ async function processHotelWithRetry(hotel) {
     console.log(`✅ Successfully filled all fields for ${hotel.name}`);
   }
 
-  // Fetch FAQs after processing data (optional)
-  await fetchAndPrintHotelFAQ(hotel.name);
-}
-
-/**
- * Fetch hotel FAQs and print to console
- * @param {string} hotelName
- */
-async function fetchAndPrintHotelFAQ(hotelName) {
-  try {
-    const faqs = await AIService.fetchHotelFAQ(hotelName);
-    if (!faqs || faqs.length === 0) {
-      console.log(`ℹ️  No FAQs found for ${hotelName}`);
-      return;
-    }
-
-    console.log(`\n📘 FAQ for ${hotelName}:`);
-    faqs.forEach((faq, index) => {
-      console.log(`\nQ${index + 1}: ${faq.question || 'N/A'}`);
-      console.log(`A${index + 1}: ${faq.answer || 'N/A'}`);
-    });
-  } catch (error) {
-    console.error(`⚠️  Could not fetch FAQs for ${hotelName}:`, error.message);
-  }
 }
 
 async function main() {
@@ -161,7 +137,7 @@ async function main() {
         }
 
         // Process hotel with retry logic to fill all fields (AI-based data extraction)
-        await processHotelWithRetry(hotel);
+        // await processHotelWithRetry(hotel);
       } catch (error) {
         console.error(`❌ Error processing ${hotel.name}:`, error.message);
         console.log("⏭️  Continuing with next hotel...");
