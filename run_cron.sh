@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Example cron usage:
-# 43 21 * * * /home/vaia-bot-old1/run_cron.sh
+# 43 21 * * * /home/vaia-bot/run_cron.sh
 # This runs the script daily at 21:43 (9:43 PM)
 
 # Define base directory
-APP_DIR="/home/vaia-bot-old1"
+APP_DIR="/home/vaia-bot"
 
 # Navigate to the app directory. This is **essential** for the script to load .env variables correctly.
 cd "$APP_DIR" || exit 1   # Exit if cd fails
