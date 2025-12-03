@@ -76,9 +76,20 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
     throw new Error(`Invalid hotel URL: ${hotelUrl}`);
   }
 
+  // Get max depth from environment variable (default: unlimited)
+  // Depth 0 = starting page only, Depth 1 = starting page + direct links, etc.
+  const maxDepth = process.env.CRAWLER_MAX_DEPTH 
+    ? parseInt(process.env.CRAWLER_MAX_DEPTH, 10) 
+    : 3; // Default max depth to 3.
+
   console.log(`\n🕷️  Starting scrape for: ${hotelName}`);
   console.log(`📍 URL: ${hotelUrl}`);
   console.log(`🆔 UUID: ${hotelUuid}`);
+  if (maxDepth !== null) {
+    console.log(`📏 Max depth: ${maxDepth}`);
+  } else {
+    console.log(`📏 Max depth: unlimited`);
+  }
 
   let pagesScraped = 0;
   let pagesSkipped = 0;
@@ -97,6 +108,55 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         headless: true,
       },
     },
+
+    // Pre-navigation hooks to block images, videos, and PDFs
+    preNavigationHooks: [
+      async ({ page, log }) => {
+        // Block images, videos, and PDFs
+        await page.route('**/*', (route) => {
+          const request = route.request();
+          const url = request.url();
+          const resourceType = request.resourceType();
+          const urlLower = url.toLowerCase();
+
+          // Block by resource type
+          if (resourceType === 'image' || resourceType === 'media') {
+            route.abort();
+            return;
+          }
+
+          // Block by file extension
+          const blockedExtensions = [
+            '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp', // Images
+            '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', // Videos
+            '.pdf', // PDFs
+            '.mp3', '.wav', '.ogg', '.aac', '.flac', // Audio (optional)
+          ];
+
+          const hasBlockedExtension = blockedExtensions.some(ext => urlLower.endsWith(ext));
+          if (hasBlockedExtension) {
+            route.abort();
+            return;
+          }
+
+          // Block by MIME type patterns in URL
+          const blockedMimePatterns = [
+            'image/', 'video/', 'application/pdf', 'audio/',
+          ];
+
+          const hasBlockedMime = blockedMimePatterns.some(mime => urlLower.includes(mime));
+          if (hasBlockedMime) {
+            route.abort();
+            return;
+          }
+
+          // Allow all other requests
+          route.continue();
+        });
+
+        log.debug('🚫 Resource blocking enabled: images, videos, and PDFs will be blocked');
+      },
+    ],
 
     async requestHandler({ page, request, enqueueLinks, log }) {
       const url = request.url;
@@ -130,11 +190,47 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         
         log.info(`✅ Saved page ${pagesScraped}: ${url.substring(0, 80)}...`);
 
-        // Auto-enqueue links from same domain
+        // Get current depth from request userData
+        const currentDepth = request.userData?.depth ?? 0;
+        
+        // Log depth for debugging
+        if (maxDepth !== null) {
+          log.debug(`📍 Current depth: ${currentDepth}/${maxDepth}`);
+        }
+
+        // Auto-enqueue links from same domain (excluding images, videos, PDFs)
         await enqueueLinks({
           strategy: 'same-domain',
           selector: 'a[href]',
           label: 'hotel-page',
+          transformRequestFunction: ({ request: newRequest }) => {
+            const url = newRequest.url.toLowerCase();
+            
+            // Skip images, videos, and PDFs
+            const blockedExtensions = [
+              '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp',
+              '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v',
+              '.pdf',
+              '.mp3', '.wav', '.ogg', '.aac', '.flac',
+            ];
+
+            const hasBlockedExtension = blockedExtensions.some(ext => url.endsWith(ext));
+            if (hasBlockedExtension) {
+              return false; // Don't enqueue this link
+            }
+
+            // Check depth limit
+            if (maxDepth !== null && currentDepth >= maxDepth) {
+              return false; // Don't enqueue if max depth reached
+            }
+
+            // Set depth for the new request
+            newRequest.userData = { 
+              ...newRequest.userData, 
+              depth: currentDepth + 1 
+            };
+            return newRequest; // Enqueue this link
+          },
         });
 
       } catch (error) {
@@ -152,8 +248,11 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
   });
 
   try {
-    // Start crawling from the hotel's main URL
-    await crawler.run([hotelUrl]);
+    // Start crawling from the hotel's main URL with depth 0
+    await crawler.run([{
+      url: hotelUrl,
+      userData: { depth: 0 },
+    }]);
 
     const stats = {
       hotelUuid,
