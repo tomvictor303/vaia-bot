@@ -1,0 +1,16 @@
+{
+    "name": "VAIA Market Data Fetcher",
+    "version": "1.0.0",
+    "description": "VAIA Market Data Fetcher which gets data from hotel websites and stores it in the database",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "dotenv": "^16.4.5",
+        "extract-json-from-string": "^1.0.1",
+        "mysql2": "^3.15.3",
+        "openai": "^4.56.0"
+    }
+}
