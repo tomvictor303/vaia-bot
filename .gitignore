@@ -4,3 +4,4 @@ build
 *.bat
 .env
 cron.log
+storage
