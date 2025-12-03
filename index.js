@@ -3,6 +3,7 @@ import { testConnection, closePool } from './config/database.js';
 import { HotelService } from './services/hotelService.js';
 import { MarketDataService } from './services/marketDataService.js';
 import { AIService } from './services/aiService.js';
+import { scrapeHotel } from './services/scrapeService.js';
 import { MD_ALL_FIELDS } from './middleware/constants.js';
 
 /**
@@ -152,6 +153,14 @@ async function main() {
       console.log(`${"=".repeat(60)}\n`);
 
       try {
+        // Scrape hotel website if hotel_url is available
+        if (hotel.hotel_url) {
+          await scrapeHotel(hotel.hotel_url, hotel.hotel_uuid, hotel.name);
+        } else {
+          console.log(`⚠️  No hotel_url found for ${hotel.name}, skipping scraping`);
+        }
+
+        // Process hotel with retry logic to fill all fields (AI-based data extraction)
         await processHotelWithRetry(hotel);
       } catch (error) {
         console.error(`❌ Error processing ${hotel.name}:`, error.message);

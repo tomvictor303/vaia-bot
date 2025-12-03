@@ -5,7 +5,7 @@ export class HotelService {
   // Get all active hotels from hotel_list table
   static async getActiveHotels() {
     const query = `
-      SELECT id, hotel_uuid, name 
+      SELECT id, hotel_uuid, name, hotel_url 
       FROM hotel_list 
       WHERE is_deleted = 0 
       ORDER BY id ASC
@@ -24,7 +24,7 @@ export class HotelService {
   // Get hotel by UUID
   static async getHotelByUuid(hotelUuid) {
     const query = `
-      SELECT id, hotel_uuid, name 
+      SELECT id, hotel_uuid, name, hotel_url 
       FROM hotel_list 
       WHERE hotel_uuid = ? AND is_deleted = 0
     `;
