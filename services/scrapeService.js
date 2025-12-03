@@ -14,6 +14,20 @@ const HOTEL_DATA_TABLE = process.env.HOTEL_DATA_TABLE || 'hotel_data';
  * @returns {Promise<number>} Insert ID or affected rows
  */
 async function saveScrapedPage(hotelUuid, url, html, checksum) {
+  // Validate inputs
+  if (!hotelUuid || typeof hotelUuid !== 'string') {
+    throw new Error(`Invalid hotelUuid: ${typeof hotelUuid}`);
+  }
+  if (!url || typeof url !== 'string') {
+    throw new Error(`Invalid url: ${typeof url}`);
+  }
+  if (!html || typeof html !== 'string') {
+    throw new Error(`Invalid html: ${typeof html}`);
+  }
+  if (!checksum || typeof checksum !== 'string') {
+    throw new Error(`Invalid checksum: ${typeof checksum}`);
+  }
+
   // Check if record already exists for this hotel_uuid and page_url
   const checkQuery = `
     SELECT id FROM ${HOTEL_DATA_TABLE}
@@ -46,8 +60,17 @@ async function saveScrapedPage(hotelUuid, url, html, checksum) {
       return result.insertId || result.affectedRows;
     }
   } catch (error) {
-    console.error(`❌ Error saving scraped page to database:`, error.message);
-    throw error;
+    // Use safe error message extraction to avoid serialization issues
+    const errorMessage = error?.message || String(error) || 'Unknown database error';
+    const errorDetails = {
+      message: errorMessage,
+      hotelUuid: hotelUuid?.substring(0, 50),
+      url: url?.substring(0, 100),
+      htmlLength: html?.length || 0,
+      checksum: checksum?.substring(0, 20),
+    };
+    console.error(`❌ Error saving scraped page to database:`, errorDetails);
+    throw new Error(`Database save failed: ${errorMessage}`);
   }
 }
 
@@ -176,21 +199,47 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           log.warning(`⚠️  Network idle timeout for ${url}, continuing anyway...`);
         });
 
-        // Get full HTML content
-        const html = await page.content();
+        // Step 1: Get full HTML content safely
+        let html = '';
+        try {
+          html = await page.content();
+          if (!html || html.length === 0) {
+            log.warning(`⚠️  Empty HTML content for ${url}`);
+            errors++;
+            return;
+          }
+          log.debug(`📄 HTML length: ${html.length} bytes`);
+        } catch (err) {
+          errors++;
+          log.error(`🔥 Error getting page content for ${url}:`, err?.message || String(err));
+          return; // Can't continue without HTML
+        }
 
-        // Compute checksum
-        const checksum = computeChecksum(html);
+        // Step 2: Compute checksum safely
+        let checksum = 'ERROR';
+        try {
+          checksum = computeChecksum(html);
+          if (!checksum || checksum === 'ERROR') {
+            log.warning(`⚠️  Failed to compute checksum for ${url}`);
+          }
+        } catch (err) {
+          log.error(`🔥 Error computing checksum for ${url}:`, err?.message || String(err));
+          // Continue anyway with ERROR checksum
+        }
 
-        // Save to database
-        await saveScrapedPage(hotelUuid, url, html, checksum);
+        // Step 3: Save to database safely
+        try {
+          await saveScrapedPage(hotelUuid, url, html, checksum);
+          scrapedUrls.add(url);
+          pagesScraped++;
+          log.info(`✅ Saved page ${pagesScraped}: ${url.substring(0, 80)}...`);
+        } catch (err) {
+          errors++;
+          log.error(`🔥 Error saving to database for ${url}:`, err?.message || String(err));
+          // Don't return here - still try to enqueue links even if save failed
+        }
 
-        scrapedUrls.add(url);
-        pagesScraped++;
-        
-        log.info(`✅ Saved page ${pagesScraped}: ${url.substring(0, 80)}...`);
-
-        // Get current depth from request userData
+        // Step 4: Get current depth from request userData
         const currentDepth = request.userData?.depth ?? 0;
         
         // Log depth for debugging
@@ -198,44 +247,51 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           log.debug(`📍 Current depth: ${currentDepth}/${maxDepth}`);
         }
 
-        // Auto-enqueue links from same domain (excluding images, videos, PDFs)
-        await enqueueLinks({
-          strategy: 'same-domain',
-          selector: 'a[href]',
-          label: 'hotel-page',
-          transformRequestFunction: ({ request: newRequest }) => {
-            const url = newRequest.url.toLowerCase();
-            
-            // Skip images, videos, and PDFs
-            const blockedExtensions = [
-              '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp',
-              '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v',
-              '.pdf',
-              '.mp3', '.wav', '.ogg', '.aac', '.flac',
-            ];
+        // Step 5: Auto-enqueue links from same domain (excluding images, videos, PDFs)
+        try {
+          await enqueueLinks({
+            strategy: 'same-domain',
+            selector: 'a[href]',
+            label: 'hotel-page',
+            transformRequestFunction: ({ request: newRequest }) => {
+              const linkUrl = newRequest.url.toLowerCase();
+              
+              // Skip images, videos, and PDFs
+              const blockedExtensions = [
+                '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp',
+                '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v',
+                '.pdf',
+                '.mp3', '.wav', '.ogg', '.aac', '.flac',
+              ];
 
-            const hasBlockedExtension = blockedExtensions.some(ext => url.endsWith(ext));
-            if (hasBlockedExtension) {
-              return false; // Don't enqueue this link
-            }
+              const hasBlockedExtension = blockedExtensions.some(ext => linkUrl.endsWith(ext));
+              if (hasBlockedExtension) {
+                return false; // Don't enqueue this link
+              }
 
-            // Check depth limit
-            if (maxDepth !== null && currentDepth >= maxDepth) {
-              return false; // Don't enqueue if max depth reached
-            }
+              // Check depth limit
+              if (maxDepth !== null && currentDepth >= maxDepth) {
+                return false; // Don't enqueue if max depth reached
+              }
 
-            // Set depth for the new request
-            newRequest.userData = { 
-              ...newRequest.userData, 
-              depth: currentDepth + 1 
-            };
-            return newRequest; // Enqueue this link
-          },
-        });
+              // Set depth for the new request
+              newRequest.userData = { 
+                ...newRequest.userData, 
+                depth: currentDepth + 1 
+              };
+              return newRequest; // Enqueue this link
+            },
+          });
+        } catch (err) {
+          log.error(`🔥 Error enqueueing links for ${url}:`, err?.message || String(err));
+          // Non-fatal - continue
+        }
 
       } catch (error) {
         errors++;
-        log.error(`❌ Error scraping ${url}:`, error.message);
+        // Use safe error logging to avoid serialization issues
+        const errorMessage = error?.message || String(error) || 'Unknown error';
+        log.error(`❌ Handler failure for ${url}: ${errorMessage}`);
         // Continue with other pages even if one fails
       }
     },
