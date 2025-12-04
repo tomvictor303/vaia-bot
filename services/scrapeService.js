@@ -74,6 +74,41 @@ async function saveScrapedPage(hotelUuid, url, html, checksum) {
   }
 }
 
+async function getExistingPages(hotelUuid) {
+  const query = `
+    SELECT id, page_url
+    FROM ${HOTEL_DATA_TABLE}
+    WHERE hotel_uuid = ?
+  `;
+  try {
+    return await executeQuery(query, [hotelUuid]);
+  } catch (error) {
+    console.error('❌ Error fetching existing pages:', error.message);
+    return [];
+  }
+}
+
+async function deactivatePagesByIds(pageIds = []) {
+  if (pageIds.length === 0) {
+    return 0;
+  }
+
+  const placeholders = pageIds.map(() => '?').join(', ');
+  const query = `
+    UPDATE ${HOTEL_DATA_TABLE}
+    SET active = 0, updated_at = CURRENT_TIMESTAMP
+    WHERE id IN (${placeholders})
+  `;
+
+  try {
+    const result = await executeQuery(query, pageIds);
+    return result.affectedRows || 0;
+  } catch (error) {
+    console.error('❌ Error deactivating old pages:', error.message);
+    return 0;
+  }
+}
+
 /**
  * Compute SHA256 checksum of content
  * @param {string} content - Content to hash
@@ -108,6 +143,8 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
   const timeoutSecs = parseInt(process.env.CRAWLER_TIMEOUT_SECS || '60', 10);
   const blockedExtensions = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp', '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', '.pdf', '.mp3', '.wav', '.ogg', '.aac', '.flac']);
   const visited = new Set();
+  const existingPages = await getExistingPages(hotelUuid);
+  const nonUpdatedPageMap = new Map((existingPages || []).map((page) => [page.page_url, page.id]));
   const stats = { scraped: 0, skipped: 0, errors: 0 };
 
   console.log(`\n🕷️  Crawl-all mode: ${hotelName}`);
@@ -163,6 +200,9 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         const checksum = computeChecksum(html);
         await saveScrapedPage(hotelUuid, pageUrl, html, checksum);
         visited.add(pageUrl);
+        if (nonUpdatedPageMap.has(pageUrl)) {
+          nonUpdatedPageMap.delete(pageUrl);
+        }
         stats.scraped += 1;
         log.info(`✅ Saved: ${pageUrl}`);
 
@@ -214,6 +254,12 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
   } catch (error) {
     console.error(`❌ Fatal crawl error for ${hotelName}: ${error?.message || error}`);
     throw error;
+  }
+
+  const stalePageIds = Array.from(nonUpdatedPageMap.values());
+  if (stalePageIds.length > 0) {
+    const deactivated = await deactivatePagesByIds(stalePageIds);
+    console.log(`🗂️  Deactivated ${deactivated} outdated page(s) for ${hotelName}`);
   }
 
   console.log(`\n📊 Crawl summary for ${hotelName}`);
