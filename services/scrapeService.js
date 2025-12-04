@@ -122,9 +122,12 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
 
     async requestHandler({ page, request, response, enqueueLinks, log }) {
       const currentDepth = request.userData?.depth ?? 0;
-      const url = request.url;
+      const pageUrl = response?.url() || request.url;
+      if (pageUrl !== request.url) {
+        log.info(`🔁 Redirected: ${request.url} → ${pageUrl}`);
+      }
 
-      if (visited.has(url)) {
+      if (visited.has(pageUrl)) {
         stats.skipped += 1;
         return;
       }
@@ -140,28 +143,28 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         const status = response?.status();
         const title = (await page.title().catch(() => '') || '').toLowerCase();
         if (status && status >= 400) {
-          log.warning(`⚠️  Skipping error page (status ${status}): ${url}`);
+          log.warning(`⚠️  Skipping error page (status ${status}): ${pageUrl}`);
           stats.errors += 1;
           return;
         }
         if (title.includes('404') || title.includes('500')) {
-          log.warning(`⚠️  Skipping page due to error code intitle (${title}): ${url}`);
+          log.warning(`⚠️  Skipping page due to error code intitle (${title}): ${pageUrl}`);
           stats.errors += 1;
           return;
         }
 
         const html = await page.content();
         if (!html || html.trim().length === 0) {
-          log.warning(`⚠️  Empty HTML: ${url}`);
+          log.warning(`⚠️  Empty HTML: ${pageUrl}`);
           stats.errors += 1;
           return;
         }
 
         const checksum = computeChecksum(html);
-        await saveScrapedPage(hotelUuid, url, html, checksum);
-        visited.add(url);
+        await saveScrapedPage(hotelUuid, pageUrl, html, checksum);
+        visited.add(pageUrl);
         stats.scraped += 1;
-        log.info(`✅ Saved: ${url}`);
+        log.info(`✅ Saved: ${pageUrl}`);
 
         const rawLinks = await page.$$eval('a[href]', anchors =>
           anchors.map(a => a.getAttribute('href') || '').filter(Boolean)
@@ -170,7 +173,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         const urlsToEnqueue = rawLinks
           .map((href) => {
             try {
-              return new URL(href, url).toString();
+              return new URL(href, pageUrl).toString();
             } catch {
               return '';
             }
@@ -196,7 +199,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         }
       } catch (error) {
         stats.errors += 1;
-        log.error(`❌ Failed: ${url} -> ${error?.message || error}`);
+        log.error(`❌ Failed: ${request.url} -> ${error?.message || error}`);
       }
     },
 
