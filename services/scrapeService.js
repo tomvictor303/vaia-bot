@@ -105,10 +105,6 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
     ? parseInt(process.env.CRAWLER_MAX_DEPTH, 10) 
     : 3; // Default max depth to 3.
 
-  // Get JS render delay from environment variable (default: 3000ms = 3 seconds)
-  // This delay allows JavaScript-heavy sites to fully render links
-  const jsRenderDelay = parseInt(process.env.CRAWLER_JS_RENDER_DELAY_MS || '3000', 10);
-
   console.log(`\n🕷️  Starting scrape for: ${hotelName}`);
   console.log(`📍 URL: ${hotelUrl}`);
   console.log(`🆔 UUID: ${hotelUuid}`);
@@ -117,7 +113,6 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
   } else {
     console.log(`📏 Max depth: unlimited`);
   }
-  console.log(`⏱️  JS render delay: ${jsRenderDelay}ms`);
 
   let pagesScraped = 0;
   let pagesSkipped = 0;
@@ -199,20 +194,26 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
       try {
         log.info(`📄 Scraping: ${url}`);
 
-        // Wait for page to load (adjust selector if needed)
+        // Wait for page to load
         await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {
           log.warning(`⚠️  Network idle timeout for ${url}, continuing anyway...`);
         });
 
-        // Additional wait for JavaScript-heavy sites to render links
         // Wait for DOM to be ready
         await page.waitForLoadState('domcontentloaded').catch(() => {
           // Ignore errors
         });
-        
-        // Delay to allow JavaScript to populate links (configurable via CRAWLER_JS_RENDER_DELAY_MS)
-        log.debug(`⏳ Waiting ${jsRenderDelay}ms for JavaScript to render links...`);
-        await new Promise(resolve => setTimeout(resolve, jsRenderDelay));
+
+        // Wait for links to appear (for JavaScript-heavy sites)
+        // This is smarter than an arbitrary delay - we wait for actual content
+        try {
+          await page.waitForSelector('a[href]', { timeout: 5000 }).catch(() => {
+            log.debug(`⚠️  No links found immediately on ${url}, continuing anyway...`);
+          });
+        } catch (err) {
+          // Links might not exist or page might be loading - continue anyway
+          log.debug(`⚠️  Could not wait for links on ${url}, continuing...`);
+        }
 
         // Step 1: Get full HTML content safely
         let html = '';
