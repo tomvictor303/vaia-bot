@@ -120,7 +120,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
     requestHandlerTimeoutSecs: timeoutSecs,
     launchContext: { launchOptions: { headless: true } },
 
-    async requestHandler({ page, request, enqueueLinks, log }) {
+    async requestHandler({ page, request, response, enqueueLinks, log }) {
       const currentDepth = request.userData?.depth ?? 0;
       const url = request.url;
 
@@ -137,9 +137,22 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
         await page.waitForSelector('body', { timeout: 5000 }).catch(() => {});
 
+        const status = response?.status();
+        const title = (await page.title().catch(() => '') || '').toLowerCase();
+        if (status && status >= 400) {
+          log.warning(`⚠️  Skipping error page (status ${status}): ${url}`);
+          stats.errors += 1;
+          return;
+        }
+        if (title.includes('404') || title.includes('500')) {
+          log.warning(`⚠️  Skipping page due to error code intitle (${title}): ${url}`);
+          stats.errors += 1;
+          return;
+        }
+
         const html = await page.content();
         if (!html || html.trim().length === 0) {
-          log.warn(`⚠️  Empty HTML: ${url}`);
+          log.warning(`⚠️  Empty HTML: ${url}`);
           stats.errors += 1;
           return;
         }
@@ -154,13 +167,15 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           anchors.map(a => a.getAttribute('href') || '').filter(Boolean)
         ).catch(() => []);
 
-        const urlsToEnqueue = rawLinks.map((href) => {
-          try {
-            return new URL(href, url).toString();
-          } catch {
-            return '';
-          }
-        });
+        const urlsToEnqueue = rawLinks
+          .map((href) => {
+            try {
+              return new URL(href, url).toString();
+            } catch {
+              return '';
+            }
+          })
+          .filter(Boolean);
 
         if (urlsToEnqueue.length > 0) {
           await enqueueLinks({
