@@ -100,8 +100,9 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
     throw new Error(`Invalid hotel URL: ${hotelUrl}`);
   }
 
-  const maxDepthEnv = process.env.CRAWLER_MAX_DEPTH;
-  const maxDepth = Number.isNaN(parseInt(maxDepthEnv, 10)) ? Infinity : parseInt(maxDepthEnv, 10);
+  const maxDepth = Number.isNaN(parseInt(process.env.CRAWLER_MAX_DEPTH ?? '', 10))
+    ? Infinity
+    : parseInt(process.env.CRAWLER_MAX_DEPTH ?? '', 10);
   const maxConcurrency = parseInt(process.env.CRAWLER_MAX_CONCURRENCY || '3', 10);
   const maxRetries = parseInt(process.env.CRAWLER_MAX_RETRIES || '2', 10);
   const timeoutSecs = parseInt(process.env.CRAWLER_TIMEOUT_SECS || '60', 10);
@@ -151,10 +152,13 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
 
         await enqueueLinks({
           strategy: 'same-domain',
+          selector: 'a[href]',
           label: 'hotel-page',
-          transformRequestFunction: ({ request: newReq }) => {
+          transformRequestFunction: (newReq) => {
             if (!newReq?.url) return false;
+
             const lower = newReq.url.toLowerCase();
+            if (lower.startsWith('javascript:') || lower.startsWith('tel:')) return false;
             const blocked = Array.from(blockedExtensions).some(ext => lower.endsWith(ext));
             if (blocked) return false;
             if (maxDepth !== Infinity && currentDepth + 1 > maxDepth) return false;
