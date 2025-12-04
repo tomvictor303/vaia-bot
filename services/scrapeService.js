@@ -150,22 +150,35 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         stats.scraped += 1;
         log.info(`✅ Saved: ${url}`);
 
-        await enqueueLinks({
-          strategy: 'same-domain',
-          selector: 'a[href]',
-          label: 'hotel-page',
-          transformRequestFunction: (newReq) => {
-            if (!newReq?.url) return false;
+        const rawLinks = await page.$$eval('a[href]', anchors =>
+          anchors.map(a => a.getAttribute('href') || '').filter(Boolean)
+        ).catch(() => []);
 
-            const lower = newReq.url.toLowerCase();
-            if (lower.startsWith('javascript:') || lower.startsWith('tel:')) return false;
-            const blocked = Array.from(blockedExtensions).some(ext => lower.endsWith(ext));
-            if (blocked) return false;
-            if (maxDepth !== Infinity && currentDepth + 1 > maxDepth) return false;
-            newReq.userData = { depth: currentDepth + 1 };
-            return newReq;
-          },
+        const urlsToEnqueue = rawLinks.map((href) => {
+          try {
+            return new URL(href, url).toString();
+          } catch {
+            return '';
+          }
         });
+
+        if (urlsToEnqueue.length > 0) {
+          await enqueueLinks({
+            urls: urlsToEnqueue,
+            transformRequestFunction: (newReq) => {
+              if (!newReq?.url) return false;
+
+              const lower = newReq.url.toLowerCase();
+              if (lower.startsWith('javascript:') || lower.startsWith('tel:')) return false;
+              if (Array.from(blockedExtensions).some(ext => lower.endsWith(ext))) return false;
+              if (visited.has(newReq.url)) return false;
+              if (maxDepth !== Infinity && currentDepth + 1 > maxDepth) return false;
+
+              newReq.userData = { depth: currentDepth + 1 };
+              return newReq;
+            },
+          });
+        }
       } catch (error) {
         stats.errors += 1;
         log.error(`❌ Failed: ${url} -> ${error?.message || error}`);
