@@ -31,7 +31,7 @@ async function saveScrapedPage(hotelUuid, url, html, checksum) {
   // Check if record already exists for this hotel_uuid and page_url
   const checkQuery = `
     SELECT id FROM ${HOTEL_DATA_TABLE}
-    WHERE hotel_uuid = ? AND page_url = ? AND active = 1
+    WHERE hotel_uuid = ? AND page_url = ?
     LIMIT 1
   `;
 
