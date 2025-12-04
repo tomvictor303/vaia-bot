@@ -96,190 +96,104 @@ function computeChecksum(content) {
  * @returns {Promise<Object>} Scraping statistics
  */
 export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
-  // Validate input
   if (!hotelUrl || !hotelUrl.startsWith('http')) {
     throw new Error(`Invalid hotel URL: ${hotelUrl}`);
   }
 
-  // Configuration
-  const maxDepth = parseInt(process.env.CRAWLER_MAX_DEPTH || '3', 10);
+  const maxDepthEnv = process.env.CRAWLER_MAX_DEPTH;
+  const maxDepth = Number.isNaN(parseInt(maxDepthEnv, 10)) ? Infinity : parseInt(maxDepthEnv, 10);
   const maxConcurrency = parseInt(process.env.CRAWLER_MAX_CONCURRENCY || '3', 10);
   const maxRetries = parseInt(process.env.CRAWLER_MAX_RETRIES || '2', 10);
-  const timeout = parseInt(process.env.CRAWLER_TIMEOUT_SECS || '60', 10);
-  const blockedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp', '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', '.pdf', '.mp3', '.wav', '.ogg', '.aac', '.flac'];
+  const timeoutSecs = parseInt(process.env.CRAWLER_TIMEOUT_SECS || '60', 10);
+  const blockedExtensions = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp', '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', '.pdf', '.mp3', '.wav', '.ogg', '.aac', '.flac']);
+  const visited = new Set();
+  const stats = { scraped: 0, skipped: 0, errors: 0 };
 
-  // Statistics tracking
-  const stats = {
-    pagesScraped: 0,
-    pagesSkipped: 0,
-    errors: 0,
-    scrapedUrls: new Set(),
-  };
+  console.log(`\n🕷️  Crawl-all mode: ${hotelName}`);
+  console.log(`📍 Start URL: ${hotelUrl}`);
+  console.log(`📏 Max depth: ${maxDepth === Infinity ? 'unlimited' : maxDepth}`);
 
-  // Logging
-  console.log(`\n🕷️  Starting crawl-all mode for: ${hotelName}`);
-  console.log(`📍 URL: ${hotelUrl}`);
-  console.log(`🆔 UUID: ${hotelUuid}`);
-  console.log(`📏 Max depth: ${maxDepth}`);
-  console.log(`⚙️  Concurrency: ${maxConcurrency}, Retries: ${maxRetries}, Timeout: ${timeout}s`);
-
-  // Create crawler
   const crawler = new PlaywrightCrawler({
     maxConcurrency,
     maxRequestRetries: maxRetries,
-    requestHandlerTimeoutSecs: timeout,
-    
-    launchContext: {
-      launchOptions: { headless: true },
-    },
-
-    preNavigationHooks: [
-      async ({ page, log }) => {
-        // Block images, videos, and PDFs
-        await page.route('**/*', (route) => {
-          const request = route.request();
-          const url = request.url();
-          const resourceType = request.resourceType();
-          const urlLower = url.toLowerCase();
-
-          // Block by resource type
-          if (resourceType === 'image' || resourceType === 'media') {
-            route.abort();
-            return;
-          }
-
-          // Block by file extension
-          if (blockedExtensions.some(ext => urlLower.endsWith(ext))) {
-            route.abort();
-            return;
-          }
-
-          // Block by MIME type patterns
-          if (['image/', 'video/', 'application/pdf', 'audio/'].some(mime => urlLower.includes(mime))) {
-            route.abort();
-            return;
-          }
-
-          route.continue();
-        });
-        log.debug('🚫 Resource blocking enabled');
-      },
-    ],
+    requestHandlerTimeoutSecs: timeoutSecs,
+    launchContext: { launchOptions: { headless: true } },
 
     async requestHandler({ page, request, enqueueLinks, log }) {
+      const currentDepth = request.userData?.depth ?? 0;
       const url = request.url;
 
-      // Skip duplicates
-      if (stats.scrapedUrls.has(url)) {
-        stats.pagesSkipped++;
-        log.debug(`⏭️  Skipping duplicate: ${url}`);
+      if (visited.has(url)) {
+        stats.skipped += 1;
+        return;
+      }
+      if (maxDepth !== Infinity && currentDepth > maxDepth) {
+        stats.skipped += 1;
         return;
       }
 
       try {
-        log.info(`📄 Scraping: ${url}`);
+        await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
+        await page.waitForSelector('body', { timeout: 5000 }).catch(() => {});
 
-        // Wait for page to load
-        await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {
-          log.warning(`⚠️  Network idle timeout for ${url}, continuing...`);
-        });
-        await page.waitForLoadState('domcontentloaded').catch(() => {});
-        await page.waitForSelector('a[href]', { timeout: 5000 }).catch(() => {
-          log.debug(`⚠️  No links found on ${url}, continuing...`);
-        });
-
-        // Get HTML content
         const html = await page.content();
-        if (!html || html.length === 0) {
-          log.warning(`⚠️  Empty HTML for ${url}`);
-          stats.errors++;
+        if (!html || html.trim().length === 0) {
+          log.warn(`⚠️  Empty HTML: ${url}`);
+          stats.errors += 1;
           return;
         }
 
-        // Compute checksum and save
         const checksum = computeChecksum(html);
         await saveScrapedPage(hotelUuid, url, html, checksum);
-        stats.scrapedUrls.add(url);
-        stats.pagesScraped++;
-        log.info(`✅ Saved page ${stats.pagesScraped}: ${url.substring(0, 80)}...`);
+        visited.add(url);
+        stats.scraped += 1;
+        log.info(`✅ Saved: ${url}`);
 
-        // Discover and enqueue links
-        const currentDepth = request.userData?.depth ?? 0;
-        const links = await page.$$eval('a[href]', (anchors) => {
-          return anchors
-            .map(a => a.href)
-            .filter(href => href && href.startsWith('http'))
-            .filter((href, index, self) => self.indexOf(href) === index);
+        await enqueueLinks({
+          strategy: 'same-domain',
+          label: 'hotel-page',
+          transformRequestFunction: ({ request: newReq }) => {
+            if (!newReq?.url) return false;
+            const lower = newReq.url.toLowerCase();
+            const blocked = Array.from(blockedExtensions).some(ext => lower.endsWith(ext));
+            if (blocked) return false;
+            if (maxDepth !== Infinity && currentDepth + 1 > maxDepth) return false;
+            newReq.userData = { depth: currentDepth + 1 };
+            return newReq;
+          },
         });
-
-        const baseUrl = new URL(url);
-        const validLinks = links
-          .filter(link => {
-            try {
-              return new URL(link).hostname === baseUrl.hostname;
-            } catch {
-              return false;
-            }
-          })
-          .filter(link => {
-            const linkLower = link.toLowerCase();
-            if (blockedExtensions.some(ext => linkLower.endsWith(ext))) return false;
-            if (currentDepth >= maxDepth) return false;
-            return true;
-          });
-
-        if (validLinks.length > 0) {
-          await enqueueLinks({
-            urls: validLinks.map(linkUrl => ({
-              url: linkUrl,
-              userData: { depth: currentDepth + 1 },
-            })),
-          });
-          log.debug(`🔗 Enqueued ${validLinks.length} links (depth: ${currentDepth + 1})`);
-        }
-
       } catch (error) {
-        stats.errors++;
-        const errorMessage = error?.message || String(error) || 'Unknown error';
-        log.error(`❌ Error processing ${url}: ${errorMessage}`);
+        stats.errors += 1;
+        log.error(`❌ Failed: ${url} -> ${error?.message || error}`);
       }
     },
 
     errorHandler({ request, log, error }) {
-      stats.errors++;
-      log.error(`❌ Failed to process ${request.url}:`, error?.message || String(error));
+      stats.errors += 1;
+      log.error(`❌ Handler error: ${request.url} -> ${error?.message || error}`);
     },
   });
 
-  // Start crawling
   try {
-    await crawler.run([{
-      url: hotelUrl,
-      userData: { depth: 0 },
-    }]);
-
-    // Final statistics
-    const finalStats = {
-      hotelUuid,
-      hotelName,
-      hotelUrl,
-      pagesScraped: stats.pagesScraped,
-      pagesSkipped: stats.pagesSkipped,
-      errors: stats.errors,
-      totalPages: stats.pagesScraped + stats.pagesSkipped,
-    };
-
-    console.log(`\n📊 Crawl completed for ${hotelName}:`);
-    console.log(`   ✅ Pages scraped: ${finalStats.pagesScraped}`);
-    console.log(`   ⏭️  Pages skipped: ${finalStats.pagesSkipped}`);
-    console.log(`   ❌ Errors: ${finalStats.errors}`);
-    console.log(`   📦 Total: ${finalStats.totalPages} pages`);
-
-    return finalStats;
-
+    await crawler.run([{ url: hotelUrl, userData: { depth: 0 } }]);
   } catch (error) {
-    console.error(`❌ Fatal error scraping ${hotelName}:`, error?.message || String(error));
+    console.error(`❌ Fatal crawl error for ${hotelName}: ${error?.message || error}`);
     throw error;
   }
+
+  console.log(`\n📊 Crawl summary for ${hotelName}`);
+  console.log(`   ✅ Scraped: ${stats.scraped}`);
+  console.log(`   ⏭️  Skipped: ${stats.skipped}`);
+  console.log(`   ❌ Errors: ${stats.errors}`);
+
+  return {
+    hotelUuid,
+    hotelName,
+    hotelUrl,
+    pagesScraped: stats.scraped,
+    pagesSkipped: stats.skipped,
+    errors: stats.errors,
+    totalPages: stats.scraped + stats.skipped,
+  };
 }
 
