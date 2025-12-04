@@ -99,11 +99,15 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
     throw new Error(`Invalid hotel URL: ${hotelUrl}`);
   }
 
-  // Get max depth from environment variable (default: unlimited)
+  // Get max depth from environment variable (default: 3)
   // Depth 0 = starting page only, Depth 1 = starting page + direct links, etc.
   const maxDepth = process.env.CRAWLER_MAX_DEPTH 
     ? parseInt(process.env.CRAWLER_MAX_DEPTH, 10) 
     : 3; // Default max depth to 3.
+
+  // Get JS render delay from environment variable (default: 3000ms = 3 seconds)
+  // This delay allows JavaScript-heavy sites to fully render links
+  const jsRenderDelay = parseInt(process.env.CRAWLER_JS_RENDER_DELAY_MS || '3000', 10);
 
   console.log(`\n🕷️  Starting scrape for: ${hotelName}`);
   console.log(`📍 URL: ${hotelUrl}`);
@@ -113,6 +117,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
   } else {
     console.log(`📏 Max depth: unlimited`);
   }
+  console.log(`⏱️  JS render delay: ${jsRenderDelay}ms`);
 
   let pagesScraped = 0;
   let pagesSkipped = 0;
@@ -199,6 +204,16 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           log.warning(`⚠️  Network idle timeout for ${url}, continuing anyway...`);
         });
 
+        // Additional wait for JavaScript-heavy sites to render links
+        // Wait for DOM to be ready
+        await page.waitForLoadState('domcontentloaded').catch(() => {
+          // Ignore errors
+        });
+        
+        // Delay to allow JavaScript to populate links (configurable via CRAWLER_JS_RENDER_DELAY_MS)
+        log.debug(`⏳ Waiting ${jsRenderDelay}ms for JavaScript to render links...`);
+        await new Promise(resolve => setTimeout(resolve, jsRenderDelay));
+
         // Step 1: Get full HTML content safely
         let html = '';
         try {
@@ -249,42 +264,123 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
 
         // Step 5: Auto-enqueue links from same domain (excluding images, videos, PDFs)
         try {
-          await enqueueLinks({
-            strategy: 'same-domain',
-            selector: 'a[href]',
-            label: 'hotel-page',
-            transformRequestFunction: ({ request: newRequest }) => {
-              const linkUrl = newRequest.url.toLowerCase();
+          // First, check if there are any links on the page
+          const linkCount = await page.$$eval('a[href]', (links) => links.length).catch(() => 0);
+          log.debug(`🔗 Found ${linkCount} links on page`);
+
+          if (linkCount === 0) {
+            log.warning(`⚠️  No links found on page ${url}`);
+          } else {
+            // Enqueue links with proper error handling
+            const enqueued = await enqueueLinks({
+              strategy: 'same-domain',
+              selector: 'a[href]',
+              label: 'hotel-page',
+              transformRequestFunction: ({ request: newRequest }) => {
+                try {
+                  if (!newRequest || !newRequest.url) {
+                    return false;
+                  }
+
+                  const linkUrl = newRequest.url.toLowerCase();
+                  
+                  // Skip images, videos, and PDFs
+                  const blockedExtensions = [
+                    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp',
+                    '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v',
+                    '.pdf',
+                    '.mp3', '.wav', '.ogg', '.aac', '.flac',
+                  ];
+
+                  const hasBlockedExtension = blockedExtensions.some(ext => linkUrl.endsWith(ext));
+                  if (hasBlockedExtension) {
+                    return false; // Don't enqueue this link
+                  }
+
+                  // Check depth limit
+                  if (maxDepth !== null && currentDepth >= maxDepth) {
+                    return false; // Don't enqueue if max depth reached
+                  }
+
+                  // Set depth for the new request
+                  newRequest.userData = { 
+                    ...newRequest.userData, 
+                    depth: currentDepth + 1 
+                  };
+                  return newRequest; // Enqueue this link
+                } catch (transformErr) {
+                  log.error(`🔥 Error in transformRequestFunction:`, transformErr?.message || String(transformErr));
+                  return false; // Don't enqueue if transform fails
+                }
+              },
+            });
+
+            log.debug(`✅ Enqueued ${enqueued?.processedRequests?.length || 0} links from ${url}`);
+          }
+        } catch (err) {
+          log.error(`🔥 Error enqueueing links for ${url}:`, err?.message || String(err));
+          
+          // Fallback: Try to manually find and enqueue links
+          try {
+            log.debug(`🔄 Attempting fallback link discovery for ${url}`);
+            const links = await page.$$eval('a[href]', (anchors) => {
+              return anchors
+                .map(a => a.href)
+                .filter(href => href && href.startsWith('http'))
+                .filter((href, index, self) => self.indexOf(href) === index); // Remove duplicates
+            });
+
+            const baseUrl = new URL(url);
+            const sameDomainLinks = links.filter(link => {
+              try {
+                const linkUrl = new URL(link);
+                return linkUrl.hostname === baseUrl.hostname;
+              } catch {
+                return false;
+              }
+            });
+
+            log.debug(`🔗 Found ${sameDomainLinks.length} same-domain links via fallback`);
+
+            // Filter and prepare links for enqueueing
+            const linksToEnqueue = sameDomainLinks.filter(linkUrl => {
+              const linkUrlLower = linkUrl.toLowerCase();
               
-              // Skip images, videos, and PDFs
+              // Skip blocked extensions
               const blockedExtensions = [
                 '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp',
                 '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v',
                 '.pdf',
                 '.mp3', '.wav', '.ogg', '.aac', '.flac',
               ];
-
-              const hasBlockedExtension = blockedExtensions.some(ext => linkUrl.endsWith(ext));
-              if (hasBlockedExtension) {
-                return false; // Don't enqueue this link
+              
+              if (blockedExtensions.some(ext => linkUrlLower.endsWith(ext))) {
+                return false;
               }
 
               // Check depth limit
               if (maxDepth !== null && currentDepth >= maxDepth) {
-                return false; // Don't enqueue if max depth reached
+                return false;
               }
 
-              // Set depth for the new request
-              newRequest.userData = { 
-                ...newRequest.userData, 
-                depth: currentDepth + 1 
-              };
-              return newRequest; // Enqueue this link
-            },
-          });
-        } catch (err) {
-          log.error(`🔥 Error enqueueing links for ${url}:`, err?.message || String(err));
-          // Non-fatal - continue
+              return true;
+            });
+
+            // Enqueue all filtered links at once
+            if (linksToEnqueue.length > 0) {
+              await enqueueLinks({
+                urls: linksToEnqueue.map(linkUrl => ({
+                  url: linkUrl,
+                  userData: { depth: currentDepth + 1 },
+                })),
+              });
+              log.info(`✅ Fallback: Manually enqueued ${linksToEnqueue.length} links`);
+            } else {
+              log.debug(`⚠️  No valid links to enqueue after filtering`);
+            }
+          } catch (fallbackErr) {
+            log.error(`🔥 Fallback link discovery also failed:`, fallbackErr?.message || String(fallbackErr));
+          }
         }
 
       } catch (error) {
