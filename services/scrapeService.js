@@ -166,6 +166,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
   const visited = new Set();
   const existingPages = await getExistingPages(hotelUuid);
   const nonScrapedPageMap = new Map((existingPages || []).map((page) => [page.page_url, page.id]));
+  const oldCheckSumMap = new Map((existingPages || []).map((page) => [page.page_url, page.checksum ?? null]));
   const stats = { scraped: 0, skipped: 0, errors: 0 };
 
   console.log(`\n🕷️  Crawl-all mode: ${hotelName}`);
@@ -219,7 +220,8 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         }
 
         const checksum = computeChecksum(html);
-        await saveScrapedPage(hotelUuid, pageUrl, html, checksum);
+        const previousChecksum = oldCheckSumMap.get(pageUrl) ?? null;
+        await saveScrapedPage(hotelUuid, pageUrl, html, checksum, previousChecksum);
         visited.add(pageUrl);
         if (nonScrapedPageMap.has(pageUrl)) {
           nonScrapedPageMap.delete(pageUrl);
