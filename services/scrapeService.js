@@ -2,8 +2,8 @@ import { PlaywrightCrawler } from 'crawlee';
 import crypto from 'crypto';
 import { executeQuery } from '../config/database.js';
 
-// Get table name from environment variable, default to 'hotel_data'
-const HOTEL_DATA_TABLE = process.env.HOTEL_DATA_TABLE || 'hotel_data';
+// Get table name from environment variable, default to 'hotel_page_data'
+const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
 
 /**
  * Save scraped page to database
@@ -33,7 +33,7 @@ async function saveScrapedPage(hotelUuid, url, html, checksum, pageId = null) {
   let targetId = pageId;
   if (!targetId) {
     const checkQuery = `
-      SELECT id FROM ${HOTEL_DATA_TABLE}
+      SELECT id FROM ${HOTEL_PAGE_DATA_TABLE}
       WHERE hotel_uuid = ? AND page_url = ?
       LIMIT 1
     `;
@@ -59,7 +59,7 @@ async function saveScrapedPage(hotelUuid, url, html, checksum, pageId = null) {
     } else {
       // Insert new record
       const insertQuery = `
-        INSERT INTO ${HOTEL_DATA_TABLE} (hotel_uuid, page_url, checksum, content, active)
+        INSERT INTO ${HOTEL_PAGE_DATA_TABLE} (hotel_uuid, page_url, checksum, content, active)
         VALUES (?, ?, ?, ?, 1)
       `;
       const result = await executeQuery(insertQuery, [hotelUuid, url, checksum, html]);
@@ -87,7 +87,7 @@ async function saveScrapedPage(hotelUuid, url, html, checksum, pageId = null) {
 async function getExistingPages(hotelUuid) {
   const query = `
     SELECT id, page_url, checksum
-    FROM ${HOTEL_DATA_TABLE}
+    FROM ${HOTEL_PAGE_DATA_TABLE}
     WHERE hotel_uuid = ?
   `;
   try {
@@ -112,7 +112,7 @@ async function deactivatePagesByIds(pageIds = []) {
 
   const placeholders = pageIds.map(() => '?').join(', ');
   const query = `
-    UPDATE ${HOTEL_DATA_TABLE}
+    UPDATE ${HOTEL_PAGE_DATA_TABLE}
     SET active = 0, updated_at = CURRENT_TIMESTAMP
     WHERE id IN (${placeholders})
   `;
