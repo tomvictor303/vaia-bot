@@ -11,9 +11,11 @@ const HOTEL_DATA_TABLE = process.env.HOTEL_DATA_TABLE || 'hotel_data';
  * @param {string} url - Page URL
  * @param {string} html - Full HTML content
  * @param {string} checksum - SHA256 checksum of the HTML
+ * @param {string|null} prevChecksum - Previous checksum (if known)
+ * @param {number|null} pageId - Existing page id (if known)
  * @returns {Promise<number>} Insert ID or affected rows
  */
-async function saveScrapedPage(hotelUuid, url, html, checksum) {
+async function saveScrapedPage(hotelUuid, url, html, checksum, prevChecksum = null, pageId = null) {
   // Validate inputs
   if (!hotelUuid || typeof hotelUuid !== 'string') {
     throw new Error(`Invalid hotelUuid: ${typeof hotelUuid}`);
@@ -28,35 +30,43 @@ async function saveScrapedPage(hotelUuid, url, html, checksum) {
     throw new Error(`Invalid checksum: ${typeof checksum}`);
   }
 
-  // Check if record already exists for this hotel_uuid and page_url
-  const checkQuery = `
-    SELECT id FROM ${HOTEL_DATA_TABLE}
-    WHERE hotel_uuid = ? AND page_url = ?
-    LIMIT 1
-  `;
+  // Resolve target id if not provided
+  let targetId = pageId;
+  if (!targetId) {
+    const checkQuery = `
+      SELECT id FROM ${HOTEL_DATA_TABLE}
+      WHERE hotel_uuid = ? AND page_url = ?
+      LIMIT 1
+    `;
+    const found = await executeQuery(checkQuery, [hotelUuid, url]);
+    if (found && found.length > 0) {
+      targetId = found[0].id;
+    }
+  }
+
+  const previous = prevChecksum ?? checksum;
 
   try {
-    const existing = await executeQuery(checkQuery, [hotelUuid, url]);
-    
-    if (existing && existing.length > 0) {
+    if (targetId) {
       // Update existing record
       const updateQuery = `
         UPDATE ${HOTEL_DATA_TABLE}
         SET content = ?,
+            prev_checksum = ?,
             checksum = ?,
             updated_at = CURRENT_TIMESTAMP,
             active = 1
         WHERE id = ?
       `;
-      const result = await executeQuery(updateQuery, [html, checksum, existing[0].id]);
+      const result = await executeQuery(updateQuery, [html, previous, checksum, targetId]);
       return result.affectedRows;
     } else {
       // Insert new record
       const insertQuery = `
-        INSERT INTO ${HOTEL_DATA_TABLE} (hotel_uuid, page_url, checksum, content, active)
-        VALUES (?, ?, ?, ?, 1)
+        INSERT INTO ${HOTEL_DATA_TABLE} (hotel_uuid, page_url, prev_checksum, checksum, content, active)
+        VALUES (?, ?, ?, ?, ?, 1)
       `;
-      const result = await executeQuery(insertQuery, [hotelUuid, url, checksum, html]);
+      const result = await executeQuery(insertQuery, [hotelUuid, url, previous, checksum, html]);
       return result.insertId || result.affectedRows;
     }
   } catch (error) {
@@ -76,7 +86,7 @@ async function saveScrapedPage(hotelUuid, url, html, checksum) {
 
 async function getExistingPages(hotelUuid) {
   const query = `
-    SELECT id, page_url
+    SELECT id, page_url, checksum, prev_checksum
     FROM ${HOTEL_DATA_TABLE}
     WHERE hotel_uuid = ?
   `;
@@ -144,7 +154,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
   const blockedExtensions = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp', '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', '.pdf', '.mp3', '.wav', '.ogg', '.aac', '.flac']);
   const visited = new Set();
   const existingPages = await getExistingPages(hotelUuid);
-  const nonUpdatedPageMap = new Map((existingPages || []).map((page) => [page.page_url, page.id]));
+  const nonScrapedPageMap = new Map((existingPages || []).map((page) => [page.page_url, page.id]));
   const stats = { scraped: 0, skipped: 0, errors: 0 };
 
   console.log(`\n🕷️  Crawl-all mode: ${hotelName}`);
@@ -200,8 +210,8 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         const checksum = computeChecksum(html);
         await saveScrapedPage(hotelUuid, pageUrl, html, checksum);
         visited.add(pageUrl);
-        if (nonUpdatedPageMap.has(pageUrl)) {
-          nonUpdatedPageMap.delete(pageUrl);
+        if (nonScrapedPageMap.has(pageUrl)) {
+          nonScrapedPageMap.delete(pageUrl);
         }
         stats.scraped += 1;
         log.info(`✅ Saved: ${pageUrl}`);
@@ -256,7 +266,8 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
     throw error;
   }
 
-  const stalePageIds = Array.from(nonUpdatedPageMap.values());
+  // Deactivate pages that were present before but not scraped in this run
+  const stalePageIds = Array.from(nonScrapedPageMap.values());
   if (stalePageIds.length > 0) {
     const deactivated = await deactivatePagesByIds(stalePageIds);
     console.log(`🗂️  Deactivated ${deactivated} outdated page(s) for ${hotelName}`);
