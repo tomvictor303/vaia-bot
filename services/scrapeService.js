@@ -84,6 +84,10 @@ async function saveScrapedPage(hotelUuid, url, html, checksum, prevChecksum = nu
   }
 }
 
+/**
+ * Fetch existing pages for a hotel (id, url, checksum, prev_checksum).
+ * Note: active = 0 indicates the page was not scraped in the last run; it is not a deletion flag.
+ */
 async function getExistingPages(hotelUuid) {
   const query = `
     SELECT id, page_url, checksum, prev_checksum
@@ -98,6 +102,13 @@ async function getExistingPages(hotelUuid) {
   }
 }
 
+/**
+ * Deactivate pages that were not scraped in the current scrapeHotel execution.
+ * Note: Sets active = 0 to indicate the page was not scraped in the last run. This does not mean the page is deleted.
+ *
+ * @param {Array<number>} pageIds - Array of page ids to deactivate
+ * @returns {Promise<number>} Number of affected rows
+ */
 async function deactivatePagesByIds(pageIds = []) {
   if (pageIds.length === 0) {
     return 0;
