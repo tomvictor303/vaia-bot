@@ -44,7 +44,7 @@ async function saveScrapedPage(hotelUuid, url, html, checksum, prevChecksum = nu
     }
   }
 
-  const previous = prevChecksum ?? checksum;
+  const previous = prevChecksum ?? null;
 
   try {
     if (targetId) {
