@@ -47,7 +47,7 @@ async function saveScrapedPage(hotelUuid, url, html, checksum, pageId = null) {
     if (targetId) {
       // Update existing record
       const updateQuery = `
-        UPDATE ${HOTEL_DATA_TABLE}
+        UPDATE ${HOTEL_PAGE_DATA_TABLE}
         SET content = ?,
             checksum = ?,
             updated_at = CURRENT_TIMESTAMP,
