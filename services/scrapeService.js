@@ -11,11 +11,10 @@ const HOTEL_DATA_TABLE = process.env.HOTEL_DATA_TABLE || 'hotel_data';
  * @param {string} url - Page URL
  * @param {string} html - Full HTML content
  * @param {string} checksum - SHA256 checksum of the HTML
- * @param {string|null} prevChecksum - Previous checksum (if known)
  * @param {number|null} pageId - Existing page id (if known)
  * @returns {Promise<number>} Insert ID or affected rows
  */
-async function saveScrapedPage(hotelUuid, url, html, checksum, prevChecksum = null, pageId = null) {
+async function saveScrapedPage(hotelUuid, url, html, checksum, pageId = null) {
   // Validate inputs
   if (!hotelUuid || typeof hotelUuid !== 'string') {
     throw new Error(`Invalid hotelUuid: ${typeof hotelUuid}`);
@@ -44,29 +43,26 @@ async function saveScrapedPage(hotelUuid, url, html, checksum, prevChecksum = nu
     }
   }
 
-  const previous = prevChecksum ?? null;
-
   try {
     if (targetId) {
       // Update existing record
       const updateQuery = `
         UPDATE ${HOTEL_DATA_TABLE}
         SET content = ?,
-            prev_checksum = ?,
             checksum = ?,
             updated_at = CURRENT_TIMESTAMP,
             active = 1
         WHERE id = ?
       `;
-      const result = await executeQuery(updateQuery, [html, previous, checksum, targetId]);
+      const result = await executeQuery(updateQuery, [html, checksum, targetId]);
       return result.affectedRows;
     } else {
       // Insert new record
       const insertQuery = `
-        INSERT INTO ${HOTEL_DATA_TABLE} (hotel_uuid, page_url, prev_checksum, checksum, content, active)
-        VALUES (?, ?, ?, ?, ?, 1)
+        INSERT INTO ${HOTEL_DATA_TABLE} (hotel_uuid, page_url, checksum, content, active)
+        VALUES (?, ?, ?, ?, 1)
       `;
-      const result = await executeQuery(insertQuery, [hotelUuid, url, previous, checksum, html]);
+      const result = await executeQuery(insertQuery, [hotelUuid, url, checksum, html]);
       return result.insertId || result.affectedRows;
     }
   } catch (error) {
@@ -85,12 +81,12 @@ async function saveScrapedPage(hotelUuid, url, html, checksum, prevChecksum = nu
 }
 
 /**
- * Fetch existing pages for a hotel (id, url, checksum, prev_checksum).
+ * Fetch existing pages for a hotel (id, url, checksum).
  * Note: active = 0 indicates the page was not scraped in the last run; it is not a deletion flag.
  */
 async function getExistingPages(hotelUuid) {
   const query = `
-    SELECT id, page_url, checksum, prev_checksum
+    SELECT id, page_url, checksum
     FROM ${HOTEL_DATA_TABLE}
     WHERE hotel_uuid = ?
   `;
@@ -166,7 +162,6 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
   const visited = new Set();
   const existingPages = await getExistingPages(hotelUuid);
   const nonScrapedPageMap = new Map((existingPages || []).map((page) => [page.page_url, page.id]));
-  const oldCheckSumMap = new Map((existingPages || []).map((page) => [page.page_url, page.checksum ?? null]));
   const stats = { scraped: 0, skipped: 0, errors: 0 };
 
   console.log(`\n🕷️  Crawl-all mode: ${hotelName}`);
@@ -220,8 +215,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         }
 
         const checksum = computeChecksum(html);
-        const previousChecksum = oldCheckSumMap.get(pageUrl) ?? null;
-        await saveScrapedPage(hotelUuid, pageUrl, html, checksum, previousChecksum);
+        await saveScrapedPage(hotelUuid, pageUrl, html, checksum);
         visited.add(pageUrl);
         if (nonScrapedPageMap.has(pageUrl)) {
           nonScrapedPageMap.delete(pageUrl);
