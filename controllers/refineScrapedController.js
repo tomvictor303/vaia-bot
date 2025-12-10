@@ -6,7 +6,7 @@ const turndown = new TurndownService({ headingStyle: 'atx' });
 
 async function getActivePages(hotelUuid) {
   const query = `
-    SELECT id, page_url, content
+    SELECT id, page_url, html
     FROM ${HOTEL_PAGE_DATA_TABLE}
     WHERE active = 1 AND hotel_uuid = ?
   `;
@@ -46,7 +46,7 @@ export async function refineScrapedData(hotelUuid, hotelName = '') {
   let updated = 0;
   for (const page of pages) {
     try {
-      const markdown = turndown.turndown(page.content || '');
+      const markdown = turndown.turndown(page.html || '');
       const affected = await saveMarkdown(page.id, markdown);
       if (affected > 0) updated += 1;
       console.log(`✅ Converted page ${page.id} (${page.page_url})`);
