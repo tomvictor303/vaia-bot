@@ -207,6 +207,38 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           return;
         }
 
+        // BEGIN CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
+        // Clean page DOM before extraction
+        await page.evaluate(() => {
+          // Remove script/style/noscript
+          document.querySelectorAll('script, style, noscript').forEach(e => e.remove());
+          // Remove common ad/advertisement elements
+          document.querySelectorAll("[id*='ad'], .ad, .ads, .advertisement").forEach(e => e.remove());
+
+          // Resolve relative URLs
+          const toAbsolute = (url) => {
+            try {
+              return new URL(url, location.href).href;
+            } catch {
+              return url;
+            }
+          };
+          document.querySelectorAll('a[href]').forEach(a => {
+            const href = a.getAttribute('href');
+            if (href) a.href = toAbsolute(href);
+          });
+          document.querySelectorAll('img[src]').forEach(img => {
+            const src = img.getAttribute('src');
+            if (src) img.src = toAbsolute(src);
+          });
+
+          // Remove empty text containers
+          document.querySelectorAll('p, div, span').forEach(el => {
+            if (!el.textContent.trim()) el.remove();
+          });
+        });
+        // END CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
+
         const html = await page.content();
         if (!html || html.trim().length === 0) {
           log.warning(`⚠️  Empty HTML: ${pageUrl}`);
