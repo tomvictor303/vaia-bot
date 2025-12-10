@@ -9,12 +9,13 @@ const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_d
  * Save scraped page to database
  * @param {string} hotelUuid - Hotel UUID
  * @param {string} url - Page URL
- * @param {string} html - Full HTML content
+ * @param {string} html - Cleaned HTML content
+ * @param {string|null} htmlOrigin - Original raw HTML content (before cleaning)
  * @param {string} checksum - SHA256 checksum of the HTML
  * @param {number|null} pageId - Existing page id (if known)
  * @returns {Promise<number>} Insert ID or affected rows
  */
-async function saveScrapedPage(hotelUuid, url, html, checksum, pageId = null) {
+async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, checksum, pageId = null) {
   // Validate inputs
   if (!hotelUuid || typeof hotelUuid !== 'string') {
     throw new Error(`Invalid hotelUuid: ${typeof hotelUuid}`);
@@ -24,6 +25,9 @@ async function saveScrapedPage(hotelUuid, url, html, checksum, pageId = null) {
   }
   if (!html || typeof html !== 'string') {
     throw new Error(`Invalid html: ${typeof html}`);
+  }
+  if (htmlOrigin !== null && typeof htmlOrigin !== 'string') {
+    throw new Error(`Invalid htmlOrigin: ${typeof htmlOrigin}`);
   }
   if (!checksum || typeof checksum !== 'string') {
     throw new Error(`Invalid checksum: ${typeof checksum}`);
@@ -49,20 +53,21 @@ async function saveScrapedPage(hotelUuid, url, html, checksum, pageId = null) {
       const updateQuery = `
         UPDATE ${HOTEL_PAGE_DATA_TABLE}
         SET html = ?,
+            html_origin = ?,
             checksum = ?,
             updated_at = CURRENT_TIMESTAMP,
             active = 1
         WHERE id = ?
       `;
-      const result = await executeQuery(updateQuery, [html, checksum, targetId]);
+      const result = await executeQuery(updateQuery, [html, htmlOrigin, checksum, targetId]);
       return result.affectedRows;
     } else {
       // Insert new record
       const insertQuery = `
-        INSERT INTO ${HOTEL_PAGE_DATA_TABLE} (hotel_uuid, page_url, checksum, html, active)
-        VALUES (?, ?, ?, ?, 1)
+        INSERT INTO ${HOTEL_PAGE_DATA_TABLE} (hotel_uuid, page_url, checksum, html, html_origin, active)
+        VALUES (?, ?, ?, ?, ?, 1)
       `;
-      const result = await executeQuery(insertQuery, [hotelUuid, url, checksum, html]);
+      const result = await executeQuery(insertQuery, [hotelUuid, url, checksum, html, htmlOrigin]);
       return result.insertId || result.affectedRows;
     }
   } catch (error) {
@@ -208,6 +213,9 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         }
 
         // BEGIN CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
+        // Capture original HTML before cleaning (for debugging)
+        const htmlOrigin = await page.content();
+
         // Clean page DOM before extraction
         await page.evaluate(() => {
           // Remove script/style/noscript
@@ -250,7 +258,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         }
 
         const checksum = computeChecksum(html);
-        await saveScrapedPage(hotelUuid, pageUrl, html, checksum);
+        await saveScrapedPage(hotelUuid, pageUrl, html, htmlOrigin, checksum);
         visited.add(pageUrl);
         if (nonScrapedPageMap.has(pageUrl)) {
           nonScrapedPageMap.delete(pageUrl);
