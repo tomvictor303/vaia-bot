@@ -296,3 +296,5 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
   };
 }
 
+
+

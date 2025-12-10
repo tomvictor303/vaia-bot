@@ -58,3 +58,5 @@ export async function refineScrapedData(hotelUuid, hotelName = '') {
   console.log(`🏁 Refinement complete. Updated ${updated}/${pages.length} pages.`);
 }
 
+
+
