@@ -2,8 +2,8 @@ import 'dotenv/config';
 import { testConnection, closePool } from './config/database.js';
 import { HotelService } from './services/hotelService.js';
 import { MarketDataService } from './services/marketDataService.js';
-import { AIService } from './services/aiService.js';
-import { scrapeHotel } from './services/scrapeService.js';
+import { AIService } from './controllers/aiController.js';
+import { scrapeHotel } from './controllers/scrapeController.js';
 import { MD_ALL_FIELDS } from './middleware/constants.js';
 
 /**
