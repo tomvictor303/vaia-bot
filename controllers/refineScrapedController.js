@@ -21,7 +21,7 @@ async function getActivePages(hotelUuid) {
 async function saveMarkdown(id, markdown) {
   const query = `
     UPDATE ${HOTEL_PAGE_DATA_TABLE}
-    SET lll_output = ?, updated_at = CURRENT_TIMESTAMP
+    SET llm_output = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `;
   try {
