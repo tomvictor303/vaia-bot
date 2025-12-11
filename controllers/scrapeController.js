@@ -245,8 +245,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
             if (!el.textContent.trim()) el.remove();
           });
 
-          // Clean up whitespace globally
-          document.body.innerHTML = document.body.innerHTML.replace(/\s+/g, ' ').trim();
+          // (Intentionally keep original whitespace; no global whitespace collapsing)
         });
         // END CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
 
