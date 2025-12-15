@@ -1,9 +1,11 @@
 import { PlaywrightCrawler } from 'crawlee';
 import crypto from 'crypto';
+import TurndownService from 'turndown';
 import { executeQuery } from '../config/database.js';
 
 // Get table name from environment variable, default to 'hotel_page_data'
 const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
+const turndown = new TurndownService({ headingStyle: 'atx' });
 
 /**
  * Save scraped page to database
@@ -11,11 +13,12 @@ const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_d
  * @param {string} url - Page URL
  * @param {string} html - Cleaned HTML content
  * @param {string|null} htmlOrigin - Original raw HTML content (before cleaning)
+ * @param {string} markdown - Markdown converted from cleaned HTML
  * @param {string} checksum - SHA256 checksum of the HTML
  * @param {number|null} pageId - Existing page id (if known)
  * @returns {Promise<number>} Insert ID or affected rows
  */
-async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, checksum, pageId = null) {
+async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, markdown, checksum, pageId = null) {
   // Validate inputs
   if (!hotelUuid || typeof hotelUuid !== 'string') {
     throw new Error(`Invalid hotelUuid: ${typeof hotelUuid}`);
@@ -31,6 +34,9 @@ async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, checksum, pageI
   }
   if (!checksum || typeof checksum !== 'string') {
     throw new Error(`Invalid checksum: ${typeof checksum}`);
+  }
+  if (!markdown || typeof markdown !== 'string') {
+    throw new Error(`Invalid markdown: ${typeof markdown}`);
   }
 
   // Resolve target id if not provided
@@ -54,20 +60,21 @@ async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, checksum, pageI
         UPDATE ${HOTEL_PAGE_DATA_TABLE}
         SET html = ?,
             html_origin = ?,
+            markdown = ?,
             checksum = ?,
             updated_at = CURRENT_TIMESTAMP,
             active = 1
         WHERE id = ?
       `;
-      const result = await executeQuery(updateQuery, [html, htmlOrigin, checksum, targetId]);
+      const result = await executeQuery(updateQuery, [html, htmlOrigin, markdown, checksum, targetId]);
       return result.affectedRows;
     } else {
       // Insert new record
       const insertQuery = `
-        INSERT INTO ${HOTEL_PAGE_DATA_TABLE} (hotel_uuid, page_url, checksum, html, html_origin, active)
-        VALUES (?, ?, ?, ?, ?, 1)
+        INSERT INTO ${HOTEL_PAGE_DATA_TABLE} (hotel_uuid, page_url, checksum, html, html_origin, markdown, active)
+        VALUES (?, ?, ?, ?, ?, ?, 1)
       `;
-      const result = await executeQuery(insertQuery, [hotelUuid, url, checksum, html, htmlOrigin]);
+      const result = await executeQuery(insertQuery, [hotelUuid, url, checksum, html, htmlOrigin, markdown]);
       return result.insertId || result.affectedRows;
     }
   } catch (error) {
@@ -257,7 +264,8 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         }
 
         const checksum = computeChecksum(html);
-        await saveScrapedPage(hotelUuid, pageUrl, html, htmlOrigin, checksum);
+        const markdown = turndown.turndown(html);
+        await saveScrapedPage(hotelUuid, pageUrl, html, htmlOrigin, markdown, checksum);
         visited.add(pageUrl);
         if (nonScrapedPageMap.has(pageUrl)) {
           nonScrapedPageMap.delete(pageUrl);

@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { testConnection, closePool } from './config/database.js';
 import { HotelService } from './services/hotelService.js';
 import { scrapeHotel } from './controllers/scrapeController.js';
-import { refineScrapedData } from './controllers/refineScrapedController.js';
 import { aggregateScrapedData } from './controllers/aggregateScrapedController.js';
 
 async function main() {
@@ -47,10 +46,9 @@ async function main() {
 
         if (scrapedOk) {
           try {
-            await refineScrapedData(hotel.hotel_uuid, hotel.name);
             await aggregateScrapedData(hotel.hotel_uuid, hotel.name);
           } catch (error) {
-            console.error(`❌ Error refining ${hotel.name}:`, error.message);
+            console.error(`❌ Error aggregating ${hotel.name}:`, error.message);
             console.log("⏭️  Continuing with next hotel...");
           }
         }
