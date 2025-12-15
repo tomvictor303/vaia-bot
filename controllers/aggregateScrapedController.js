@@ -119,6 +119,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName = '') {
   const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f, []]));
 
   // Per-page extraction (Count(pages) LLM calls)
+  console.log(`🔍 Extracting fields' data from pages...`);
   for (const page of pages) {
     try {
       const extracted = await extractFieldsFromPage(page.markdown, page.page_url);
@@ -128,20 +129,23 @@ export async function aggregateScrapedData(hotelUuid, hotelName = '') {
           fieldBuckets[field].push(val.trim());
         }
       });
+      console.log(`✅ Extraction: processed page ${page.id} (${page.page_url})`);
     } catch (error) {
-      console.error(`❌ Extract failed for page ${page.id}:`, error.message);
+      console.log(`❌ Extraction: failed page ${page.id} (${page.page_url}) -> ${error.message}`);
     }
   }
 
   // Per-field refinement (Count(schema fields) LLM calls)
+  console.log(`🔍 Refining extracted fields' data...`);
   const merged = {};
   for (const field of CATEGORY_FIELDS) {
     merged[field] = await refineField(field, fieldBuckets[field]);
+    console.log(`✅ Refining done: ${field}`);
   }
 
   // Persist to market_data via upsert
   const result = await MarketDataService.upsertMarketData(merged, hotelUuid);
-  console.log(`✅ Aggregated data upserted for hotel ${hotelName || hotelUuid}`, result);
+  console.log(`✅ Finished aggregating data for hotel ${hotelName || hotelUuid}`, result);
 
   return merged;
 }
