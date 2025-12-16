@@ -111,6 +111,7 @@ async function extractPrimaryFields(basicInfoText, hotelNameLabel) {
     return `- "${f.name}" : ${desc}`;
   }).join('\n');
 
+  // First pass: extract basic information from the provided text
   const prompt = `Extract basic hotel information for ${hotelNameLabel}.
 Return a JSON object with EXACTLY these keys (all string values; use "" if not found):
 ${describedFields}
