@@ -41,10 +41,17 @@ async function markLLMInput(pageId, checksum) {
   }
 }
 
-async function extractFieldsFromPage(markdown, pageUrl) {
-  const prompt = `You are extracting structured hotel information from Markdown content.
+async function extractFieldsFromPage(markdown, pageUrl, hotelNameLabel) {
+  hotelNameLabel = hotelNameLabel || 'the hotel';
+
+  const describedFields = CATEGORY_FIELDS.map((f) => {
+    const desc = (f.description || '').replace(/\[hotelName\]/g, hotelNameLabel);
+    return `- "${f.name}" : ${desc}`;
+  }).join('\n');
+
+  const prompt = `You are extracting structured hotel information from Markdown content for ${hotelNameLabel}.
 Return a JSON object with EXACTLY these keys (all string values; use "" if not found):
-${CATEGORY_FIELDS.map((f) => `- "${f.name}" : ${f.description}`).join('\n')}
+${describedFields}
 
 Rules:
 - Base your answers ONLY on the provided Markdown.
@@ -104,7 +111,7 @@ Return ONLY the merged text.`;
   return completion.choices[0]?.message?.content?.trim() || '';
 }
 
-export async function aggregateScrapedData(hotelUuid, hotelName = '') {
+export async function aggregateScrapedData(hotelUuid, hotelName) {
   if (!hotelUuid) throw new Error('hotelUuid is required');
 
   const pages = await getActiveMarkdownPages(hotelUuid);
@@ -119,7 +126,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName = '') {
   console.log(`🔍 Extracting fields' data from pages...`);
   for (const page of pages) {
     try {
-      const extracted = await extractFieldsFromPage(page.markdown, page.page_url);
+      const extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
       CATEGORY_FIELDS.forEach((field) => {
         const val = extracted[field.name];
         if (typeof val === 'string' && val.trim()) {
