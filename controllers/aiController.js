@@ -1,6 +1,6 @@
 import OpenAI from "openai";
-import extractJson from 'extract-json-from-string';
 import { MD_ALL_FIELDS } from '../middleware/constants.js';
+import { llmOutputToJson } from '../utils/custom.js';
 
 const openai = new OpenAI({
   apiKey: process.env["PERPLEXITY_API_KEY"],
@@ -66,15 +66,10 @@ Please do **deep** live web search to get current information. Do not make up an
       console.log("EXTRACTING JSON...");
       console.log("=".repeat(50));
 
-      // Extract JSON using extract-json-from-string
-      const extractedJsonObjects = extractJson(fullResponse);
-      
-      if (extractedJsonObjects.length === 0) {
+      const parsedJson = llmOutputToJson(fullResponse);
+      if (!parsedJson || typeof parsedJson !== 'object' || Object.keys(parsedJson).length === 0) {
         throw new Error("No JSON found in response");
       }
-      
-      // Use the first (and usually only) JSON object found
-      const parsedJson = extractedJsonObjects[0];
 
       // Validate requested fields
       const requestedFields = fields.map(f => f.name);
@@ -134,13 +129,7 @@ Rules:
         fullResponse += content;
       }
 
-      const extractedJsonObjects = extractJson(fullResponse);
-      if (extractedJsonObjects.length === 0) {
-        console.log("⚠️  No FAQ JSON found in response");
-        return [];
-      }
-
-      const faqs = extractedJsonObjects[0];
+      const faqs = llmOutputToJson(fullResponse);
       if (!Array.isArray(faqs)) {
         console.log("⚠️  FAQ response was not an array");
         return [];

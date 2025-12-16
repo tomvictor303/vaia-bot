@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
 import { MD_CAT_FIELDS } from '../middleware/constants.js';
+import { llmOutputToJson } from '../utils/custom.js';
 
 const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
 
@@ -71,22 +72,13 @@ ${markdown}
     max_tokens: 1500,
   });
 
-  // best-effort JSON parse
-  const content = completion.choices[0]?.message?.content || '{}';
-  try {
-    return JSON.parse(content);
-  } catch {
-    try {
-      const wrapped = content
-        .replace(/```json/gi, '')
-        .replace(/```/g, '')
-        .trim();
-      return JSON.parse(wrapped);
-    } catch {
-      console.error('⚠️  Could not parse extraction response; returning empty object');
-      return {};
-    }
+  const content = completion.choices?.[0]?.message?.content || '';
+  const parsed = llmOutputToJson(content);
+  if (!parsed || typeof parsed !== 'object') {
+    console.error('⚠️  Could not parse extraction response; returning empty object');
+    return {};
   }
+  return parsed;
 }
 
 async function refineField(fieldName, snippets) {
