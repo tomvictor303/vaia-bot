@@ -17,7 +17,7 @@ async function getActiveMarkdownPages(hotelUuid) {
   const query = `
     SELECT id, page_url, markdown, checksum
     FROM ${HOTEL_PAGE_DATA_TABLE}
-    WHERE active = 1 AND hotel_uuid = ? AND markdown IS NOT NULL AND markdown != ''
+    WHERE active = 1 AND hotel_uuid = ? AND markdown IS NOT NULL AND markdown != '' AND checksum != llm_input_checksum
   `;
   try {
     return await executeQuery(query, [hotelUuid]);
