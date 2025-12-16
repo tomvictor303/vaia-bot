@@ -14,7 +14,7 @@ const openai = new OpenAI({
 
 async function getActiveMarkdownPages(hotelUuid) {
   const query = `
-    SELECT id, page_url, markdown
+    SELECT id, page_url, markdown, checksum
     FROM ${HOTEL_PAGE_DATA_TABLE}
     WHERE active = 1 AND hotel_uuid = ? AND markdown IS NOT NULL AND markdown != ''
   `;
@@ -23,6 +23,21 @@ async function getActiveMarkdownPages(hotelUuid) {
   } catch (error) {
     console.error('❌ Error fetching markdown pages:', error.message);
     return [];
+  }
+}
+
+async function markLLMInput(pageId, checksum) {
+  const query = `
+    UPDATE ${HOTEL_PAGE_DATA_TABLE}
+    SET llm_input_checksum = ?, llm_updated = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `;
+  try {
+    const result = await executeQuery(query, [checksum, pageId]);
+    return result.affectedRows || 0;
+  } catch (error) {
+    console.error(`❌ Error updating LLM input metadata for page ${pageId}:`, error.message);
+    return 0;
   }
 }
 
@@ -111,6 +126,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName = '') {
           fieldBuckets[field.name].push(val.trim());
         }
       });
+      await markLLMInput(page.id, page.checksum);
       console.log(`✅ Extraction: processed page ${page.id} (${page.page_url})`);
     } catch (error) {
       console.log(`❌ Extraction: failed page ${page.id} (${page.page_url}) -> ${error.message}`);
