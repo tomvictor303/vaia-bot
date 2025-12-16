@@ -263,8 +263,8 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           return;
         }
 
-        const checksum = computeChecksum(html);
         const markdown = turndown.turndown(html);
+        const checksum = computeChecksum(markdown);
         await saveScrapedPage(hotelUuid, pageUrl, html, htmlOrigin, markdown, checksum);
         visited.add(pageUrl);
         if (nonScrapedPageMap.has(pageUrl)) {
