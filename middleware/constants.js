@@ -13,9 +13,9 @@ export const MD_PR_FIELDS = [
 	{ name: 'other_phones', capture_description: 'All phone numbers with descriptions. e.g: "Front Desk: (123) 456-7890"' },
 ];
 
-// Category text fields (16 categories)
+// Category text fields (16 categories plus "other")
 export const MD_CAT_FIELDS = [
-	{ name: 'hotel_information', capture_description: 'Hotel Information - List high level information about the property' },
+	{ name: 'general_information', capture_description: 'General Information - only high level information about the property: name, location, phone numbers, email, description, history, website.' },
 	{ name: 'accessibility', capture_description: 'Accessibility - ADA-compliant rooms, Accessible entrances, restrooms, and elevators, Assistive devices or services' },
 	{ name: 'amenities', capture_description: 'Amenities - Feature, facility, or service offered to enhance the guest experience' },
 	{ name: 'cleanliness_enhancements', capture_description: 'Cleanliness enhancements - Specific improvements or additional measures to maintain a higher level of hygiene and sanitation' },
@@ -31,6 +31,8 @@ export const MD_CAT_FIELDS = [
 	{ name: 'recreation_fitness', capture_description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity' },
 	{ name: 'safety_security', capture_description: 'Safety & Security - Emergency procedures (fire exits, severe weather protocols, Safe deposit boxes or in-room safes, Security staff or surveillance)' },
 	{ name: 'technology_business_services', capture_description: 'Technology / Business Services - Business center computers, printing, fax, and copying, Wi-Fi details, Public computer access' },
+	// Plus, "other" field
+	{ name: 'other', capture_description: 'Other - Any other information that is not covered by the other categories' },
 ];
 
 // All fields - merge of primary and category fields

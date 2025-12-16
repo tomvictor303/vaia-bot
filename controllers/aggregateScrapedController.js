@@ -1,29 +1,11 @@
 import OpenAI from 'openai';
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
+import { MD_CAT_FIELDS } from '../middleware/constants.js';
 
 const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
 
-// Category fields (16) plus "other"
-const CATEGORY_FIELDS = [
-  'hotel_information',
-  'accessibility',
-  'amenities',
-  'cleanliness_enhancements',
-  'food_beverage',
-  'guest_rooms',
-  'guest_services_front_desk',
-  'housekeeping_laundry',
-  'local_area_information',
-  'meeting_events',
-  'on_property_convenience',
-  'parking_transportation',
-  'policies',
-  'recreation_fitness',
-  'safety_security',
-  'technology_business_services',
-  'other',
-];
+const CATEGORY_FIELDS = MD_CAT_FIELDS.map(f => ({ name: f.name, description: f.capture_description }));
 
 const openai = new OpenAI({
   apiKey: process.env['PERPLEXITY_API_KEY'],
@@ -47,7 +29,7 @@ async function getActiveMarkdownPages(hotelUuid) {
 async function extractFieldsFromPage(markdown, pageUrl) {
   const prompt = `You are extracting structured hotel information from Markdown content.
 Return a JSON object with EXACTLY these keys (all string values; use "" if not found):
-${CATEGORY_FIELDS.map((f) => `- "${f}"`).join('\n')}
+${CATEGORY_FIELDS.map((f) => `- "${f.name}" : ${f.description}`).join('\n')}
 
 Rules:
 - Base your answers ONLY on the provided Markdown.
@@ -116,7 +98,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName = '') {
     return null;
   }
 
-  const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f, []]));
+  const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f.name, []]));
 
   // Per-page extraction (Count(pages) LLM calls)
   console.log(`🔍 Extracting fields' data from pages...`);
@@ -124,9 +106,9 @@ export async function aggregateScrapedData(hotelUuid, hotelName = '') {
     try {
       const extracted = await extractFieldsFromPage(page.markdown, page.page_url);
       CATEGORY_FIELDS.forEach((field) => {
-        const val = extracted[field];
+        const val = extracted[field.name];
         if (typeof val === 'string' && val.trim()) {
-          fieldBuckets[field].push(val.trim());
+          fieldBuckets[field.name].push(val.trim());
         }
       });
       console.log(`✅ Extraction: processed page ${page.id} (${page.page_url})`);
@@ -139,8 +121,8 @@ export async function aggregateScrapedData(hotelUuid, hotelName = '') {
   console.log(`🔍 Refining extracted fields' data...`);
   const merged = {};
   for (const field of CATEGORY_FIELDS) {
-    merged[field] = await refineField(field, fieldBuckets[field]);
-    console.log(`✅ Refining done: ${field}`);
+    merged[field.name] = await refineField(field.name, fieldBuckets[field.name]);
+    console.log(`✅ Refining done: ${field.name}`);
   }
 
   // Persist to market_data via upsert
