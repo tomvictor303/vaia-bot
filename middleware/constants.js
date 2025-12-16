@@ -15,7 +15,7 @@ export const MD_PR_FIELDS = [
 
 // Category text fields (16 categories plus "other")
 export const MD_CAT_FIELDS = [
-	{ name: 'general_information', capture_description: 'General Information - only high level information about the property: name, location, phone numbers, email, description, history, website.' },
+	{ name: 'basic_information', capture_description: 'Basic Information - name, location, phone numbers, email, description, history, website.' },
 	{ name: 'accessibility', capture_description: 'Accessibility - ADA-compliant rooms, Accessible entrances, restrooms, and elevators, Assistive devices or services' },
 	{ name: 'amenities', capture_description: 'Amenities - Feature, facility, or service offered to enhance the guest experience' },
 	{ name: 'cleanliness_enhancements', capture_description: 'Cleanliness enhancements - Specific improvements or additional measures to maintain a higher level of hygiene and sanitation' },
