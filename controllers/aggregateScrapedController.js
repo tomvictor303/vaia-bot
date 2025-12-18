@@ -14,6 +14,12 @@ const openai = new OpenAI({
   baseURL: 'https://api.perplexity.ai',
 });
 
+// BEGIN getActiveMarkdownPages
+/**
+ * Fetch active markdown pages that have not been processed by the LLM (checksum diff).
+ * @param {string} hotelUuid - Hotel UUID.
+ * @returns {Promise<Array<{id: number, page_url: string, markdown: string, checksum: string, depth: number}>>}
+ */
 async function getActiveMarkdownPages(hotelUuid) {
   const query = `
     SELECT id, page_url, markdown, checksum, depth
@@ -27,7 +33,15 @@ async function getActiveMarkdownPages(hotelUuid) {
     return [];
   }
 }
+// END getActiveMarkdownPages
 
+// BEGIN markLLMInput
+/**
+ * Update LLM input metadata for a page after successful extraction.
+ * @param {number} pageId - Page ID.
+ * @param {string} checksum - Checksum used for the LLM input.
+ * @returns {Promise<number>} Number of affected rows.
+ */
 async function markLLMInput(pageId, checksum) {
   const query = `
     UPDATE ${HOTEL_PAGE_DATA_TABLE}
@@ -42,7 +56,16 @@ async function markLLMInput(pageId, checksum) {
     return 0;
   }
 }
+// END markLLMInput
 
+// BEGIN extractFieldsFromPage
+/**
+ * Extract category fields from a single markdown page via LLM.
+ * @param {string} markdown - Markdown content of the page.
+ * @param {string} pageUrl - Source page URL (for context).
+ * @param {string} hotelNameLabel - Human-friendly hotel name for prompts.
+ * @returns {Promise<Object<string, string>>} Key/value pairs for category fields.
+ */
 async function extractFieldsFromPage(markdown, pageUrl, hotelNameLabel) {
   hotelNameLabel = hotelNameLabel || 'the hotel';
 
@@ -81,7 +104,15 @@ ${markdown}
   }
   return parsed;
 }
+// END extractFieldsFromPage
 
+// BEGIN refineField
+/**
+ * Refine and merge snippets for a given field using LLM to remove duplicates and clean formatting.
+ * @param {string} fieldName - Field name being refined.
+ * @param {string[]} snippets - Snippets collected from pages.
+ * @returns {Promise<string>} Refined field value.
+ */
 async function refineField(fieldName, snippets) {
   const joined = snippets.filter(Boolean).join('\n- ');
   if (!joined) return '';
@@ -103,7 +134,15 @@ Return ONLY the merged text.`;
 
   return completion.choices[0]?.message?.content?.trim() || '';
 }
+// END refineField
 
+// BEGIN extractPrimaryFields
+/**
+ * Derive primary fields from basic_information and optionally fetch missing via online search.
+ * @param {string} basicInfoText - Aggregated basic information text.
+ * @param {string} hotelNameLabel - Human-friendly hotel name for prompts.
+ * @returns {Promise<Object<string, string>>} Primary field key/value pairs.
+ */
 async function extractPrimaryFields(basicInfoText, hotelNameLabel) {
   hotelNameLabel = hotelNameLabel || 'the hotel';
   const describedFields = MD_PR_FIELDS.map((f) => {
@@ -161,7 +200,17 @@ ${basicInfoText || ''}
 
   return parsed;
 }
+// END extractPrimaryFields
 
+// BEGIN aggregateScrapedData
+/**
+ * **Entry point** of this controller.
+ * 
+ * Aggregates scraped markdown pages into structured market data via LLM extraction and refinement.
+ * @param {string} hotelUuid - Hotel UUID to process.
+ * @param {string} hotelName - Hotel name for prompt context and logging.
+ * @returns {Promise<Object>} Aggregated market data payload.
+ */
 export async function aggregateScrapedData(hotelUuid, hotelName) {
   if (!hotelUuid) throw new Error('hotelUuid is required');
 
@@ -211,4 +260,5 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
 
   return merged;
 }
+// END aggregateScrapedData
 
