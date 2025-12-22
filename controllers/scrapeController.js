@@ -5,7 +5,17 @@ import { executeQuery } from '../config/database.js';
 
 // Get table name from environment variable, default to 'hotel_page_data'
 const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
-const turndown = new TurndownService({ headingStyle: 'atx' });
+/* ⭐ Fully pinned Turndown configuration (NO defaults) */
+const turndown = new TurndownService({
+  headingStyle: 'atx',
+  hr: '---',
+  bulletListMarker: '-',
+  codeBlockStyle: 'fenced',
+  emDelimiter: '*',
+  strongDelimiter: '**',
+  linkStyle: 'inlined',
+  linkReferenceStyle: 'full',
+});
 
 /**
  * Save scraped page to database
@@ -156,6 +166,17 @@ function computeChecksum(content) {
 }
 
 /**
+ * Normalize markdown to a deterministic form for hashing/storage.
+ * @param {string} markdown
+ * @returns {string}
+ */
+function normalizeMarkdown(markdown) {
+  return (markdown || '')
+    .replace(/\r\n/g, '\n')
+    .trim();
+}
+
+/**
  * Scrape a hotel website using PlaywrightCrawler
  * Crawls all pages from the hotel's main URL (crawl all mode)
  * 
@@ -228,14 +249,14 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         // Capture original HTML before cleaning (for debugging)
         const htmlOrigin = await page.content();
 
-        // Clean page DOM before extraction
+        /* ⭐ Deterministic DOM cleanup */
         await page.evaluate(() => {
-          // Remove script/style/noscript
+          // Remove unstable elements
           document.querySelectorAll('script, style, noscript').forEach(e => e.remove());
-          // Remove common ad/advertisement elements
           document.querySelectorAll("[id*='ad'], .ad, .ads, .advertisement").forEach(e => e.remove());
+          document.querySelectorAll('svg, figure').forEach(e => e.remove());
 
-          // Resolve relative URLs
+          // Resolve relative URLs deterministically
           const toAbsolute = (url) => {
             try {
               return new URL(url, location.href).href;
@@ -243,21 +264,54 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
               return url;
             }
           };
+
           document.querySelectorAll('a[href]').forEach(a => {
             const href = a.getAttribute('href');
-            if (href) a.href = toAbsolute(href);
+            if (href) a.setAttribute('href', toAbsolute(href));
           });
+
           document.querySelectorAll('img[src]').forEach(img => {
             const src = img.getAttribute('src');
-            if (src) img.src = toAbsolute(src);
+            if (src) img.setAttribute('src', toAbsolute(src));
           });
 
-          // Remove empty text containers
+          // Remove only structurally empty containers
           document.querySelectorAll('p, div, span').forEach(el => {
-            if (!el.textContent.trim()) el.remove();
+            if (
+              el.children.length === 0 &&
+              el.textContent.replace(/\s+/g, '').length === 0
+            ) {
+              el.remove();
+            }
           });
 
-          // (Intentionally keep original whitespace; no global whitespace collapsing)
+          // Normalize adjacent text nodes for deterministic Turndown output
+          (function normalizeTextNodes(node) {
+            // Safety guards
+            if (!node || node.nodeType !== Node.ELEMENT_NODE) return;
+          
+            // Do not normalize inside code blocks (preserve formatting)
+            const tag = node.tagName && node.tagName.toLowerCase();
+            if (tag === 'pre' || tag === 'code') return;
+          
+            let prevTextNode = null;
+          
+            node.childNodes.forEach(child => {
+              if (child.nodeType === Node.TEXT_NODE) {
+                if (prevTextNode) {
+                  // Merge adjacent text nodes
+                  prevTextNode.textContent += child.textContent;
+                  child.remove();
+                } else {
+                  prevTextNode = child;
+                }
+              } else {
+                // Reset when encountering a non-text node
+                prevTextNode = null;
+                normalizeTextNodes(child);
+              }
+            });
+          })(document.body);          
         });
         // END CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
 
@@ -268,7 +322,9 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           return;
         }
 
-        const markdown = turndown.turndown(html);
+        // ⭐ Deterministic Markdown + checksum
+        const markdownRaw = turndown.turndown(html);
+        const markdown = normalizeMarkdown(markdownRaw);
         const checksum = computeChecksum(markdown);
         await saveScrapedPage(hotelUuid, pageUrl, html, htmlOrigin, markdown, checksum, currentDepth);
         visited.add(pageUrl);
