@@ -16,6 +16,19 @@ const turndown = new TurndownService({
   linkStyle: 'inlined',
   linkReferenceStyle: 'full',
 });
+// Strip links (keep text, drop URLs)
+// URLs might confuse checksum calculation - different checksums for the same content
+turndown.addRule('stripLinks', {
+  filter: 'a',
+  replacement: (content) => content,
+});
+
+// Drop images entirely
+// Image source URLs might confuse checksum calculation - different checksums for the same content
+turndown.addRule('dropImages', {
+  filter: 'img',
+  replacement: () => '',
+});
 
 /**
  * Save scraped page to database
@@ -169,7 +182,7 @@ async function deactivatePagesByIds(pageIds = []) {
 function computeChecksum(content) {
   return crypto
     .createHash('sha256')
-    .update(content)
+    .update(content.normalize('NFC'), 'utf8')
     .digest('hex');
 }
 
@@ -260,9 +273,12 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         /* ⭐ Deterministic DOM cleanup */
         await page.evaluate(() => {
           // Remove unstable elements
-          document.querySelectorAll('script, style, noscript').forEach(e => e.remove());
+          document.querySelectorAll('script, style, noscript, iframe, frame').forEach(e => e.remove());
           document.querySelectorAll("[id*='ad'], .ad, .ads, .advertisement").forEach(e => e.remove());
           document.querySelectorAll('svg, figure').forEach(e => e.remove());
+
+          // Strip all inline styles for consistency
+          document.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
 
           // Resolve relative URLs deterministically
           const toAbsolute = (url) => {
@@ -323,12 +339,14 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         });
         // END CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
 
-        const html = await page.content();
+        let html = await page.content();
         if (!html || html.trim().length === 0) {
           log.warning(`⚠️  Empty HTML: ${pageUrl}`);
           stats.errors += 1;
           return;
         }
+        // Compact HTML inline: remove whitespace between tags (no extra variable)
+        html = html.replace(/>\s+</g, '><').trim();
 
         // ⭐ Deterministic Markdown + checksum
         const markdownRaw = turndown.turndown(html);
