@@ -1,9 +1,8 @@
 import OpenAI from 'openai';
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
-import { MD_CAT_FIELDS, MD_PR_FIELDS } from '../middleware/constants.js';
+import { MD_CAT_FIELDS } from '../middleware/constants.js';
 import { llmOutputToJson } from '../utils/custom.js';
-import { AIService } from '../services/aiService.js';
 
 const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
 
@@ -136,72 +135,6 @@ Return ONLY the merged text.`;
 }
 // END refineField
 
-// BEGIN extractPrimaryFields
-/**
- * Derive primary fields from basic_information and optionally fetch missing via online search.
- * @param {string} basicInfoText - Aggregated basic information text.
- * @param {string} hotelNameLabel - Human-friendly hotel name for prompts.
- * @returns {Promise<Object<string, string>>} Primary field key/value pairs.
- */
-async function extractPrimaryFields(basicInfoText, hotelNameLabel) {
-  hotelNameLabel = hotelNameLabel || 'the hotel';
-  const describedFields = MD_PR_FIELDS.map((f) => {
-    const desc = (f.capture_description || '').replace(/\[hotelName\]/g, hotelNameLabel);
-    return `- "${f.name}" : ${desc}`;
-  }).join('\n');
-
-  // First pass: extract basic information from the provided text
-  const prompt = `Extract basic hotel information for ${hotelNameLabel}.
-Return a JSON object with EXACTLY these keys (all string values; use "" if not found):
-${describedFields}
-
-Rules:
-- Base your answers ONLY on the provided text.
-- Keep text concise; do not invent data.
-- If nothing relevant for a key, use "".
-- Keep URLs if present.
-
-Source text:
----
-${basicInfoText || ''}
----`;
-
-  const completion = await openai.chat.completions.create({
-    model: 'sonar-pro',
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 800,
-  });
-
-  const content = completion.choices?.[0]?.message?.content || '';
-  let parsed = llmOutputToJson(content);
-  if (!parsed || typeof parsed !== 'object') {
-    console.error('⚠️  Could not parse primary fields; returning empty object');
-    parsed = {};
-  }
-
-  // Second pass: if still missing, attempt online fetch for those primary fields
-  const missing = MD_PR_FIELDS.filter((f) => {
-    const val = parsed[f.name];
-    return typeof val !== 'string' || val.trim() === '';
-  }).map(f => f.name);
-
-  if (missing.length > 0) {
-    try {
-      const online = await AIService.fetchHotelData(hotelNameLabel, missing);
-      missing.forEach((key) => {
-        if (typeof online?.[key] === 'string' && online[key].trim()) {
-          parsed[key] = online[key];
-        }
-      });
-    } catch (error) {
-      console.log(`⚠️ Online fetch for primary fields failed: ${error.message}`);
-    }
-  }
-
-  return parsed;
-}
-// END extractPrimaryFields
-
 // BEGIN aggregateScrapedData
 /**
  * **Entry point** of this controller.
@@ -247,12 +180,6 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     merged[field.name] = await refineField(field.name, fieldBuckets[field.name]);
     console.log(`✅ Refining done: ${field.name}`);
   }
-
-  // Derive primary fields from basic_information
-  const primary = await extractPrimaryFields(merged['basic_information'], hotelName);
-  MD_PR_FIELDS.forEach((f) => {
-    merged[f.name] = typeof primary[f.name] === 'string' ? primary[f.name] : '';
-  });
 
   // Persist to market_data via upsert
   const result = await MarketDataService.upsertMarketData(merged, hotelUuid);
