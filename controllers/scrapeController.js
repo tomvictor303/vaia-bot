@@ -57,13 +57,21 @@ async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, markdown, check
   let targetId = pageId;
   if (!targetId) {
     const checkQuery = `
-      SELECT id FROM ${HOTEL_PAGE_DATA_TABLE}
+      SELECT id, checksum FROM ${HOTEL_PAGE_DATA_TABLE}
       WHERE hotel_uuid = ? AND page_url = ?
       LIMIT 1
     `;
     const found = await executeQuery(checkQuery, [hotelUuid, url]);
     if (found && found.length > 0) {
       targetId = found[0].id;
+    }
+    if (
+      process.env.NODE_ENV === 'development' &&
+      found &&
+      found.length > 0 &&
+      found[0].checksum !== checksum
+    ) {
+      console.log(`⚠️  checksum chaged for ${url}: ${found[0].checksum} !== ${checksum}`);
     }
   }
 
