@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
+import { AIService } from '../services/aiService.js';
 import { MD_CAT_FIELDS } from '../middleware/constants.js';
 import { llmOutputToJson } from '../utils/custom.js';
 
@@ -199,8 +200,11 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
       if (existingData[fieldName] === newData[fieldName]) {
         continue;
       }
-      // if the values are different, set the new data
-      mergedData[fieldName] = newData[fieldName];
+      // Use LLM merge to determine if update is meaningful
+      const { isUpdate, mergedText } = await AIService.mergeTextByLLM(existingData[fieldName], newData[fieldName]);
+      if (isUpdate && mergedText) {
+        mergedData[fieldName] = mergedText;
+      }
     }
     // END MERGE_NEW_DATA_WITH_EXISTING_DATA
   } else {
