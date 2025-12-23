@@ -9,10 +9,16 @@ const openai = new OpenAI({
 
 export class AIService {
   
-  // Fetch hotel data using AI
-  // @param {string} hotelName - Name of the hotel to fetch data for
-  // @param {Array<string>} fieldsToFetch - Optional: specific fields to fetch (if empty, fetches all)
-  static async fetchHotelData(hotelName, fieldsToFetch = null) {
+  /** 
+   * [Deprecated]
+   * Fetch hotel data using the LLM.
+   * IMPORTANT: LLM does **scraping or web search** to get the data.
+   *  
+   * @param {string} hotelName - Name of the hotel to fetch data for
+   * @param {Array<string>} fieldsToFetch - Optional: specific fields to fetch (if empty, fetches all)
+   * 
+   * */ 
+  static async fetchHotelDataFromLLM(hotelName, fieldsToFetch = null) {
     console.log(`🔍 Fetching data for: ${hotelName}`);
     
     // Filter fields if specific fields requested
@@ -90,11 +96,14 @@ Please do **deep** live web search to get current information. Do not make up an
   }
 
   /**
-   * Fetch hotel FAQs (question/answer pairs) using AI
-   * @param {string} hotelName - Name of the hotel to fetch FAQs for
-   * @returns {Promise<Array<{question: string, answer: string}>>}
+   * [Deprecated]
+   * Fetch hotel FAQs (question/answer pairs) using the LLM.
+   * IMPORTANT: LLM does **scraping or web search** to get the data.
+   * 
+   * @param {string} hotelName - Human-friendly hotel name used in the prompt.
+   * @returns {Promise<Array<{question: string, answer: string}>>} Array of FAQ objects, or [] if unavailable.
    */
-  static async fetchHotelFAQ(hotelName) {
+  static async fetchHotelFAQFromLLM(hotelName) {
     console.log(`\n📚 Fetching FAQs for: ${hotelName}`);
 
     const prompt = `Parse FAQ content from this hotel's official FAQ page:
