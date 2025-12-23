@@ -264,7 +264,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
             let lastHeight = document.body.scrollHeight;
             for (let i = 0; i < 10; i++) {
               window.scrollTo(0, document.body.scrollHeight);
-              await delay(1000);
+              await delay(1500);
               const newHeight = document.body.scrollHeight;
               if (newHeight === lastHeight) break;
               lastHeight = newHeight;
