@@ -6,6 +6,18 @@ import { aggregateScrapedData } from './controllers/aggregateScrapedController.j
 
 async function main() {
   console.log("🚀 Starting Hotel Data Fetcher...");
+
+  const isUnitTest = String(process.env.UNIT_TEST || '').toLowerCase() === 'true';
+  const unitTestModule = String(process.env.UNIT_TEST_MODULE || '').toLowerCase();
+  const shouldRunScrape = !isUnitTest || unitTestModule === 'scrape';
+  const shouldRunAggregate = !isUnitTest || unitTestModule === 'aggregate';
+
+  if (isUnitTest) {
+    if (!unitTestModule) {
+      throw new Error('UNIT_TEST mode requires UNIT_TEST_MODULE to be set (scrape|aggregate)');
+    }
+    console.log(`🧪 UNIT_TEST mode enabled (module: ${unitTestModule})`);
+  }
   
   // Test database connection
   const isConnected = await testConnection();
@@ -35,23 +47,31 @@ async function main() {
 
       if (hotel.hotel_url) {
         // BEGIN PROCESS_SINGLE_HOTEL
-        let scrapedOk = false;
-        try {
-          await scrapeHotel(hotel.hotel_url, hotel.hotel_uuid, hotel.name);
-          scrapedOk = true;
-        } catch (error) {
-          console.error(`❌ Error scraping ${hotel.name}:`, error.message);
-          console.log("⏭️  Continuing with next hotel...");
-        }
-
-        if (scrapedOk) {
+        // BEGIN SCRAPE_HOTEL
+        let scrapedSuccess = false;
+        if (shouldRunScrape) {
+          // BEGIN SCRAPE_HOTEL_BODY
           try {
-            await aggregateScrapedData(hotel.hotel_uuid, hotel.name);
+            await scrapeHotel(hotel.hotel_url, hotel.hotel_uuid, hotel.name);
+            scrapedSuccess = true;
           } catch (error) {
-            console.error(`❌ Error aggregating ${hotel.name}:`, error.message);
+            console.error(`❌ Error scraping ${hotel.name}:`, error.message);
             console.log("⏭️  Continuing with next hotel...");
           }
+          // END SCRAPE_HOTEL_BODY
+        } else {
+          scrapedSuccess = true; // Set true for next modules for unit test
+          console.log('ℹ️  UNIT_TEST: skipping scrape step');
         }
+        // END SCRAPE_HOTEL
+
+        // BEGIN AGGREGATE_SCRAPED_HOTEL_DATA
+        if (shouldRunAggregate && scrapedSuccess) {
+          // BEGIN AGGREGATE_SCRAPED_HOTEL_DATA_BODY
+          await aggregateScrapedData(hotel.hotel_uuid, hotel.name);
+          // END AGGREGATE_SCRAPED_HOTEL_DATA_BODY
+        }
+        // END AGGREGATE_SCRAPED_HOTEL_DATA 
         // END PROCESS_SINGLE_HOTEL
       } else {
         console.log(`⚠️  No hotel_url found for ${hotel.name}, skipping scraping`);
