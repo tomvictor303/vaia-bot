@@ -84,7 +84,7 @@ async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, markdown, check
       found.length > 0 &&
       found[0].checksum !== checksum
     ) {
-      console.log(`⚠️  checksum chaged for ${url}: ${found[0].checksum} !== ${checksum}`);
+      console.log(`⚠️  checksum changed for ${url}: ${found[0].checksum} !== ${checksum}`);
     }
   }
 

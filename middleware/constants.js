@@ -1,8 +1,8 @@
 // Centralized field definitions for market_data
 // Only stable identifiers are id and hotel_uuid; others are defined here
 
-// Primary/Principal fields (basic fields)
-export const MD_PR_FIELDS = [
+// Deprecated: Primary/Principal fields (basic fields)
+const MD_PR_FIELDS = [
 	{ name: 'name', capture_description: 'hotel name' },
 	{ name: 'city_state_country', capture_description: 'city, state, country' },
 	{ name: 'address', capture_description: 'street address' },
@@ -36,7 +36,7 @@ export const MD_CAT_FIELDS = [
 ];
 
 // All fields - merge of primary and category fields
-export const MD_ALL_FIELDS = [...MD_PR_FIELDS, ...MD_CAT_FIELDS];
+export const MD_ALL_FIELDS = [...MD_CAT_FIELDS];
 
 // Boolean fields - none in simplified structure
 export const BOOLEAN_FIELDS = [];
