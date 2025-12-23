@@ -175,17 +175,37 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
 
   // Per-field refinement (Count(schema fields) LLM calls)
   console.log(`🔍 Refining extracted fields' data...`);
-  const merged = {};
+  const newData = {};
   for (const field of CATEGORY_FIELDS) {
-    merged[field.name] = await refineField(field.name, fieldBuckets[field.name]);
+    newData[field.name] = await refineField(field.name, fieldBuckets[field.name]);
     console.log(`✅ Refining done: ${field.name}`);
   }
 
+  // Merge the new data with the existing data
+  let mergedData = {};
+  const existingData = await MarketDataService.getMarketDataByUuid(hotelUuid);
+  if (existingData) {
+    // BEGIN MERGE_NEW_DATA_WITH_EXISTING_DATA
+    for (const fieldName of Object.keys(newData)) {
+      if (!newData[fieldName] || newData[fieldName] === 'N/A') {
+        continue;
+      }
+    }
+    // END MERGE_NEW_DATA_WITH_EXISTING_DATA
+  } else {
+    mergedData = newData;
+  }
+
+  // Guardrail: no meaningful updates
+  if (Object.keys(mergedData).length === 0) {
+    console.log(`⚠️  ${hotelName || hotelUuid} There is no significant new info to update.`);
+  }
+
   // Persist to market_data via upsert
-  const result = await MarketDataService.upsertMarketData(merged, hotelUuid);
+  const result = await MarketDataService.upsertMarketData(mergedData, hotelUuid);
   console.log(`✅ Finished aggregating data for hotel ${hotelName || hotelUuid}`, result);
 
-  return merged;
+  return newData;
 }
 // END aggregateScrapedData
 
