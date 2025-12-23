@@ -190,6 +190,17 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
       if (!newData[fieldName] || newData[fieldName] === 'N/A') {
         continue;
       }
+      // If the existing data is empty for **current field**, set the new data
+      if (!existingData[fieldName] || existingData[fieldName] === 'N/A') {
+        mergedData[fieldName] = newData[fieldName];
+        continue;
+      }
+      // if the values are the same, skip
+      if (existingData[fieldName] === newData[fieldName]) {
+        continue;
+      }
+      // if the values are different, set the new data
+      mergedData[fieldName] = newData[fieldName];
     }
     // END MERGE_NEW_DATA_WITH_EXISTING_DATA
   } else {

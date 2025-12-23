@@ -150,6 +150,64 @@ Rules:
       throw error;
     }
   }
+
+  /**
+   * Merge existing and new text via LLM only when there is a notable change.
+   * If texts are effectively the same (trim/identity), returns the existing text without an update.
+   * @param {string} existingText - Current stored text.
+   * @param {string} newText - Newly scraped/extracted text to evaluate.
+   * @returns {Promise<{isUpdate: boolean, mergedText: string}>} Whether to update and the merged text.
+   */
+  static async mergeTextByLLM(existingText, newText) {
+    const existing = (existingText || '').trim();
+    const incoming = (newText || '').trim();
+
+    // Guardrails: nothing new or identical content
+    if (!incoming) {
+      return { isUpdate: false, mergedText: existing };
+    }
+    if (existing === incoming) {
+      return { isUpdate: false, mergedText: existing };
+    }
+
+    const prompt = `You will merge two pieces of text about a hotel field.
+Only update if the NEW text adds notable information beyond the EXISTING text.
+
+**Return strict JSON: { "isUpdate": boolean, "mergedText": string }**
+Rules:
+- If new text is redundant or adds nothing meaningful, set isUpdate=false and mergedText=EXISTING.
+- If new text adds or improves information, set isUpdate=true and mergedText to a concise, merged version.
+- Preserve important details; keep it readable and concise.
+
+EXISTING:
+${existing || '(empty)'}
+
+NEW:
+${incoming}`;
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "sonar-pro",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 600,
+      });
+
+      const content = completion.choices?.[0]?.message?.content || '';
+      const parsed = llmOutputToJson(content);
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        typeof parsed.isUpdate === 'boolean' &&
+        typeof parsed.mergedText === 'string'
+      ) {
+        return parsed;
+      }
+      return { isUpdate: false, mergedText: existing };
+    } catch (error) {
+      console.error(`❌ Error merging text via LLM:`, error.message);
+      return { isUpdate: false, mergedText: existing };
+    }
+  }
 }
 
 
