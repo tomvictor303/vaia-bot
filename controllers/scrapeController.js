@@ -253,6 +253,30 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
         await page.waitForSelector('body', { timeout: 5000 }).catch(() => {});
 
+        // Bridge page console logs to Node for debug visibility
+        page.on('console', (msg) => log.info(`[page:${msg.type()}] ${msg.text()}`));
+
+        // BEGIN LAZY_SCROLL_CONTENT_LOADING
+        // Attempt to load lazy/scroll-triggered content
+        try {
+          await page.evaluate(async () => {
+            const delay = (ms) => new Promise(res => setTimeout(res, ms));
+            let lastHeight = document.body.scrollHeight;
+            for (let i = 0; i < 10; i++) {
+              window.scrollTo(0, document.body.scrollHeight);
+              await delay(1000);
+              const newHeight = document.body.scrollHeight;
+              if (newHeight === lastHeight) break;
+              lastHeight = newHeight;
+              // console.log(`Scrolled to ${newHeight} at ${i+1} of 5`);
+            }
+            window.scrollTo(0, 0);
+          });
+        } catch (error) {
+          // Ignore scroll failures; continue scraping
+        }
+        // END LAZY_SCROLL_CONTENT_LOADING
+
         const status = response?.status();
         const title = (await page.title().catch(() => '') || '').toLowerCase();
         if (status && status >= 400) {
