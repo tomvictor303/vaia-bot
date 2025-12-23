@@ -212,13 +212,15 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
   }
 
   // Guardrail: no meaningful updates
-  if (Object.keys(mergedData).length === 0) {
-    console.log(`⚠️  ${hotelName || hotelUuid} There is no significant new info to update.`);
+  const updatedFieldsCount = Object.keys(mergedData).length;
+  if (updatedFieldsCount === 0) {
+    console.log(`⚠️ [${hotelName || hotelUuid}]: There is no significant new info to update.`);
+  } else {
+    // If there are significant new info, update the market_data
+    console.log(`🔄 [${hotelName || hotelUuid}]: Update market_data via upsert... (fields updated: ${updatedFieldsCount})`);
+    await MarketDataService.upsertMarketData(mergedData, hotelUuid);
   }
-
-  // Persist to market_data via upsert
-  const result = await MarketDataService.upsertMarketData(mergedData, hotelUuid);
-  console.log(`✅ Finished aggregating data for hotel ${hotelName || hotelUuid}`, result);
+  console.log(`✅ Finished aggregating data for hotel ${hotelName || hotelUuid} (fields updated: ${updatedFieldsCount})`);
 
   return newData;
 }
