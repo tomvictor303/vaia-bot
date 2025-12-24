@@ -323,6 +323,9 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
 
         /* ⭐ Deterministic DOM cleanup */
         const bodyHtml = await page.evaluate(() => {
+          const root = document.body || document.documentElement;
+          if (!root) return '';
+
           // Remove unstable elements
           document.querySelectorAll('script, style, noscript, iframe, frame').forEach(e => e.remove());
           document.querySelectorAll("[id*='ad'], .ad, .ads, .advertisement").forEach(e => e.remove());
@@ -389,9 +392,9 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
                 normalizeTextNodes(child);
               }
             });
-          })(document.body);
+          })(root);
 
-          return document.body.innerHTML || '';
+          return root.innerHTML || '';
         });
         // END CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
 
