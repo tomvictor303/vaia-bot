@@ -158,7 +158,7 @@ Rules:
    * @param {string} newText - Newly scraped/extracted text to evaluate.
    * @returns {Promise<{isUpdate: boolean, mergedText: string}>} Whether to update and the merged text.
    */
-  static async mergeTextByLLM(existingText, newText) {
+  static async mergeTextsByLLM(existingText, newText) {
     const existing = (existingText || '').trim();
     const incoming = (newText || '').trim();
 

@@ -201,7 +201,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
         continue;
       }
       // Use LLM merge to determine if update is meaningful
-      const { isUpdate, mergedText } = await AIService.mergeTextByLLM(existingData[fieldName], newData[fieldName]);
+      const { isUpdate, mergedText } = await AIService.mergeTextsByLLM(existingData[fieldName], newData[fieldName]);
       if (isUpdate && mergedText) {
         mergedData[fieldName] = mergedText;
       }
