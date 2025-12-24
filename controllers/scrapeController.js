@@ -293,6 +293,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         // BEGIN CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
         // Capture original HTML before cleaning (for debugging)
         const htmlOrigin = await page.content();
+        
         // BEGIN GET_RAW_LINKS_IN_PAGE
         // Capture raw links before DOM mutations (for enqueue after save), skipping obvious ads
         const rawLinks = await page.evaluate(() => {
