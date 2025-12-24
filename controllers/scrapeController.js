@@ -372,9 +372,10 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         });
         // END CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
 
+        // remove whitespace between tags
         let html = bodyHtml ? bodyHtml.replace(/>\s+</g, '><').trim() : '';
         
-        if (!html || html?.trim()?.length === 0) {
+        if (!html || html.length === 0 || html.trim().length === 0) {
           log.warning(`⚠️  Empty HTML: ${pageUrl}`);
           stats.errors += 1;
           return;
