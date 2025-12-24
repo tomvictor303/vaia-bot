@@ -31,8 +31,6 @@ export const MD_CAT_FIELDS = [
 	{ name: 'recreation_fitness', capture_description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity' },
 	{ name: 'safety_security', capture_description: 'Safety & Security - Emergency procedures (fire exits, severe weather protocols, Safe deposit boxes or in-room safes, Security staff or surveillance)' },
 	{ name: 'technology_business_services', capture_description: 'Technology / Business Services - Business center computers, printing, fax, and copying, Wi-Fi details, Public computer access' },
-	// Plus, "faq" field
-	{ name: 'faq', capture_description: 'FAQ - Frequently Asked Questions & Answers about [hotelName]' },
 	// Plus, "other" field
 	{ name: 'other', capture_description: 'Other - Any other information that is not covered by the other categories' },
 ];
