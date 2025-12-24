@@ -170,7 +170,7 @@ Rules:
       return { isUpdate: false, mergedText: existing };
     }
 
-    const prompt = `You will merge two pieces of text about a hotel field.
+    const prompt = `You will merge two pieces of markdown text about a hotel field.
 Only update if the NEW text adds notable information beyond the EXISTING text.
 
 **Return strict JSON: { "isUpdate": boolean, "mergedText": string }**
@@ -179,11 +179,15 @@ Rules:
 - If new text adds or improves information, set isUpdate=true and mergedText to a concise, merged version.
 - Preserve important details; keep it readable and concise.
 
-EXISTING:
+EXISTING (markdown):
+<<<
 ${existing || '(empty)'}
+>>>
 
-NEW:
-${incoming}`;
+NEW (markdown):
+<<<
+${incoming}
+>>>`;
 
     try {
       const completion = await openai.chat.completions.create({
