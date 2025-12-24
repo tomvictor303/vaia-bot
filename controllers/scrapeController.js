@@ -322,7 +322,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         // END GET_RAW_LINKS_IN_PAGE
 
         /* ⭐ Deterministic DOM cleanup */
-        const bodyHtml = await page.evaluate(() => {
+        const bodyHtml = await page.evaluate((currentDepth) => {
           const root = document.body || document.documentElement;
           if (!root) return '';
 
@@ -334,8 +334,12 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           // Strip all inline styles for consistency
           document.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
 
-          // Remove navigational chrome for markdown friendliness
-          document.querySelectorAll('nav, header, footer').forEach(el => el.remove());
+          // Remove navigational chrome for markdown friendliness (skip on depth 0)
+          if (currentDepth > 0) {
+            document.querySelectorAll(
+              'nav, header, footer, #header, #footer, #nav, .header, .footer'
+            ).forEach(el => el.remove());
+          }
 
           // Resolve relative URLs deterministically
           const toAbsolute = (url) => {
@@ -395,7 +399,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           })(root);
 
           return root.innerHTML || '';
-        });
+        }, currentDepth); // Pass currentDepth to the evaluate function
         // END CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
 
         // remove whitespace between tags
