@@ -293,9 +293,13 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         // BEGIN CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
         // Capture original HTML before cleaning (for debugging)
         const htmlOrigin = await page.content();
+        // Capture raw links before DOM mutations (for enqueue after save)
+        const rawLinks = await page.$$eval('a[href]', anchors =>
+          anchors.map(a => a.getAttribute('href') || '').filter(Boolean)
+        ).catch(() => []);
 
         /* ⭐ Deterministic DOM cleanup */
-        await page.evaluate(() => {
+        const bodyHtml = await page.evaluate(() => {
           // Remove unstable elements
           document.querySelectorAll('script, style, noscript, iframe, frame').forEach(e => e.remove());
           document.querySelectorAll("[id*='ad'], .ad, .ads, .advertisement").forEach(e => e.remove());
@@ -303,6 +307,9 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
 
           // Strip all inline styles for consistency
           document.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
+
+          // Remove navigational chrome for markdown friendliness
+          document.querySelectorAll('nav, header, footer').forEach(el => el.remove());
 
           // Resolve relative URLs deterministically
           const toAbsolute = (url) => {
@@ -359,18 +366,19 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
                 normalizeTextNodes(child);
               }
             });
-          })(document.body);          
+          })(document.body);
+
+          return document.body.innerHTML || '';
         });
         // END CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
 
-        let html = await page.content();
-        if (!html || html.trim().length === 0) {
+        let html = bodyHtml ? bodyHtml.replace(/>\s+</g, '><').trim() : '';
+        
+        if (!html || html?.trim()?.length === 0) {
           log.warning(`⚠️  Empty HTML: ${pageUrl}`);
           stats.errors += 1;
           return;
         }
-        // Compact HTML inline: remove whitespace between tags (no extra variable)
-        html = html.replace(/>\s+</g, '><').trim();
 
         // ⭐ Deterministic Markdown + checksum
         const markdownRaw = turndown.turndown(html);
@@ -383,10 +391,6 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         }
         stats.scraped += 1;
         log.info(`✅ Saved: ${pageUrl}`);
-
-        const rawLinks = await page.$$eval('a[href]', anchors =>
-          anchors.map(a => a.getAttribute('href') || '').filter(Boolean)
-        ).catch(() => []);
 
         const urlsToEnqueue = rawLinks
           .map((href) => {
