@@ -337,7 +337,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           // Remove navigational chrome for markdown friendliness (skip on depth 0)
           if (currentDepth > 0) {
             document.querySelectorAll(
-              'nav, header, footer, #header, #footer, #nav, .header, .footer'
+              'nav, header, footer, #header, #footer, #nav, .header, .footer, [role="header"], [role="footer"], .navbar, .navigation, .site-nav, .breadcrumb, #navbar, #navigation, #site-nav, #breadcrumb, [role="navigation"], [role="banner"]'
             ).forEach(el => el.remove());
           }
 
