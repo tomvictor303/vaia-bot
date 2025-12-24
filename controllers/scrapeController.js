@@ -293,10 +293,32 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         // BEGIN CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
         // Capture original HTML before cleaning (for debugging)
         const htmlOrigin = await page.content();
-        // Capture raw links before DOM mutations (for enqueue after save)
-        const rawLinks = await page.$$eval('a[href]', anchors =>
-          anchors.map(a => a.getAttribute('href') || '').filter(Boolean)
-        ).catch(() => []);
+        // BEGIN GET_RAW_LINKS_IN_PAGE
+        // Capture raw links before DOM mutations (for enqueue after save), skipping obvious ads
+        const rawLinks = await page.evaluate(() => {
+          const isAd = (el) => {
+            const id = (el.id || '').toLowerCase();
+            const cls = (el.className || '').toLowerCase();
+            if (id.includes('ad') || id.includes('ads') || id.includes('advertisement')) return true;
+            if (cls.includes(' ad') || cls.includes('ads') || cls.includes('advertisement')) return true;
+            if (el.closest("[id*='ad'], .ad, .ads, .advertisement")) return true;
+            return false;
+          };
+          const blockedHosts = ['google.com', 'bing.com', 'yahoo.com'];
+          return Array.from(document.querySelectorAll('a[href]'))
+            .filter((a) => !isAd(a))
+            .map((a) => a.getAttribute('href') || '')
+            .filter(Boolean)
+            .filter((href) => {
+              try {
+                const url = new URL(href, location.href);
+                return !blockedHosts.some((host) => url.hostname.includes(host));
+              } catch {
+                return true;
+              }
+            });
+        }).catch(() => []);
+        // END GET_RAW_LINKS_IN_PAGE
 
         /* ⭐ Deterministic DOM cleanup */
         const bodyHtml = await page.evaluate(() => {
