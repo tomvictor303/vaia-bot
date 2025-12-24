@@ -106,14 +106,14 @@ ${markdown}
 }
 // END extractFieldsFromPage
 
-// BEGIN refineField
+// BEGIN mergeAndRefineSnippets
 /**
- * Refine and merge snippets for a given field using LLM to remove duplicates and clean formatting.
+ * Merge and refine snippets for a given field using LLM to remove duplicates and clean formatting.
  * @param {string} fieldName - Field name being refined.
  * @param {string[]} snippets - Snippets collected from pages.
  * @returns {Promise<string>} Refined field value.
  */
-async function refineField(fieldName, snippets) {
+async function mergeAndRefineSnippets(fieldName, snippets) {
   const joined = snippets.filter(Boolean).join('\n- ');
   if (!joined) return '';
 
@@ -134,7 +134,7 @@ Return ONLY the merged text.`;
 
   return completion.choices[0]?.message?.content?.trim() || '';
 }
-// END refineField
+// END mergeAndRefineSnippets
 
 // BEGIN aggregateScrapedData
 /**
@@ -178,7 +178,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
   console.log(`🔍 Refining extracted fields' data...`);
   const newData = {};
   for (const field of CATEGORY_FIELDS) {
-    newData[field.name] = await refineField(field.name, fieldBuckets[field.name]);
+    newData[field.name] = await mergeAndRefineSnippets(field.name, fieldBuckets[field.name]);
     console.log(`✅ Refining done: ${field.name}`);
   }
 
