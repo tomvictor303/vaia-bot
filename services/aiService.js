@@ -213,6 +213,47 @@ ${incoming}
       return { isUpdate: false, mergedText: existing };
     }
   }
+
+  /**
+   * Convert free-form text into a structured JSON object via LLM.
+   * @param {string} rawText - Unstructured text describing a hotel (or resort agency).
+   * @returns {Promise<object>} Parsed JSON object (empty object on failure).
+   */
+  static async textToJsonByLLM(rawText) {
+    const text = (rawText || '').trim();
+    if (!text) return {};
+
+    const prompt = `You are extracting structured information about a hotel (or resort agency) from free text.
+
+Return **ONLY ONE JSON object**. No markdown, no explanations.
+
+Source text:
+<<<
+${text}
+>>>
+
+Rules:
+- Create clear, meaningful field names (snake_case only).
+- Include all discernible info; do not invent data.
+- Preserve emails, phones, URLs as-is.
+- If some details cannot be cleanly classified, place them in "other" (string or array). Use "other" only as a last resort.
+- Output must be valid JSON object (not an array).`;
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "sonar-pro",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 800,
+      });
+
+      const content = completion.choices?.[0]?.message?.content || '';
+      const parsed = llmOutputToJson(content);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch (error) {
+      console.error(`❌ Error converting text to JSON via LLM:`, error.message);
+      return {};
+    }
+  }
 }
 
 
