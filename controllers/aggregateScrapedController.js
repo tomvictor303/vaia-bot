@@ -179,20 +179,13 @@ function toOtherStructuredJson(raw) {
 
 // BEGIN isFieldUpdated
 /**
- * Check if a field was updated by comparing merged value with existing.
+ * Check if a field is present in the merged payload (indicates an update).
  * @param {string} fieldName - Field to check.
  * @param {Object} mergedData - Merged payload (only includes changed fields).
- * @param {Object|null} existingData - Existing payload or null.
- * @returns {boolean} True if the field exists in mergedData and differs from existing.
+ * @returns {boolean} True if the field exists in mergedData.
  */
-function isFieldUpdated(fieldName, mergedData, existingData) {
-  console.log('fieldName', fieldName);
-  console.log('mergedData', mergedData);
-  console.log('existingData', existingData);
-  if (!Object.prototype.hasOwnProperty.call(mergedData, fieldName)) return false;
-  console.log('mergedData[fieldName]', mergedData[fieldName]);
-  console.log('existingData[fieldName]', existingData ? existingData[fieldName] : undefined);
-  return mergedData[fieldName] !== (existingData ? existingData[fieldName] : undefined);
+function isFieldUpdated(fieldName, mergedData) {
+  return Object.prototype.hasOwnProperty.call(mergedData, fieldName);
 }
 // END isFieldUpdated
 
@@ -272,7 +265,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
   }
 
   // Track "other" changes in a single check
-  const otherUpdated = isFieldUpdated('other', mergedData, existingData);
+  const otherUpdated = isFieldUpdated('other', mergedData);
   console.log('otherUpdated', otherUpdated);
 
   // If "other" changed, store structured JSON representation
