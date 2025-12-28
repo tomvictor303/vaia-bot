@@ -136,6 +136,61 @@ Return ONLY the merged text.`;
 }
 // END mergeAndRefineSnippets
 
+// BEGIN toOtherStructuredJson
+/**
+ * Convert free-form "other" text into a simple JSON string for storage.
+ * - Keeps existing JSON if already valid.
+ * - Otherwise splits lines, extracts key:value pairs, or stores raw notes.
+ * @param {string} raw - Raw "other" content.
+ * @returns {string} JSON string ('' if nothing to store).
+ */
+function toOtherStructuredJson(raw) {
+  if (!raw) return '';
+
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) || (parsed && typeof parsed === 'object')) {
+        return JSON.stringify(parsed);
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  const lines = String(raw)
+    .split(/\r?\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^[\-\*\u2022]\s*/, '').trim())
+    .filter(Boolean);
+
+  const entries = lines.map((line) => {
+    const kv = line.match(/^([^:]+):\s*(.+)$/);
+    if (kv) {
+      return { name: kv[1].trim(), value: kv[2].trim() };
+    }
+    return { value: line };
+  });
+
+  return entries.length ? JSON.stringify(entries) : '';
+}
+// END toOtherStructuredJson
+
+// BEGIN isFieldUpdated
+/**
+ * Check if a field was updated by comparing merged value with existing.
+ * @param {string} fieldName - Field to check.
+ * @param {Object} mergedData - Merged payload (only includes changed fields).
+ * @param {Object|null} existingData - Existing payload or null.
+ * @returns {boolean} True if the field exists in mergedData and differs from existing.
+ */
+function isFieldUpdated(fieldName, mergedData, existingData) {
+  if (!Object.prototype.hasOwnProperty.call(mergedData, fieldName)) return false;
+  return mergedData[fieldName] !== (existingData ? existingData[fieldName] : undefined);
+}
+// END isFieldUpdated
+
 // BEGIN aggregateScrapedData
 /**
  * **Entry point** of this controller.
@@ -209,6 +264,15 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     // END MERGE_NEW_DATA_WITH_EXISTING_DATA
   } else {
     mergedData = newData;
+  }
+
+  // Track "other" changes in a single check
+  const otherUpdated = isFieldUpdated('other', mergedData, existingData);
+
+  // If "other" changed, store structured JSON representation
+  if (otherUpdated) {
+    const sourceOther = mergedData.other || existingData?.other || '';
+    mergedData.other_structured = toOtherStructuredJson(sourceOther);
   }
 
   // Guardrail: no meaningful updates
