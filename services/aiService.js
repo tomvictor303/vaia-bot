@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { MD_ALL_FIELDS } from '../middleware/constants.js';
+import { MD_DATA_FIELDS } from '../middleware/constants.js';
 import { llmOutputToJson } from '../utils/custom.js';
 
 const openai = new OpenAI({
@@ -23,8 +23,8 @@ export class AIService {
     
     // Filter fields if specific fields requested
     const fields = fieldsToFetch 
-      ? MD_ALL_FIELDS.filter(f => fieldsToFetch.includes(f.name))
-      : MD_ALL_FIELDS;
+      ? MD_DATA_FIELDS.filter(f => fieldsToFetch.includes(f.name))
+      : MD_DATA_FIELDS;
     
     if (fields.length === 0) {
       throw new Error("No fields to fetch");

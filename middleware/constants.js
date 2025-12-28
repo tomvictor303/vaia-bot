@@ -36,8 +36,17 @@ export const MD_CAT_FIELDS = [
 	{ name: 'other', capture_description: 'Other - Any other information that is not covered by the other categories' },
 ];
 
-// All fields - merge of primary and category fields
-export const MD_ALL_FIELDS = [...MD_CAT_FIELDS];
+// All fields with meaningful data - originally merge of primary and category fields but now just category fields
+export const MD_DATA_FIELDS = [...MD_CAT_FIELDS];
 
-// Boolean fields - none in simplified structure
+// Extra fields for data manipulation - not meaningful data fields. Supportive or metadata fields.
+// In most cases, these fields are not needed to be fetched from the LLM.
+// They are calculated from the meaningful data fields. i.e. other_structured is calculated from the other field.
+// Or automatically generated.
+export const MD_EXTRA_FIELDS = ['other_structured'];
+
+// All fields - merge of meaningful data fields and extra fields
+export const MD_ALL_FIELDS = [...MD_DATA_FIELDS, ...MD_EXTRA_FIELDS];
+
+// (Deprecated) Boolean fields - array of field names that are boolean values. 
 export const BOOLEAN_FIELDS = [];
