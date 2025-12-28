@@ -186,7 +186,12 @@ function toOtherStructuredJson(raw) {
  * @returns {boolean} True if the field exists in mergedData and differs from existing.
  */
 function isFieldUpdated(fieldName, mergedData, existingData) {
+  console.log('fieldName', fieldName);
+  console.log('mergedData', mergedData);
+  console.log('existingData', existingData);
   if (!Object.prototype.hasOwnProperty.call(mergedData, fieldName)) return false;
+  console.log('mergedData[fieldName]', mergedData[fieldName]);
+  console.log('existingData[fieldName]', existingData ? existingData[fieldName] : undefined);
   return mergedData[fieldName] !== (existingData ? existingData[fieldName] : undefined);
 }
 // END isFieldUpdated
@@ -268,6 +273,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
 
   // Track "other" changes in a single check
   const otherUpdated = isFieldUpdated('other', mergedData, existingData);
+  console.log('otherUpdated', otherUpdated);
 
   // If "other" changed, store structured JSON representation
   if (otherUpdated) {
