@@ -43,7 +43,9 @@ export const MD_DATA_FIELDS = [...MD_CAT_FIELDS];
 // In most cases, these fields are not needed to be fetched from the LLM.
 // They are calculated from the meaningful data fields. i.e. other_structured is calculated from the other field.
 // Or automatically generated.
-export const MD_EXTRA_FIELDS = ['other_structured'];
+export const MD_EXTRA_FIELDS = [
+	{ name: 'other_structured', capture_description: 'Other - Any other information that is not covered by the other categories' },
+];
 
 // All fields - merge of meaningful data fields and extra fields
 export const MD_ALL_FIELDS = [...MD_DATA_FIELDS, ...MD_EXTRA_FIELDS];
