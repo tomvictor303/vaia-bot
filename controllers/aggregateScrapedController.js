@@ -93,7 +93,7 @@ ${markdown}
   const completion = await openai.chat.completions.create({
     model: 'sonar-pro',
     messages: [{ role: 'user', content: prompt }],
-    max_tokens: 1024 * 4,
+    max_tokens: 1024 * 6,
   });
 
   const content = completion.choices?.[0]?.message?.content || '';
