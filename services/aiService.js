@@ -194,7 +194,7 @@ ${incoming}
       const completion = await openai.chat.completions.create({
         model: "sonar-pro",
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 600,
+        max_tokens: 1024 * 10 * 4,
       });
 
       const content = completion.choices?.[0]?.message?.content || '';
@@ -243,7 +243,7 @@ Rules:
       const completion = await openai.chat.completions.create({
         model: "sonar-pro",
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 800,
+        max_tokens: 1024 * 10 * 4,
       });
 
       const content = completion.choices?.[0]?.message?.content || '';
