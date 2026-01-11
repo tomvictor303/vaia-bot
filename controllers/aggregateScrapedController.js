@@ -93,7 +93,7 @@ ${markdown}
   const completion = await openai.chat.completions.create({
     model: 'sonar-pro',
     messages: [{ role: 'user', content: prompt }],
-    max_tokens: 1500,
+    max_tokens: 1024 * 4,
   });
 
   const content = completion.choices?.[0]?.message?.content || '';
@@ -129,7 +129,7 @@ Return ONLY the merged text.`;
   const completion = await openai.chat.completions.create({
     model: 'sonar-pro',
     messages: [{ role: 'user', content: prompt }],
-    max_tokens: 800,
+    max_tokens: 1024 * 10,
   });
 
   return completion.choices[0]?.message?.content?.trim() || '';
@@ -271,7 +271,8 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
   // If "other" changed, store structured JSON representation
   if (otherUpdated) {
     const sourceOther = mergedData.other || existingData?.other || '';
-    mergedData.other_structured = toOtherStructuredJson(sourceOther);
+    let other_json = await AIService.textToJsonByLLM(sourceOther);
+    mergedData.other_structured = JSON.stringify(other_json);
   }
 
   // Guardrail: no meaningful updates
