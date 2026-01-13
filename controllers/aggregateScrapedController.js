@@ -7,7 +7,7 @@ import { llmOutputToJson } from '../utils/custom.js';
 
 const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
 
-const CATEGORY_FIELDS = MD_CAT_FIELDS.map(f => ({ name: f.name, description: f.capture_description }));
+const CATEGORY_FIELDS = MD_CAT_FIELDS.map(f => ({ name: f.name, description: f.description }));
 
 const openai = new OpenAI({
   apiKey: process.env['PERPLEXITY_API_KEY'],

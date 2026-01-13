@@ -31,7 +31,7 @@ export class AIService {
     }
     
     const fieldsDoc = fields
-      .map(f => `  "${f.name}": "${f.capture_description}"`)
+      .map(f => `  "${f.name}": "${f.description}"`)
       .join(',\n');
 
     const fieldsNote = fieldsToFetch 
