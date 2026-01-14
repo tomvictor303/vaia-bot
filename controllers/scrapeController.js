@@ -5,6 +5,7 @@ import { executeQuery } from '../config/database.js';
 
 // Get table name from environment variable, default to 'hotel_page_data'
 const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
+
 /* ⭐ Fully pinned Turndown configuration (NO defaults) */
 const turndown = new TurndownService({
   headingStyle: 'atx',
@@ -17,10 +18,16 @@ const turndown = new TurndownService({
   linkReferenceStyle: 'full',
 });
 // Strip links (keep text, drop URLs)
-// URLs might confuse checksum calculation - different checksums for the same content
+// Keep link/button intent without including URLs (avoid checksum noise)
 turndown.addRule('stripLinks', {
   filter: 'a',
-  replacement: (content) => content,
+  replacement: (content, node) => {
+    const cls = (node?.className || '').toLowerCase();
+    const role = (node?.getAttribute ? node.getAttribute('role') : '')?.toLowerCase() || '';
+    const isButton = role === 'button' || cls.includes('button') || cls.includes('btn');
+    const tag = isButton ? 'button' : 'link';
+    return `${content} [${tag}]`;
+  },
 });
 
 // Drop images entirely
