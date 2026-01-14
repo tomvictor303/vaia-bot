@@ -36,7 +36,7 @@ export const MD_CAT_FIELDS = [
 	{
 		name: 'faq',
 		description: 'FAQ - Frequently Asked Questions',
-		extract_guide: 'Only capture explicit Q&A pairs from sections explicitly labeled as FAQ (Frequently Asked Questions); do not invent or generalize beyond what is written'
+		extract_guide: 'Only capture explicit Q&A pairs from sections explicitly labeled as FAQ (Frequently Asked Questions). Keep original question and answer as is'
 	},
 	// Plus, "other" field
 	{ name: 'other', description: 'Other - Any other information that is not covered by the other categories' },
