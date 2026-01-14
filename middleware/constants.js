@@ -32,6 +32,12 @@ export const MD_CAT_FIELDS = [
 	{ name: 'recreation_fitness', description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity' },
 	{ name: 'safety_security', description: 'Safety & Security - Emergency procedures (fire exits, severe weather protocols, Safe deposit boxes or in-room safes, Security staff or surveillance)' },
 	{ name: 'technology_business_services', description: 'Technology / Business Services - Business center computers, printing, fax, and copying, Wi-Fi details, Public computer access' },
+	// Plus, "faq" field
+	{
+		name: 'faq',
+		description: 'FAQ - Frequently Asked Questions',
+		extract_guide: 'Only capture explicit Q&A pairs from sections explicitly labeled as FAQ (Frequently Asked Questions); do not invent or generalize beyond what is written'
+	},
 	// Plus, "other" field
 	{ name: 'other', description: 'Other - Any other information that is not covered by the other categories' },
 ];
