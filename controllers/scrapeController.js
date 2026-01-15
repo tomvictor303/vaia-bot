@@ -22,6 +22,10 @@ const turndown = new TurndownService({
 turndown.addRule('stripLinks', {
   filter: 'a',
   replacement: (content, node) => {
+    const text = typeof content === 'string' ? content : '';
+    if (!text.trim()) {
+      return '';
+    }
     const cls = (node?.className || '').toLowerCase();
     const role = (node?.getAttribute ? node.getAttribute('role') : '')?.toLowerCase() || '';
     const isButton = role === 'button' || cls.includes('button') || cls.includes('btn');
