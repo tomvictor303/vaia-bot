@@ -409,6 +409,43 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
             });
           })(root);
 
+          // Insert missing spaces between inline siblings where text would be fused (e.g., </span>NextText)
+          // for example: <span>Orlando, FL</span>Minutes from airport
+          (function insertMissingSpaces(node) {
+            if (!node || node.nodeType !== Node.ELEMENT_NODE) return;
+
+            const children = Array.from(node.childNodes);
+            const isAlphaNum = (ch) => !!ch && /[A-Za-z0-9]/.test(ch);
+
+            for (let i = 0; i < children.length - 1; i++) {
+              const current = children[i];
+              const next = children[i + 1];
+
+              const currentText = current?.textContent || '';
+              const nextText = next?.textContent || '';
+
+              const currentEndsWithSpace = /\s$/.test(currentText);
+              const nextStartsWithSpace = /^\s/.test(nextText);
+
+              if (!currentEndsWithSpace && !nextStartsWithSpace) {
+                const endChar = currentText.trimEnd().slice(-1);
+                const startChar = nextText.trimStart().charAt(0);
+                if (isAlphaNum(endChar) && isAlphaNum(startChar)) {
+                  node.insertBefore(document.createTextNode(' '), next);
+                }
+              }
+
+              if (current.nodeType === Node.ELEMENT_NODE) {
+                insertMissingSpaces(current);
+              }
+            }
+
+            const lastChild = children[children.length - 1];
+            if (lastChild && lastChild.nodeType === Node.ELEMENT_NODE) {
+              insertMissingSpaces(lastChild);
+            }
+          })(root);
+
           return root.innerHTML || '';
         }, currentDepth); // Pass currentDepth to the evaluate function
         // END CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
