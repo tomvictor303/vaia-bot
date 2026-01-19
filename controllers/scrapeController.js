@@ -291,7 +291,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         // BEGIN WAIT_FOR_ASYNC_CONTENT_TO_SETTLE
         // Allow hero/above-the-fold async content to settle on root page
         if (currentDepth === 0) {
-          await page.waitForTimeout(8500); // Home page might have more async content to settle
+          await page.waitForTimeout(5000); // Home page might have more async content to settle
         } else {
           await page.waitForTimeout(1500); // Other pages might have less async content to settle
         }
