@@ -351,6 +351,9 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           document.querySelectorAll("[id*='ad'], .ad, .ads, .advertisement").forEach(e => e.remove());
           document.querySelectorAll('svg, figure').forEach(e => e.remove());
 
+          // Remove Here Map tags (https://www.here.com/)
+          document.querySelectorAll('.H_imprint [class^="H_"], .H_ui [class^="H_"]').forEach(e => e.remove());
+
           // Strip all inline styles for consistency
           document.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
 
