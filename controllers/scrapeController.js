@@ -273,7 +273,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           await page.evaluate(async () => {
             const delay = (ms) => new Promise(res => setTimeout(res, ms));
             let lastHeight = document.body.scrollHeight;
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 25; i++) {
               window.scrollTo(0, document.body.scrollHeight);
               await delay(1500);
               const newHeight = document.body.scrollHeight;
