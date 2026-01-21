@@ -79,6 +79,7 @@ async function saveScrapedPage(hotelUuid, url, html, htmlRaw, markdown, checksum
 
   // Resolve target id if not provided
   let targetId = pageId;
+  let existingChecksum = null;
   let isChecksumUpdated = 0; // This is only for update (of page) use case. We **do not** treat checksum-updated in **new (insert) page** use case.
   if (!targetId) {
     const checkQuery = `
@@ -89,15 +90,14 @@ async function saveScrapedPage(hotelUuid, url, html, htmlRaw, markdown, checksum
     const found = await executeQuery(checkQuery, [hotelUuid, url]);
     if (found && found.length > 0) {
       targetId = found[0].id;
+      existingChecksum = found[0].checksum;
     }
-    if (
-      process.env.NODE_ENV === 'development' &&
-      found &&
-      found.length > 0 &&
-      found[0].checksum !== checksum
-    ) {
-      isChecksumUpdated = 1;
-      console.log(`⚠️  checksum changed for ${url}: ${found[0].checksum} !== ${checksum}`);
+  }
+
+  if (targetId && existingChecksum !== null && existingChecksum !== checksum) {
+    isChecksumUpdated = 1;
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`⚠️  checksum updated for ${url}: ${existingChecksum} !== ${checksum}`);
     }
   }
 
