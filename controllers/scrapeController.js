@@ -79,6 +79,7 @@ async function saveScrapedPage(hotelUuid, url, html, htmlRaw, markdown, checksum
 
   // Resolve target id if not provided
   let targetId = pageId;
+  let isChecksumUpdated = 0;
   if (!targetId) {
     const checkQuery = `
       SELECT id, checksum FROM ${HOTEL_PAGE_DATA_TABLE}
@@ -95,6 +96,7 @@ async function saveScrapedPage(hotelUuid, url, html, htmlRaw, markdown, checksum
       found.length > 0 &&
       found[0].checksum !== checksum
     ) {
+      isChecksumUpdated = 1;
       console.log(`⚠️  checksum changed for ${url}: ${found[0].checksum} !== ${checksum}`);
     }
   }
@@ -109,12 +111,13 @@ async function saveScrapedPage(hotelUuid, url, html, htmlRaw, markdown, checksum
             html_raw = ?,
             markdown = ?,
             checksum = ?,
+            is_checksum_updated = ?,
             depth = ?,
             updated_at = CURRENT_TIMESTAMP,
             active = 1
         WHERE id = ?
       `;
-      const result = await executeQuery(updateQuery, [html, htmlRaw, markdown, checksum, depth, targetId]);
+      const result = await executeQuery(updateQuery, [html, htmlRaw, markdown, checksum, isChecksumUpdated, depth, targetId]);
       return result.affectedRows;
     } else {
       // Insert new record
