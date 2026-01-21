@@ -79,7 +79,7 @@ async function saveScrapedPage(hotelUuid, url, html, htmlRaw, markdown, checksum
 
   // Resolve target id if not provided
   let targetId = pageId;
-  let isChecksumUpdated = 0;
+  let isChecksumUpdated = 0; // This is only for update (of page) use case. We **do not** treat checksum-updated in **new (insert) page** use case.
   if (!targetId) {
     const checkQuery = `
       SELECT id, checksum FROM ${HOTEL_PAGE_DATA_TABLE}
