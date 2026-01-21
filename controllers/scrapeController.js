@@ -104,7 +104,8 @@ async function saveScrapedPage(hotelUuid, url, html, htmlRaw, markdown, checksum
       // Update existing record
       const updateQuery = `
         UPDATE ${HOTEL_PAGE_DATA_TABLE}
-        SET html = ?,
+        SET html_prev = html,
+            html = ?,
             html_raw = ?,
             markdown = ?,
             checksum = ?,
