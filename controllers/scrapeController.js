@@ -105,7 +105,7 @@ async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, markdown, check
       const updateQuery = `
         UPDATE ${HOTEL_PAGE_DATA_TABLE}
         SET html = ?,
-            html_origin = ?,
+            html_raw = ?,
             markdown = ?,
             checksum = ?,
             depth = ?,
@@ -118,7 +118,7 @@ async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, markdown, check
     } else {
       // Insert new record
       const insertQuery = `
-        INSERT INTO ${HOTEL_PAGE_DATA_TABLE} (hotel_uuid, page_url, checksum, html, html_origin, markdown, depth, active)
+        INSERT INTO ${HOTEL_PAGE_DATA_TABLE} (hotel_uuid, page_url, checksum, html, html_raw, markdown, depth, active)
         VALUES (?, ?, ?, ?, ?, ?, ?, 1)
       `;
       const result = await executeQuery(insertQuery, [hotelUuid, url, checksum, html, htmlOrigin, markdown, depth]);
