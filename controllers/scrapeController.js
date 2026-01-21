@@ -46,14 +46,14 @@ turndown.addRule('dropImages', {
  * @param {string} hotelUuid - Hotel UUID
  * @param {string} url - Page URL
  * @param {string} html - Cleaned HTML content
- * @param {string|null} htmlOrigin - Original raw HTML content (before cleaning)
+ * @param {string|null} htmlRaw - raw HTML content (before cleaning)
  * @param {string} markdown - Markdown converted from cleaned HTML
  * @param {string} checksum - SHA256 checksum of the HTML
  * @param {number} depth - Crawl depth of the page
  * @param {number|null} pageId - Existing page id (if known)
  * @returns {Promise<number>} Insert ID or affected rows
  */
-async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, markdown, checksum, depth, pageId = null) {
+async function saveScrapedPage(hotelUuid, url, html, htmlRaw, markdown, checksum, depth, pageId = null) {
   // Validate inputs
   if (!hotelUuid || typeof hotelUuid !== 'string') {
     throw new Error(`Invalid hotelUuid: ${typeof hotelUuid}`);
@@ -64,8 +64,8 @@ async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, markdown, check
   if (!html || typeof html !== 'string') {
     throw new Error(`Invalid html: ${typeof html}`);
   }
-  if (htmlOrigin !== null && typeof htmlOrigin !== 'string') {
-    throw new Error(`Invalid htmlOrigin: ${typeof htmlOrigin}`);
+  if (htmlRaw !== null && typeof htmlRaw !== 'string') {
+    throw new Error(`Invalid htmlRaw: ${typeof htmlRaw}`);
   }
   if (!checksum || typeof checksum !== 'string') {
     throw new Error(`Invalid checksum: ${typeof checksum}`);
@@ -113,7 +113,7 @@ async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, markdown, check
             active = 1
         WHERE id = ?
       `;
-      const result = await executeQuery(updateQuery, [html, htmlOrigin, markdown, checksum, depth, targetId]);
+      const result = await executeQuery(updateQuery, [html, htmlRaw, markdown, checksum, depth, targetId]);
       return result.affectedRows;
     } else {
       // Insert new record
@@ -121,7 +121,7 @@ async function saveScrapedPage(hotelUuid, url, html, htmlOrigin, markdown, check
         INSERT INTO ${HOTEL_PAGE_DATA_TABLE} (hotel_uuid, page_url, checksum, html, html_raw, markdown, depth, active)
         VALUES (?, ?, ?, ?, ?, ?, ?, 1)
       `;
-      const result = await executeQuery(insertQuery, [hotelUuid, url, checksum, html, htmlOrigin, markdown, depth]);
+      const result = await executeQuery(insertQuery, [hotelUuid, url, checksum, html, htmlRaw, markdown, depth]);
       return result.insertId || result.affectedRows;
     }
   } catch (error) {
@@ -311,8 +311,8 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         }
 
         // BEGIN CLEAN_PAGE_DOM_FOR_MARKDWON_CONVERSION_FRIENDLY
-        // Capture original HTML before cleaning (for debugging)
-        const htmlOrigin = await page.content();
+        // Capture raw HTML before cleaning (for debugging)
+        const htmlRaw = await page.content();
         
         // BEGIN GET_RAW_LINKS_IN_PAGE
         // Capture raw links before DOM mutations (for enqueue after save), skipping obvious ads
@@ -438,7 +438,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         const markdownRaw = turndown.turndown(html);
         const markdown = normalizeMarkdown(markdownRaw);
         const checksum = computeChecksum(markdown);
-        await saveScrapedPage(hotelUuid, pageUrl, html, htmlOrigin, markdown, checksum, currentDepth);
+        await saveScrapedPage(hotelUuid, pageUrl, html, htmlRaw, markdown, checksum, currentDepth);
         visited.add(pageUrl);
         if (nonScrapedPageMap.has(pageUrl)) {
           nonScrapedPageMap.delete(pageUrl);
