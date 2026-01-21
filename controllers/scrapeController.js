@@ -41,6 +41,18 @@ turndown.addRule('dropImages', {
   replacement: () => '',
 });
 
+// Convert button tags to markdown format: content [button]
+turndown.addRule('stripButtons', {
+  filter: 'button',
+  replacement: (content) => {
+    const text = typeof content === 'string' ? content : '';
+    if (!text.trim()) {
+      return '';
+    }
+    return `${content} [button]`;
+  },
+});
+
 /**
  * Save scraped page to database
  * @param {string} hotelUuid - Hotel UUID
