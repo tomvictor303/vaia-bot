@@ -231,6 +231,8 @@ function normalizeMarkdown(markdown) {
  *
  * This is NOT a fixed sleep.
  * It continuously checks DOM convergence and exits early if stable.
+ * Uses a local checksum (djb2 over DOM snapshot) for stability only;
+ * does not use or affect computeChecksum.
  */
 async function waitForDomToSettle(page, {
   quietMs = 800,      // how long DOM must remain unchanged
@@ -242,25 +244,34 @@ async function waitForDomToSettle(page, {
       const root = document.body;
       if (!root) return false;
 
-      // Build a lightweight stability signature:
-      // - element count detects structural changes
-      // - text length + prefix detect meaningful content changes
+      // Own checksum for DOM stability only (not computeChecksum).
+      // djb2 over element count + normalized text; deterministic, fast, browser-only.
+      // Optimized: process every other character to save CPU.
+      function domStabilityHash(str) {
+        let h = 5381;
+        for (let i = 0; i < str.length; i += 2) {
+          h = ((h << 5) + h) + str.charCodeAt(i);
+        }
+        return h >>> 0;
+      }
+
       const text = (root.innerText || '').replace(/\s+/g, ' ').trim();
       const elCount = root.getElementsByTagName('*').length;
-      const signature = `${elCount}|${text.length}|${text.slice(0, 500)}`;
+      const input = elCount + '|' + text.length + '|' + text;
+      const checksum = '' + domStabilityHash(input);
 
       // Initialize on first run
       if (!window.__domStability) {
         window.__domStability = {
-          signature,
+          checksum,
           lastChange: now,
         };
         return false;
       }
 
       // Any change resets the quiet window
-      if (signature !== window.__domStability.signature) {
-        window.__domStability.signature = signature;
+      if (checksum !== window.__domStability.checksum) {
+        window.__domStability.checksum = checksum;
         window.__domStability.lastChange = now;
         return false;
       }
