@@ -245,7 +245,7 @@ async function waitForDomToSettle(page, {
       if (!root) return false;
 
       // Own checksum for DOM stability only (not computeChecksum).
-      // djb2 over element count + normalized text; deterministic, fast, browser-only.
+      // djb2 over text only; deterministic, fast, browser-only.
       // Optimized: process every other character to save CPU.
       function domStabilityHash(str) {
         let h = 5381;
@@ -257,21 +257,21 @@ async function waitForDomToSettle(page, {
 
       const text = (root.innerText || '').replace(/\s+/g, ' ').trim();
       const elCount = root.getElementsByTagName('*').length;
-      const input = elCount + '|' + text.length + '|' + text;
-      const checksum = '' + domStabilityHash(input);
+      const checksum = domStabilityHash(text);
+      const signature = `${elCount}|${text.length}|${checksum}`;
 
       // Initialize on first run
       if (!window.__domStability) {
         window.__domStability = {
-          checksum,
+          signature,
           lastChange: now,
         };
         return false;
       }
 
       // Any change resets the quiet window
-      if (checksum !== window.__domStability.checksum) {
-        window.__domStability.checksum = checksum;
+      if (signature !== window.__domStability.signature) {
+        window.__domStability.signature = signature;
         window.__domStability.lastChange = now;
         return false;
       }
