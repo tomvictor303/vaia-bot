@@ -249,7 +249,7 @@ async function waitForDomToSettle(page, {
       // Optimized: process every other character to save CPU.
       function domStabilityHash(str) {
         let h = 5381;
-        for (let i = 0; i < str.length; i += 2) {
+        for (let i = 0; i < str.length; i++) {
           h = ((h << 5) + h) + str.charCodeAt(i);
         }
         return h >>> 0;
