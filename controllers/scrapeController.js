@@ -226,6 +226,54 @@ function normalizeMarkdown(markdown) {
 }
 
 /**
+ * Wait until the DOM has stopped changing for `quietMs`,
+ * but never wait longer than `timeoutMs`.
+ *
+ * This is NOT a fixed sleep.
+ * It continuously checks DOM convergence and exits early if stable.
+ */
+async function waitForDomToSettle(page, {
+  quietMs = 800,      // how long DOM must remain unchanged
+  timeoutMs = 15000,  // hard upper bound
+} = {}) {
+  await page.waitForFunction(
+    ({ quietMs }) => {
+      const now = Date.now();
+      const root = document.body;
+      if (!root) return false;
+
+      // Build a lightweight stability signature:
+      // - element count detects structural changes
+      // - text length + prefix detect meaningful content changes
+      const text = (root.innerText || '').replace(/\s+/g, ' ').trim();
+      const elCount = root.getElementsByTagName('*').length;
+      const signature = `${elCount}|${text.length}|${text.slice(0, 500)}`;
+
+      // Initialize on first run
+      if (!window.__domStability) {
+        window.__domStability = {
+          signature,
+          lastChange: now,
+        };
+        return false;
+      }
+
+      // Any change resets the quiet window
+      if (signature !== window.__domStability.signature) {
+        window.__domStability.signature = signature;
+        window.__domStability.lastChange = now;
+        return false;
+      }
+
+      // Exit only after uninterrupted quiet period
+      return (now - window.__domStability.lastChange) >= quietMs;
+    },
+    { timeout: timeoutMs },
+    { quietMs }
+  ).catch(() => {});
+}
+
+/**
  * Scrape a hotel website using PlaywrightCrawler
  * Crawls all pages from the hotel's main URL (crawl all mode)
  * 
@@ -307,11 +355,14 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
 
         // BEGIN WAIT_FOR_ASYNC_CONTENT_TO_SETTLE
         // Allow hero/above-the-fold async content to settle on root page
-        if (currentDepth === 0) {
-          await page.waitForTimeout(5000); // Home page might have more async content to settle
-        } else {
-          await page.waitForTimeout(1500); // Other pages might have less async content to settle
-        }
+        // await page.waitForFunction(
+        //   () => false,
+        //   { timeout: currentDepth === 0 ? 10000 : 6000 } // Home page might have more async content to settle
+        // ).catch(() => {});        
+        await waitForDomToSettle(page, {
+          quietMs: 5000,
+          timeoutMs: currentDepth === 0 ? 10000 : 8000,
+        });        
         // END WAIT_FOR_ASYNC_CONTENT_TO_SETTLE
 
         const status = response?.status();
