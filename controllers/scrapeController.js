@@ -235,18 +235,35 @@ function normalizeMarkdown(markdown) {
  * does not use or affect computeChecksum.
  */
 async function waitForDomToSettle(page, {
-  quietMs = 800,      // how long DOM must remain unchanged
-  timeoutMs = 15000,  // hard upper bound
+  quietMs = 800,               // how long DOM must remain unchanged
+  timeoutMs = 15000,           // hard upper bound
+  minSigIntervalMs = 250,      // minimum interval between signature calculations
 } = {}) {
   await page.waitForFunction(
-    ({ quietMs }) => {
+    ({ quietMs, minSigIntervalMs }) => {
       const now = Date.now();
       const root = document.body;
       if (!root) return false;
 
+      // Ensure state exists
+      if (!window.__domStability) {
+        window.__domStability = {
+          signature: '',
+          lastChange: now,
+          lastSigAt: 0,
+        };
+      }
+
+      // ❌ Too soon to recompute signature → only check quiet window
+      if ((now - window.__domStability.lastSigAt) < minSigIntervalMs) {
+        return (now - window.__domStability.lastChange) >= quietMs;
+      }
+
+      // ✅ Allowed to recompute signature
+      window.__domStability.lastSigAt = now;
+
       // Own checksum for DOM stability only (not computeChecksum).
-      // djb2 over text only; deterministic, fast, browser-only.
-      // Optimized: process every other character to save CPU.
+      // djb2 over text only; deterministic, browser-only.
       function domStabilityHash(str) {
         let h = 5381;
         for (let i = 0; i < str.length; i++) {
@@ -260,27 +277,18 @@ async function waitForDomToSettle(page, {
       const checksum = domStabilityHash(text);
       const signature = `${elCount}|${text.length}|${checksum}`;
 
-      // Initialize on first run
-      if (!window.__domStability) {
-        window.__domStability = {
-          signature,
-          lastChange: now,
-        };
-        return false;
-      }
-
-      // Any change resets the quiet window
+      // Signature changed → reset quiet window
       if (signature !== window.__domStability.signature) {
         window.__domStability.signature = signature;
         window.__domStability.lastChange = now;
         return false;
       }
 
-      // Exit only after uninterrupted quiet period
+      // Signature unchanged → check quiet window
       return (now - window.__domStability.lastChange) >= quietMs;
     },
     { timeout: timeoutMs },
-    { quietMs }
+    { quietMs, minSigIntervalMs }
   ).catch(() => {});
 }
 
