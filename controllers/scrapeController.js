@@ -378,11 +378,16 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         //   () => false,
         //   { timeout: currentDepth === 0 ? 10000 : 6000 } // Home page might have more async content to settle
         // ).catch(() => {});        
+        const settleStartMs = Date.now();
         await waitForDomToSettle(page, {
           quietMs: currentDepth === 0 ? 6000 : 4000,
           timeoutMs: currentDepth === 0 ? 12000 : 8000,
           minSigIntervalMs: 400,
-        });        
+        });
+        if (process.env.NODE_ENV === 'development') {
+          const waitedSecs = (Date.now() - settleStartMs) / 1000;
+          log.info(`⏳ DOM settle waited ${waitedSecs.toFixed(2)}s: ${pageUrl}`);
+        }
         // END WAIT_FOR_ASYNC_CONTENT_TO_SETTLE
 
         const status = response?.status();
