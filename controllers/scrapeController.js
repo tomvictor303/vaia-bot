@@ -383,7 +383,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         const settleStartMs = Date.now();
         await waitForDomToSettle(page, {
           quietMs: currentDepth === 0 ? 6000 : 4000,
-          timeoutMs: currentDepth === 0 ? 12000 : 8000,
+          timeoutMs: currentDepth === 0 ? 15000 : 10000,
           minSigIntervalMs: 400,
         });
         if (process.env.NODE_ENV === 'development') {
