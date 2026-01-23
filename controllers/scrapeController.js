@@ -564,7 +564,17 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
 
               const lower = newReq.url.toLowerCase();
               if (lower.startsWith('javascript:') || lower.startsWith('tel:')) return false;
-              if (Array.from(blockedExtensions).some(ext => lower.endsWith(ext))) return false;
+              
+              // Check blocked extensions (handle URLs with parameters by checking pathname)
+              try {
+                const urlObj = new URL(newReq.url);
+                const pathname = urlObj.pathname.toLowerCase();
+                if (Array.from(blockedExtensions).some(ext => pathname.endsWith(ext))) return false;
+              } catch {
+                // Fallback to simple endsWith check if URL parsing fails
+                if (Array.from(blockedExtensions).some(ext => lower.endsWith(ext))) return false;
+              }
+              
               if (visited.has(newReq.url)) return false;
               if (maxDepth !== Infinity && currentDepth + 1 > maxDepth) return false;
 
