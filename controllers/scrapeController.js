@@ -380,7 +380,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         // ).catch(() => {});        
         await waitForDomToSettle(page, {
           quietMs: currentDepth === 0 ? 5000 : 3000,
-          timeoutMs: currentDepth === 0 ? 10000 : 6500,
+          timeoutMs: currentDepth === 0 ? 10000 : 6000,
           minSigIntervalMs: 400,
         });        
         // END WAIT_FOR_ASYNC_CONTENT_TO_SETTLE
