@@ -379,8 +379,9 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
         //   { timeout: currentDepth === 0 ? 10000 : 6000 } // Home page might have more async content to settle
         // ).catch(() => {});        
         await waitForDomToSettle(page, {
-          quietMs: 5000,
+          quietMs: currentDepth === 0 ? 5000 : 4000,
           timeoutMs: currentDepth === 0 ? 10000 : 8000,
+          minSigIntervalMs: 400,
         });        
         // END WAIT_FOR_ASYNC_CONTENT_TO_SETTLE
 
