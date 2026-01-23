@@ -287,10 +287,12 @@ async function waitForDomToSettle(page, {
       // Signature unchanged → check quiet window
       return (now - window.__domStability.lastChange) >= quietMs;
     },
-    { timeout: timeoutMs },
-    { quietMs, minSigIntervalMs }
-  ).catch(() => {});
+    { quietMs, minSigIntervalMs }, // args
+    { timeout: timeoutMs } // options
+  )
+  .catch(() => {});
 }
+
 
 /**
  * Scrape a hotel website using PlaywrightCrawler
