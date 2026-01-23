@@ -451,6 +451,11 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
             ).forEach(el => el.remove());
           }
 
+          // Remove common reCAPTCHA containers
+          document.querySelectorAll(
+            '.g-recaptcha, .recaptcha, .grecaptcha, [class*="recaptcha"], [id*="recaptcha"], [data-sitekey]'
+          ).forEach(el => el.remove());
+
           // Resolve relative URLs deterministically
           const toAbsolute = (url) => {
             try {
