@@ -29,7 +29,11 @@ export const MD_CAT_FIELDS = [
 	{ name: 'on_property_convenience', description: 'On property convenience - Practical, guest-facing services that make the stay more seamless, accessible, and comfortable' },
 	{ name: 'parking_transportation', description: 'Parking & transportation - Services, instructions, and logistics related to guest vehicles, access to the property, and travel options to and from the hotel' },
 	{ name: 'policies', description: 'Policies - Formal set of guidelines, rules, or procedures' },
-	{ name: 'recreation_fitness', description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity' },
+	{ 
+		name: 'recreation_fitness', 
+		description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity',
+		extract_guide: 'Extract all Recreation & fitness content, including facilities, activities, and services that support leisure, wellness, and physical activity; summarizing is allowed, but do not omit any details.' 
+	},
 	{ name: 'safety_security', description: 'Safety & Security - Emergency procedures (fire exits, severe weather protocols, Safe deposit boxes or in-room safes, Security staff or surveillance)' },
 	{ name: 'technology_business_services', description: 'Technology / Business Services - Business center computers, printing, fax, and copying, Wi-Fi details, Public computer access' },
 	// Plus, "faq" field
