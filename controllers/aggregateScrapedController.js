@@ -245,26 +245,8 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
 
   // DEBUG LOG: Save newData and source of new data (joined snippets from pages) to database
   // BEGIN DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
-  // compose debug payload
-  const debugPayload = {};
-  for (const field of CATEGORY_FIELDS) {
-    if (!field || field.name == null) continue;
-    try {
-      const snippets = fieldBuckets[field.name] ?? null;
-      const newDataVal = newData[field.name] ?? null;
-      const bothNull = (snippets == null || (Array.isArray(snippets) && snippets.length === 0)) &&
-        (newDataVal == null || newDataVal === '' || newDataVal === 'N/A');
-      const snippetsStr = snippets == null ? '' : snippets.join('\n==========================\n');
-      const newDataStr = newDataVal == null ? '' : String(newDataVal);
-      debugPayload[field.name] = bothNull ? null
-        : 'snippets:\n\n' + snippetsStr + '\n\n==========================\n==========================\n==========================\nnew Data:\n\n' + newDataStr;
-    } catch (err) { 
-      console.error(`❌ Failed: debug payload preparation: ${field.name} of hotel ${hotelUuid}:`, err.message); 
-    }
-  }
-  // upsert debug payload to database
   try {
-    await MarketDataService.upsertMarketDataDebug1(debugPayload, hotelUuid);
+    await MarketDataService.upsertMarketDataDebug1(fieldBuckets, newData, hotelUuid);
     console.log(`✅ Debug log saved: ${hotelUuid}`);
   } catch (err) {
     console.error(`❌ Failed to upsert to market_data_debug1 for ${hotelUuid}:`, err.message);

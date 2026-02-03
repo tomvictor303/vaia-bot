@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { executeQuery } from '../config/database.js';
-import { MD_ALL_FIELDS, BOOLEAN_FIELDS } from '../middleware/constants.js';
+import { MD_ALL_FIELDS, MD_DATA_FIELDS, BOOLEAN_FIELDS } from '../middleware/constants.js';
 
 // Get table name from environment variable, default to 'market_data'
 const MARKET_DATA_TABLE = process.env.MARKET_DATA_TABLE || 'market_data';
@@ -318,17 +318,45 @@ export class MarketDataService {
   }
 
   /**
+   * Build debug1 payload from fieldBuckets (snippets per field) and newData (refined value per field).
+   * @param {Object} fieldBuckets - Object keyed by field name, values are string arrays (snippets)
+   * @param {Object} newData - Object keyed by field name, values are strings (refined text)
+   * @returns {Object} Object keyed by field name, values are string or null for DB
+   */
+  static buildDebug1Payload(fieldBuckets, newData) {
+    const debugPayload = {};
+    for (const field of MD_DATA_FIELDS) {
+      if (!field || field.name == null) continue;
+      try {
+        const snippets = fieldBuckets[field.name] ?? null;
+        const newDataVal = newData[field.name] ?? null;
+        const bothNull = (snippets == null || (Array.isArray(snippets) && snippets.length === 0)) &&
+          (newDataVal == null || newDataVal === '' || newDataVal === 'N/A');
+        const snippetsStr = snippets == null ? '' : snippets.join('\n==========================\n');
+        const newDataStr = newDataVal == null ? '' : String(newDataVal);
+        debugPayload[field.name] = bothNull ? null
+          : 'snippets:\n\n' + snippetsStr + '\n\n==========================\n==========================\n==========================\nnew Data:\n\n' + newDataStr;
+      } catch (err) {
+        console.error(`Error building debug1 payload for field ${field.name}:`, err.message);
+      }
+    }
+    return debugPayload;
+  }
+
+  /**
    * Upsert into market_data_debug1 (same structure as market_data).
-   * Each field value is expected to be a JSON string or null (e.g. JSON.stringify({ snippets, newData })).
-   * @param {Object} debugData - Object keyed by field name, values are JSON strings or null
+   * Composes debug payload from fieldBuckets and newData, then upserts by hotel_uuid.
+   * @param {Object} fieldBuckets - Object keyed by field name, values are string arrays (snippets)
+   * @param {Object} newData - Object keyed by field name, values are strings (refined text)
    * @param {string} hotelUuid - Hotel UUID for upsert key
    * @returns {Promise<Object>} { action: 'insert'|'update', insertId?: number, affectedRows?: number, id?: number }
    */
-  static async upsertMarketDataDebug1(debugData, hotelUuid) {
-    if (Object.keys(debugData).length === 0) {
+  static async upsertMarketDataDebug1(fieldBuckets, newData, hotelUuid) {
+    const debugPayload = this.buildDebug1Payload(fieldBuckets, newData);
+    if (Object.keys(debugPayload).length === 0) {
       return { action: 'update', affectedRows: 0, id: 0 };
     }
-    const filteredData = this.filterValidFields(debugData);
+    const filteredData = this.filterValidFields(debugPayload);
 
     // Inline check: existing record by hotel_uuid
     const existingQuery = `
