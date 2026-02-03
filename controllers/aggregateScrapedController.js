@@ -253,18 +253,15 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
       const newDataVal = newData[field.name] ?? null;
       const bothNull = (snippets == null || (Array.isArray(snippets) && snippets.length === 0)) &&
         (newDataVal == null || newDataVal === '' || newDataVal === 'N/A');
-      debugPayload[field.name] = bothNull ? null : `snippets:
-
-${snippets}
-
-==========================
-new Data:
-
-${newDataVal}
-`;
-    } catch (err) {}
+      const snippetsStr = snippets == null ? '' : snippets.join('\n==========================\n');
+      const newDataStr = newDataVal == null ? '' : String(newDataVal);
+      debugPayload[field.name] = bothNull ? null
+        : 'snippets:\n\n' + snippetsStr + '\n\n==========================\n==========================\n==========================\nnew Data:\n\n' + newDataStr;
+    } catch (err) { 
+      console.error(`❌ Failed: debug payload preparation: ${field.name} of hotel ${hotelUuid}:`, err.message); 
+    }
   }
-  try {    
+  try {
     await MarketDataService.upsertMarketDataDebug1(debugPayload, hotelUuid);
   } catch (err) {
     console.error(`❌ Failed to upsert to market_data_debug1 for ${hotelUuid}:`, err.message);

@@ -325,6 +325,9 @@ export class MarketDataService {
    * @returns {Promise<Object>} { action: 'insert'|'update', insertId?: number, affectedRows?: number, id?: number }
    */
   static async upsertMarketDataDebug1(debugData, hotelUuid) {
+    if (Object.keys(debugData).length === 0) {
+      return { action: 'update', affectedRows: 0, id: 0 };
+    }
     const filteredData = this.filterValidFields(debugData);
 
     // Inline check: existing record by hotel_uuid
