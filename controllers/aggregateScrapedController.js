@@ -245,6 +245,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
 
   // DEBUG LOG: Save newData and source of new data (joined snippets from pages) to database
   // BEGIN DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
+  // compose debug payload
   const debugPayload = {};
   for (const field of CATEGORY_FIELDS) {
     if (!field || field.name == null) continue;
@@ -261,6 +262,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
       console.error(`❌ Failed: debug payload preparation: ${field.name} of hotel ${hotelUuid}:`, err.message); 
     }
   }
+  // upsert debug payload to database
   try {
     await MarketDataService.upsertMarketDataDebug1(debugPayload, hotelUuid);
   } catch (err) {
