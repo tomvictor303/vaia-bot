@@ -321,9 +321,10 @@ export class MarketDataService {
    * Build debug1 payload from fieldBuckets (snippets per field) and newData (refined value per field).
    * @param {Object} fieldBuckets - Object keyed by field name, values are string arrays (snippets)
    * @param {Object} newData - Object keyed by field name, values are strings (refined text)
+   * @param {string} hotelUuid - Hotel UUID for debug log
    * @returns {Object} Object keyed by field name, values are string or null for DB
    */
-  static buildDebug1Payload(fieldBuckets, newData) {
+  static buildDebug1Payload(fieldBuckets, newData, hotelUuid) {
     const debugPayload = {};
     for (const field of MD_DATA_FIELDS) {
       if (!field || field.name == null) continue;
@@ -337,7 +338,7 @@ export class MarketDataService {
         debugPayload[field.name] = bothNull ? null
           : 'snippets:\n\n' + snippetsStr + '\n\n==========================\n==========================\n==========================\nnew Data:\n\n' + newDataStr;
       } catch (err) {
-        console.error(`Error building debug1 payload for field ${field.name}:`, err.message);
+        console.error(`Error building debug1 payload for field ${field.name}:${hotelUuid}`, err.message);
       }
     }
     return debugPayload;
@@ -352,7 +353,8 @@ export class MarketDataService {
    * @returns {Promise<Object>} { action: 'insert'|'update', insertId?: number, affectedRows?: number, id?: number }
    */
   static async upsertMarketDataDebug1(fieldBuckets, newData, hotelUuid) {
-    const debugPayload = this.buildDebug1Payload(fieldBuckets, newData);
+    // compose debug payload
+    const debugPayload = this.buildDebug1Payload(fieldBuckets, newData, hotelUuid);
     if (Object.keys(debugPayload).length === 0) {
       return { action: 'update', affectedRows: 0, id: 0 };
     }
