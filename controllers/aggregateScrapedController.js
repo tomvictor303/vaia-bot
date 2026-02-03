@@ -243,6 +243,12 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     console.log(`✅ Refining done: ${field.name}`);
   }
 
+  // DEBUG LOG: Save newData and source of new data (joined snippets from pages) to database
+  // BEGIN DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
+  for (const field of CATEGORY_FIELDS) {
+  }
+  // END DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
+
   // Merge the new data with the existing data
   let mergedData = {};
   const existingData = await MarketDataService.getMarketDataByUuid(hotelUuid);
