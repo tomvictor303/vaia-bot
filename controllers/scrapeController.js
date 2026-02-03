@@ -466,7 +466,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
 
           // Remove Instagram feed/embed widgets (reduce DOM noise)
           document.querySelectorAll(
-            '.instagram-media, blockquote.instagram-media, [class*="instagram"], [id*="instagram"], [data-instagram]'
+            '.instagram-media, blockquote.instagram-media, .eapps-instagram-feed, [class*="instagram"], [id*="instagram"], [data-instagram]'
           ).forEach(el => el.remove());
 
           // Resolve relative URLs deterministically
