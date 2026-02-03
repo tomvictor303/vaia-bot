@@ -273,6 +273,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
 
   // Merge the new data with the existing data
   let mergedData = {};
+  let DEBUG2_LOGS = {};
   const existingData = await MarketDataService.getMarketDataByUuid(hotelUuid);
   if (existingData) {
     // BEGIN MERGE_NEW_DATA_WITH_EXISTING_DATA
@@ -294,6 +295,8 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
       if (isUpdate && mergedText) {
         mergedData[fieldName] = mergedText;
       }
+      // save for debug log
+      DEBUG2_LOGS[fieldName] = {isUpdate, existingData: existingData[fieldName], newData: newData[fieldName], mergedText};
     }
     // END MERGE_NEW_DATA_WITH_EXISTING_DATA
   } else {
