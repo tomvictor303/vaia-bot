@@ -302,6 +302,17 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
   } else {
     mergedData = newData;
   }
+  
+  // BEGIN SAVE_DEBUG2_LOG
+  if (Object.keys(DEBUG2_LOGS).length > 0) {    
+    try {
+      await MarketDataService.upsertMarketDataDebug2(DEBUG2_LOGS, hotelUuid);
+      console.log(`✅ Debug log saved: ${hotelUuid}`);
+    } catch (err) {
+      console.error(`❌ Failed to upsert to market_data_debug2 for ${hotelUuid}:`, err.message);
+    }
+  }
+  // END SAVE_DEBUG2_LOG
 
   // Track "other" changes in a single check
   const otherUpdated = isFieldUpdated('other', mergedData);
