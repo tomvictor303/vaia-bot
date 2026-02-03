@@ -340,8 +340,10 @@ export class MarketDataService {
       console.error('Error checking existing debug record:', err.message);
       throw err;
     }
-
+   
+    // BEGIN UPSERT_DEBUG_RECORD
     if (existingId > 0) {
+      // BEGIN UPDATE_DEBUG_RECORD
       const columns = Object.keys(filteredData);
       if (columns.length === 0) {
         return { action: 'update', affectedRows: 0, id: existingId };
@@ -354,17 +356,21 @@ export class MarketDataService {
       const values = [...columns.map((col) => filteredData[col] ?? null), existingId];
       const result = await executeQuery(updateQuery, values);
       return { action: 'update', affectedRows: result.affectedRows, id: existingId };
-    }
-
-    const dataWithUuid = { ...filteredData, hotel_uuid: hotelUuid };
-    const columns = Object.keys(dataWithUuid);
-    const placeholders = columns.map(() => '?').join(', ');
-    const insertQuery = `
-      INSERT INTO ${MARKET_DATA_DEBUG_TABLE} (${columns.join(', ')})
-      VALUES (${placeholders})
-    `;
-    const values = columns.map((col) => dataWithUuid[col] ?? null);
-    const result = await executeQuery(insertQuery, values);
-    return { action: 'insert', insertId: result.insertId };
+      // END UPDATE_DEBUG_RECORD
+    } else {
+      // BEGIN INSERT_DEBUG_RECORD
+      const dataWithUuid = { ...filteredData, hotel_uuid: hotelUuid };
+      const columns = Object.keys(dataWithUuid);
+      const placeholders = columns.map(() => '?').join(', ');
+      const insertQuery = `
+        INSERT INTO ${MARKET_DATA_DEBUG_TABLE} (${columns.join(', ')})
+        VALUES (${placeholders})
+      `;
+      const values = columns.map((col) => dataWithUuid[col] ?? null);
+      const result = await executeQuery(insertQuery, values);
+      return { action: 'insert', insertId: result.insertId };
+      // END INSERT_DEBUG_RECORD
+    }    
+    // END UPSERT_DEBUG_RECORD
   }
 }
