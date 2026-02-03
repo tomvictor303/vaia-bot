@@ -245,18 +245,29 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
 
   // DEBUG LOG: Save newData and source of new data (joined snippets from pages) to database
   // BEGIN DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
-  try {
-    const debugPayload = {};
-    for (const field of CATEGORY_FIELDS) {
+  const debugPayload = {};
+  for (const field of CATEGORY_FIELDS) {
+    if (!field || field.name == null) continue;
+    try {
       const snippets = fieldBuckets[field.name] ?? null;
       const newDataVal = newData[field.name] ?? null;
       const bothNull = (snippets == null || (Array.isArray(snippets) && snippets.length === 0)) &&
         (newDataVal == null || newDataVal === '' || newDataVal === 'N/A');
-      debugPayload[field.name] = bothNull ? null : JSON.stringify({ snippets, newData: newDataVal });
-    }
+      debugPayload[field.name] = bothNull ? null : `snippets:
+
+${snippets}
+
+==========================
+new Data:
+
+${newDataVal}
+`;
+    } catch (err) {}
+  }
+  try {    
     await MarketDataService.upsertMarketDataDebug1(debugPayload, hotelUuid);
   } catch (err) {
-    console.error(`❌ Failed to store debug data to market_data_debug1 for ${hotelUuid}:`, err.message);
+    console.error(`❌ Failed to upsert to market_data_debug1 for ${hotelUuid}:`, err.message);
   }
   // END DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
 
