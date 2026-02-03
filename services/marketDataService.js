@@ -340,6 +340,7 @@ export class MarketDataService {
           : 'snippets:\n\n' + snippetsStr + '\n\n==========================\n==========================\n==========================\nnew Data:\n\n' + newDataStr;
       } catch (err) {
         console.error(`Error building debug1 payload for field ${field.name}:${hotelUuid}`, err.message);
+        debugPayload[field.name] = null;
       }
     }
     return debugPayload;
