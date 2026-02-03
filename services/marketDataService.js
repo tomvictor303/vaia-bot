@@ -4,6 +4,7 @@ import { MD_ALL_FIELDS, BOOLEAN_FIELDS } from '../middleware/constants.js';
 
 // Get table name from environment variable, default to 'market_data'
 const MARKET_DATA_TABLE = process.env.MARKET_DATA_TABLE || 'market_data';
+const MARKET_DATA_DEBUG_TABLE = process.env.MARKET_DATA_DEBUG_TABLE || 'market_data_debug1';
 
 export class MarketDataService {
   
@@ -313,5 +314,56 @@ export class MarketDataService {
       console.error('Error upserting market data:', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Upsert into market_data_debug1 (same structure as market_data).
+   * Each field value is expected to be a JSON string or null (e.g. JSON.stringify({ snippets, newData })).
+   * @param {Object} debugData - Object keyed by field name, values are JSON strings or null
+   * @param {string} hotelUuid - Hotel UUID for upsert key
+   * @returns {Promise<Object>} { action: 'insert'|'update', insertId?: number, affectedRows?: number, id?: number }
+   */
+  static async upsertMarketDataDebug(debugData, hotelUuid) {
+    const filteredData = this.filterValidFields(debugData);
+
+    // Inline check: existing record by hotel_uuid
+    const existingQuery = `
+      SELECT id FROM ${MARKET_DATA_DEBUG_TABLE}
+      WHERE hotel_uuid = ? AND (is_deleted = 0 OR is_deleted IS NULL)
+    `;
+    let existingId = 0;
+    try {
+      const [row] = await executeQuery(existingQuery, [hotelUuid]);
+      existingId = row ? row.id : 0;
+    } catch (err) {
+      console.error('Error checking existing debug record:', err.message);
+      throw err;
+    }
+
+    if (existingId > 0) {
+      const columns = Object.keys(filteredData);
+      if (columns.length === 0) {
+        return { action: 'update', affectedRows: 0, id: existingId };
+      }
+      const setClause = columns.map((f) => `${f} = ?`).join(', ');
+      const updateQuery = `
+        UPDATE ${MARKET_DATA_DEBUG_TABLE} SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `;
+      const values = [...columns.map((col) => filteredData[col] ?? null), existingId];
+      const result = await executeQuery(updateQuery, values);
+      return { action: 'update', affectedRows: result.affectedRows, id: existingId };
+    }
+
+    const dataWithUuid = { ...filteredData, hotel_uuid: hotelUuid };
+    const columns = Object.keys(dataWithUuid);
+    const placeholders = columns.map(() => '?').join(', ');
+    const insertQuery = `
+      INSERT INTO ${MARKET_DATA_DEBUG_TABLE} (${columns.join(', ')})
+      VALUES (${placeholders})
+    `;
+    const values = columns.map((col) => dataWithUuid[col] ?? null);
+    const result = await executeQuery(insertQuery, values);
+    return { action: 'insert', insertId: result.insertId };
   }
 }
