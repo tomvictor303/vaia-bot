@@ -254,7 +254,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     debugPayload[field.name] = bothNull ? null : JSON.stringify({ snippets, newData: newDataVal });
   }
   try {
-    await MarketDataService.upsertMarketDataDebug(debugPayload, hotelUuid);
+    await MarketDataService.upsertMarketDataDebug1(debugPayload, hotelUuid);
   } catch (err) {
     console.error(`❌ Failed to upsert market_data_debug1 for ${hotelUuid}:`, err.message);
   }

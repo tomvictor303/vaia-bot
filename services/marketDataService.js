@@ -4,7 +4,7 @@ import { MD_ALL_FIELDS, BOOLEAN_FIELDS } from '../middleware/constants.js';
 
 // Get table name from environment variable, default to 'market_data'
 const MARKET_DATA_TABLE = process.env.MARKET_DATA_TABLE || 'market_data';
-const MARKET_DATA_DEBUG_TABLE = process.env.MARKET_DATA_DEBUG_TABLE || 'market_data_debug1';
+const MARKET_DATA_DEBUG1_TABLE = process.env.MARKET_DATA_DEBUG1_TABLE || 'market_data_debug1';
 
 export class MarketDataService {
   
@@ -324,12 +324,12 @@ export class MarketDataService {
    * @param {string} hotelUuid - Hotel UUID for upsert key
    * @returns {Promise<Object>} { action: 'insert'|'update', insertId?: number, affectedRows?: number, id?: number }
    */
-  static async upsertMarketDataDebug(debugData, hotelUuid) {
+  static async upsertMarketDataDebug1(debugData, hotelUuid) {
     const filteredData = this.filterValidFields(debugData);
 
     // Inline check: existing record by hotel_uuid
     const existingQuery = `
-      SELECT id FROM ${MARKET_DATA_DEBUG_TABLE}
+      SELECT id FROM ${MARKET_DATA_DEBUG1_TABLE}
       WHERE hotel_uuid = ? AND is_deleted = 0
     `;
     let existingId = 0;
@@ -350,7 +350,7 @@ export class MarketDataService {
       }
       const setClause = columns.map((f) => `${f} = ?`).join(', ');
       const updateQuery = `
-        UPDATE ${MARKET_DATA_DEBUG_TABLE} SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+        UPDATE ${MARKET_DATA_DEBUG1_TABLE} SET ${setClause}, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `;
       const values = [...columns.map((col) => filteredData[col] ?? null), existingId];
@@ -363,7 +363,7 @@ export class MarketDataService {
       const columns = Object.keys(dataWithUuid);
       const placeholders = columns.map(() => '?').join(', ');
       const insertQuery = `
-        INSERT INTO ${MARKET_DATA_DEBUG_TABLE} (${columns.join(', ')})
+        INSERT INTO ${MARKET_DATA_DEBUG1_TABLE} (${columns.join(', ')})
         VALUES (${placeholders})
       `;
       const values = columns.map((col) => dataWithUuid[col] ?? null);
