@@ -265,6 +265,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
   // upsert debug payload to database
   try {
     await MarketDataService.upsertMarketDataDebug1(debugPayload, hotelUuid);
+    console.log(`✅ Debug log saved: ${hotelUuid}`);
   } catch (err) {
     console.error(`❌ Failed to upsert to market_data_debug1 for ${hotelUuid}:`, err.message);
   }
