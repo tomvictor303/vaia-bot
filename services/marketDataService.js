@@ -330,7 +330,7 @@ export class MarketDataService {
     // Inline check: existing record by hotel_uuid
     const existingQuery = `
       SELECT id FROM ${MARKET_DATA_DEBUG_TABLE}
-      WHERE hotel_uuid = ? AND (is_deleted = 0 OR is_deleted IS NULL)
+      WHERE hotel_uuid = ? AND is_deleted = 0
     `;
     let existingId = 0;
     try {
