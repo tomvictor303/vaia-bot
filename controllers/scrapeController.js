@@ -469,6 +469,21 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
             '.instagram-media, blockquote.instagram-media, .eapps-instagram-feed, [class*="instagram"], [id*="instagram"], [data-instagram]'
           ).forEach(el => el.remove());
 
+          // Remove Facebook feed/embed widgets
+          document.querySelectorAll(
+            '.fb-page, .fb-post, .fb-like, .eapps-facebook-feed, [class*="facebook"], [id*="facebook"], [data-href*="facebook.com"]'
+          ).forEach(el => el.remove());
+
+          // Remove Twitter/X embed widgets
+          document.querySelectorAll(
+            'blockquote.twitter-tweet, .embed-tweet, .eapps-twitter-feed, [class*="twitter"], [id*="twitter"], [data-dnt*="twitter"]'
+          ).forEach(el => el.remove());
+
+          // Remove Pinterest embed widgets
+          document.querySelectorAll(
+            '[data-pin-do], [data-pin-build], .eapps-pinterest-feed, [class*="pinterest"], [id*="pinterest"], .pin-it-button'
+          ).forEach(el => el.remove());
+
           // Resolve relative URLs deterministically
           const toAbsolute = (url) => {
             try {
