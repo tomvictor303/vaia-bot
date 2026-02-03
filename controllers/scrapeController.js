@@ -420,7 +420,7 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
             if (el.closest("[id*='ad'], .ad, .ads, .advertisement")) return true;
             return false;
           };
-          const blockedHosts = ['google.com', 'bing.com', 'yahoo.com'];
+          const blockedHosts = ['google.com', 'bing.com', 'yahoo.com', 'instagram.com'];
           return Array.from(document.querySelectorAll('a[href]'))
             .filter((a) => !isAd(a))
             .map((a) => a.getAttribute('href') || '')
@@ -462,6 +462,11 @@ export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
           // Remove common reCAPTCHA containers
           document.querySelectorAll(
             '.g-recaptcha, .recaptcha, .grecaptcha, [class*="recaptcha"], [id*="recaptcha"], [data-sitekey]'
+          ).forEach(el => el.remove());
+
+          // Remove Instagram feed/embed widgets (reduce DOM noise)
+          document.querySelectorAll(
+            '.instagram-media, blockquote.instagram-media, [class*="instagram"], [id*="instagram"], [data-instagram]'
           ).forEach(el => el.remove());
 
           // Resolve relative URLs deterministically
