@@ -5,6 +5,7 @@ import { MD_ALL_FIELDS, MD_DATA_FIELDS, BOOLEAN_FIELDS } from '../middleware/con
 // Get table name from environment variable, default to 'market_data'
 const MARKET_DATA_TABLE = process.env.MARKET_DATA_TABLE || 'market_data';
 const MARKET_DATA_DEBUG1_TABLE = process.env.MARKET_DATA_DEBUG1_TABLE || 'market_data_debug1';
+const MARKET_DATA_DEBUG2_TABLE = process.env.MARKET_DATA_DEBUG2_TABLE || 'market_data_debug2';
 
 export class MarketDataService {
   
@@ -405,5 +406,79 @@ export class MarketDataService {
       // END INSERT_DEBUG_RECORD
     }    
     // END UPSERT_DEBUG_RECORD
+  }
+
+  /**
+   * Build payload for market_data_debug2: one column per field, value = JSON.stringify(DEBUG2_LOGS[field]) or null.
+   * @param {Object} DEBUG2_LOGS - Object keyed by field name, values are { isUpdate, existingData, newData, mergedText }
+   * @returns {Object} Object keyed by field name, values are JSON strings or null for DB
+   */
+  static buildDebug2Payload(DEBUG2_LOGS) {
+    const debugPayload = {};
+    for (const field of MD_DATA_FIELDS) {
+      if (!field || field.name == null) continue;
+      try {
+        const value = DEBUG2_LOGS[field.name];
+        debugPayload[field.name] = value != null ? JSON.stringify(value) : null;
+      } catch (err) {
+        console.error(`Error building debug2 payload for field ${field.name}:`, err.message);
+        debugPayload[field.name] = null;
+      }
+    }
+    return debugPayload;
+  }
+
+  /**
+   * Upsert into market_data_debug2 (same structure as market_data).
+   * Payload per field is JSON.stringify of DEBUG2_LOGS[field] (merge log: isUpdate, existingData, newData, mergedText).
+   * @param {Object} DEBUG2_LOGS - Object keyed by field name, values are { isUpdate, existingData, newData, mergedText }
+   * @param {string} hotelUuid - Hotel UUID for upsert key
+   * @returns {Promise<Object>} { action: 'insert'|'update', insertId?: number, affectedRows?: number, id?: number }
+   */
+  static async upsertMarketDataDebug2(DEBUG2_LOGS, hotelUuid) {
+    const debugPayload = this.buildDebug2Payload(DEBUG2_LOGS);
+    if (Object.keys(debugPayload).length === 0) {
+      return { action: 'update', affectedRows: 0, id: 0 };
+    }
+    const filteredData = this.filterValidFields(debugPayload);
+
+    const existingQuery = `
+      SELECT id FROM ${MARKET_DATA_DEBUG2_TABLE}
+      WHERE hotel_uuid = ? AND is_deleted = 0
+    `;
+    let existingId = 0;
+    try {
+      const [row] = await executeQuery(existingQuery, [hotelUuid]);
+      existingId = row ? row.id : 0;
+    } catch (err) {
+      console.error('Error checking existing debug2 record:', err.message);
+      throw err;
+    }
+
+    if (existingId > 0) {
+      const columns = Object.keys(filteredData);
+      if (columns.length === 0) {
+        return { action: 'update', affectedRows: 0, id: existingId };
+      }
+      const setClause = columns.map((f) => `${f} = ?`).join(', ');
+      const updateQuery = `
+        UPDATE ${MARKET_DATA_DEBUG2_TABLE} SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `;
+      const values = [...columns.map((col) => filteredData[col] ?? null), existingId];
+      const result = await executeQuery(updateQuery, values);
+      return { action: 'update', affectedRows: result.affectedRows, id: existingId };
+    }
+
+    const dataWithUuid = { ...filteredData, hotel_uuid: hotelUuid };
+    const columns = Object.keys(dataWithUuid);
+    const placeholders = columns.map(() => '?').join(', ');
+    const insertQuery = `
+      INSERT INTO ${MARKET_DATA_DEBUG2_TABLE} (${columns.join(', ')})
+      VALUES (${placeholders})
+    `;
+    const values = columns.map((col) => dataWithUuid[col] ?? null);
+    const result = await executeQuery(insertQuery, values);
+    return { action: 'insert', insertId: result.insertId };
   }
 }

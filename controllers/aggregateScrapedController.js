@@ -247,7 +247,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
   // BEGIN DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
   try {
     await MarketDataService.upsertMarketDataDebug1(fieldBuckets, newData, hotelUuid);
-    console.log(`✅ Debug log saved: ${hotelUuid}`);
+    console.log(`✅ Debug1 logs saved: ${hotelUuid}`);
   } catch (err) {
     console.error(`❌ Failed to upsert to market_data_debug1 for ${hotelUuid}:`, err.message);
   }
@@ -285,16 +285,16 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     mergedData = newData;
   }
   
-  // // BEGIN SAVE_DEBUG2_LOG
-  // if (Object.keys(DEBUG2_LOGS).length > 0) {    
-  //   try {
-  //     await MarketDataService.upsertMarketDataDebug2(DEBUG2_LOGS, hotelUuid);
-  //     console.log(`✅ Debug log saved: ${hotelUuid}`);
-  //   } catch (err) {
-  //     console.error(`❌ Failed to upsert to market_data_debug2 for ${hotelUuid}:`, err.message);
-  //   }
-  // }
-  // // END SAVE_DEBUG2_LOG
+  // BEGIN SAVE_DEBUG2_LOG
+  if (Object.keys(DEBUG2_LOGS).length > 0) {    
+    try {
+      await MarketDataService.upsertMarketDataDebug2(DEBUG2_LOGS, hotelUuid);
+      console.log(`✅ Debug2 logs saved: ${hotelUuid}`);
+    } catch (err) {
+      console.error(`❌ Failed to upsert to market_data_debug2 for ${hotelUuid}:`, err.message);
+    }
+  }
+  // END SAVE_DEBUG2_LOG
 
   // Track "other" changes in a single check
   const otherUpdated = isFieldUpdated('other', mergedData);
