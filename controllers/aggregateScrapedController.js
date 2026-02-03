@@ -44,16 +44,17 @@ async function getActiveMarkdownPages(hotelUuid) {
  * Update LLM input metadata for a page after successful extraction.
  * @param {number} pageId - Page ID.
  * @param {string} checksum - Checksum used for the LLM input.
+ * @param {string} [llm_output] - JSON string of extracted fields (e.g. JSON.stringify(extracted)); saved to llm_output column.
  * @returns {Promise<number>} Number of affected rows.
  */
-async function markLLMInput(pageId, checksum) {
+async function markLLMInput(pageId, checksum, llm_output) {
   const query = `
     UPDATE ${HOTEL_PAGE_DATA_TABLE}
-    SET llm_input_checksum = ?, llm_updated = CURRENT_TIMESTAMP
+    SET llm_input_checksum = ?, llm_output = ?, llm_updated = CURRENT_TIMESTAMP
     WHERE id = ?
   `;
   try {
-    const result = await executeQuery(query, [checksum, pageId]);
+    const result = await executeQuery(query, [checksum, llm_output ?? null, pageId]);
     return result.affectedRows || 0;
   } catch (error) {
     console.error(`❌ Error updating LLM input metadata for page ${pageId}:`, error.message);
@@ -227,7 +228,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
           fieldBuckets[field.name].push(val.trim());
         }
       });
-      await markLLMInput(page.id, page.checksum);
+      await markLLMInput(page.id, page.checksum, JSON.stringify(extracted));
       console.log(`✅ Extraction: processed page ${page.id} (${page.page_url})`);
     } catch (error) {
       console.log(`❌ Extraction: failed page ${page.id} (${page.page_url}) -> ${error.message}`);
