@@ -153,11 +153,12 @@ export class MarketDataService {
    * @returns {Object} Filtered data object containing only valid fields
    */
   static filterValidFields(data) {
-    const validFieldNames = new Set(MD_ALL_FIELDS.map(f => f.name));
+    const validFieldNamesSet = new Set(MD_ALL_FIELDS.map(f => f.name));
+    const otherTableFieldNames4Upsert = ['hotel_uuid'];
     const filteredData = {};
     
     Object.keys(data).forEach(key => {
-      if (validFieldNames.has(key) || key === 'hotel_uuid') {
+      if (validFieldNamesSet.has(key) || otherTableFieldNames4Upsert.includes(key)) {
         filteredData[key] = data[key];
       }
     });
