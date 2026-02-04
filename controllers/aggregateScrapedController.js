@@ -121,15 +121,15 @@ ${markdown}
  * @param {Array<{ page_url: string, value: string }>} snippets - Snippets per page (page_url + value).
  * @returns {Promise<string>} Refined field value.
  */
+const SNIPPET_DELIM = '\n<<<<<\n\n';
+
 async function mergeAndRefineSnippets(fieldName, snippets) {
   const items = (snippets || []).filter((s) => s && s.value);
   const formatSnippet = (s, i) => {
-    const lines = String(s.value).split('\n');
-    const first = lines[0] ?? '';
-    const rest = lines.slice(1).map((l) => '  ' + l).join('\n');
-    return `Snippet ${i + 1} (page url: ${s.page_url || ''})\n- ${first}${rest ? '\n' + rest : ''}`;
+    const value = String(s.value).trim();
+    return `>>>>> Snippet ${i + 1} (page url: ${s.page_url || ''})\n${value}`;
   };
-  const joined = items.map(formatSnippet).join('\n\n');
+  const joined = items.map(formatSnippet).join(SNIPPET_DELIM);
   if (!joined) return '';
 
   const prompt = `You are consolidating hotel information for the field "${fieldName}".
