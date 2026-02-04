@@ -426,7 +426,7 @@ export class MarketDataService {
           continue;
         }
         const sep = '\n\n==========================\n==========================\n==========================\n';
-        const isUpdateStr = value.isUpdate ? 'UPDATED\n   \n' : '.'.repeat(50) + '\n'+ 'REJECTED' + sep;
+        const isUpdateStr = value.isUpdate ? 'UPDATED\n   \n' : '.'.repeat(80) + '\n'+ 'REJECTED' + sep;
         const existingStr = value.existingData != null ? String(value.existingData) : '';
         const newStr = value.newData != null ? String(value.newData) : '';
         const mergedStr = value.mergedText != null ? String(value.mergedText) : '';
