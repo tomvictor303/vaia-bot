@@ -21,11 +21,11 @@ export const MD_CAT_FIELDS = [
 	{ name: 'amenities', description: 'Amenities - Feature, facility, or service offered to enhance the guest experience' },
 	{ name: 'cleanliness_enhancements', description: 'Cleanliness enhancements - Specific improvements or additional measures to maintain a higher level of hygiene and sanitation' },
 	{ name: 'food_beverage', description: 'Food & beverage (Dining, bar, café, and catering services provided; plus cuisine, meals, and drinks served)' },
-	{ 
-		name: 'guest_rooms', 
-		description: 'Guest Rooms - Guest rooms types',
-		extract_guide: 'Extract all Guest Room Types content (room types and what differentiates them, plus key room amenities and accessibility/pet/non-smoking notes); summarizing is allowed, but do not omit.' 
-	},
+	{
+		name: 'guest_rooms',
+		description: 'Guest Rooms - Room types and inventory count per type; renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities, and more',
+		extract_guide: 'Extract all Guest Room content. For each room type capture: room type; number of rooms per type (if stated); renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities, and more. Do not omit any details.'
+	},		
 	{ name: 'guest_services_front_desk', description: 'Guest Services / Front Desk - Bell/porter service, Concierge, Lost & found inquiries, Luggage storage, Wake-up calls' },
 	{ name: 'housekeeping_laundry', description: 'Housekeeping / Laundry - Cleaning, room upkeep, linens, guest laundry, guest clothing care' },
 	{ name: 'local_area_information', description: 'Local Area Information - Attractions, services, and amenities outside the hotel' },
