@@ -132,8 +132,13 @@ async function mergeAndRefineSnippets(fieldName, snippets) {
   const joined = items.map(formatSnippet).join(SNIPPET_DELIM);
   if (!joined) return '';
 
+  const fieldDef = MD_CAT_FIELDS.find((f) => f.name === fieldName);
+  const fieldDescription = fieldDef?.description?.trim() || '';
+  const descriptionLine = fieldDescription ? `Field description: ${fieldDescription}\n` : '';
+
   const prompt = `You are consolidating hotel information for the field "${fieldName}".
-You will receive multiple snippets (bullets). Merge them into one clean, concise paragraph or bullet list.
+${descriptionLine}
+You will receive multiple snippets. Merge them into one clean, concise paragraph or bullet list.
 Prioritize facts from snippets whose page URL is related to this field.
 Remove duplicates, keep URLs, fix formatting. Keep only factual info from the snippets.
 **Return ONLY the merged text.**
