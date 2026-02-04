@@ -123,11 +123,11 @@ ${markdown}
  */
 async function mergeAndRefineSnippets(fieldName, snippets) {
   const items = (snippets || []).filter((s) => s && s.value);
-  const formatSnippet = (s) => {
+  const formatSnippet = (s, i) => {
     const lines = String(s.value).split('\n');
     const first = lines[0] ?? '';
     const rest = lines.slice(1).map((l) => '  ' + l).join('\n');
-    return `[${s.page_url || ''}]\n- ${first}${rest ? '\n' + rest : ''}`;
+    return `Snippet ${i + 1} (page url: ${s.page_url || ''})\n- ${first}${rest ? '\n' + rest : ''}`;
   };
   const joined = items.map(formatSnippet).join('\n\n');
   if (!joined) return '';
