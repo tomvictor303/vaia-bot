@@ -431,9 +431,10 @@ export class MarketDataService {
         const newStr = value.newData != null ? String(value.newData) : '';
         const mergedStr = value.mergedText != null ? String(value.mergedText) : '';
         debugPayload[field.name] =
-          isUpdateStr + 'existingData:\n\n' + existingStr +
-          sep + 'newData:\n\n' + newStr +
-          sep + 'mergedText:\n\n' + mergedStr;
+          isUpdateStr + 
+          'existingData:\n\n' + existingStr + sep +
+          'newData:\n\n' + newStr + sep +
+          'mergedText:\n\n' + mergedStr;
       } catch (err) {
         console.error(`Error building debug2 payload for field ${field.name}:`, err.message);
         debugPayload[field.name] = null;
