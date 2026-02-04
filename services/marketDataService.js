@@ -410,9 +410,10 @@ export class MarketDataService {
   }
 
   /**
-   * Build payload for market_data_debug2: one column per field, value = JSON.stringify(DEBUG2_LOGS[field]) or null.
+   * Build payload for market_data_debug2: one column per field, value = readable string (like debug1) or null.
+   * DEBUG2_LOGS[field] is { isUpdate, existingData, newData, mergedText }.
    * @param {Object} DEBUG2_LOGS - Object keyed by field name, values are { isUpdate, existingData, newData, mergedText }
-   * @returns {Object} Object keyed by field name, values are JSON strings or null for DB
+   * @returns {Object} Object keyed by field name, values are strings or null for DB
    */
   static buildDebug2Payload(DEBUG2_LOGS) {
     const debugPayload = {};
@@ -420,7 +421,20 @@ export class MarketDataService {
       if (!field || field.name == null) continue;
       try {
         const value = DEBUG2_LOGS[field.name];
-        debugPayload[field.name] = value != null ? JSON.stringify(value) : null;
+        if (value == null) {
+          debugPayload[field.name] = null;
+          continue;
+        }
+        const sep = '\n\n==========================\n==========================\n==========================\n';
+        const isUpdateStr = String(value.isUpdate ?? '');
+        const existingStr = value.existingData != null ? String(value.existingData) : '';
+        const newStr = value.newData != null ? String(value.newData) : '';
+        const mergedStr = value.mergedText != null ? String(value.mergedText) : '';
+        debugPayload[field.name] =
+          'isUpdate:\n\n' + isUpdateStr +
+          sep + 'existingData:\n\n' + existingStr +
+          sep + 'newData:\n\n' + newStr +
+          sep + 'mergedText:\n\n' + mergedStr;
       } catch (err) {
         console.error(`Error building debug2 payload for field ${field.name}:`, err.message);
         debugPayload[field.name] = null;
