@@ -10,7 +10,7 @@ const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_d
 const CATEGORY_FIELDS = MD_CAT_FIELDS.map(f => ({
   name: f.name,
   description: f.description,
-  extract_guide: f.extract_guide,
+  capture_guide: f.capture_guide,
 }));
 
 const openai = new OpenAI({
@@ -76,8 +76,8 @@ async function extractFieldsFromPage(markdown, pageUrl, hotelNameLabel) {
 
   const describedFields = CATEGORY_FIELDS.map((f) => {
     const desc = (f.description || '').replace(/\[hotelName\]/g, hotelNameLabel);
-    const guide = f.extract_guide
-      ? ` (Extraction guide: ${f.extract_guide})`
+    const guide = f.capture_guide
+      ? ` (Capture guide: ${f.capture_guide})`
       : '';
     return `- "${f.name}" : ${desc}${guide}`;
   }).join('\n');

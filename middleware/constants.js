@@ -24,7 +24,7 @@ export const MD_CAT_FIELDS = [
 	{
 		name: 'guest_rooms',
 		description: 'Guest Rooms - Room type name (exact name as on the page) and all details per type including inventory count; renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities.',
-		extract_guide: 'Use the exact room type name as stated on the page; do not rename or paraphrase. For each room type, try to capture all stated details. Do not omit any details.'
+		capture_guide: 'Use the exact room type name as stated on the page; do not rename or paraphrase. For each room type, try to capture all stated details. Do not omit any details.'
 	},
 	{ name: 'guest_services_front_desk', description: 'Guest Services / Front Desk - Bell/porter service, Concierge, Lost & found inquiries, Luggage storage, Wake-up calls' },
 	{ name: 'housekeeping_laundry', description: 'Housekeeping / Laundry - Cleaning, room upkeep, linens, guest laundry, guest clothing care' },
@@ -36,7 +36,7 @@ export const MD_CAT_FIELDS = [
 	{ 
 		name: 'recreation_fitness', 
 		description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity',
-		extract_guide: 'Extract all Recreation & fitness content, including facilities, activities, and services that support leisure, wellness, and physical activity; summarizing is allowed, but do not omit any details.' 
+		capture_guide: 'Extract all Recreation & fitness content, including facilities, activities, and services that support leisure, wellness, and physical activity; summarizing is allowed, but do not omit any details.' 
 	},
 	{ name: 'safety_security', description: 'Safety & Security - Emergency procedures (fire exits, severe weather protocols, Safe deposit boxes or in-room safes, Security staff or surveillance)' },
 	{ name: 'technology_business_services', description: 'Technology / Business Services - Business center computers, printing, fax, and copying, Wi-Fi details, Public computer access' },
@@ -44,7 +44,7 @@ export const MD_CAT_FIELDS = [
 	{
 		name: 'faq',
 		description: 'FAQ - Frequently Asked Questions',
-		extract_guide: 'Only capture explicit Q&A pairs from sections explicitly labeled as FAQ (Frequently Asked Questions). Keep original question and answer as is'
+		capture_guide: 'Only capture explicit Q&A pairs from sections explicitly labeled as FAQ (Frequently Asked Questions). Keep original question and answer as is'
 	},
 	// Plus, "other" field
 	{ name: 'other', description: 'Other - Any other information that is not covered by the other categories' },
