@@ -133,14 +133,14 @@ async function mergeAndRefineSnippets(fieldName, snippets) {
   if (!joined) return '';
 
   const fieldDef = MD_CAT_FIELDS.find((f) => f.name === fieldName);
+  const isOtherField = fieldName === 'other' || fieldName === 'other_structured';
   const fieldDescription = fieldDef?.description?.trim() || '';
-  const descriptionLine = fieldDescription ? `Field description: ${fieldDescription}\n` : '';
+  const descriptionLine = (!isOtherField && fieldDescription) ? `Field description: ${fieldDescription}\n` : '';
+  const prioritizeLine = isOtherField ? '' : 'Prioritize facts from snippets whose page URL is related to this field.\n';
 
   const prompt = `You are consolidating hotel information for the field "${fieldName}".
-${descriptionLine}
-You will receive multiple snippets. Merge them into one clean, concise paragraph or bullet list.
-Prioritize facts from snippets whose page URL is related to this field.
-Remove duplicates, keep URLs, fix formatting. Keep only factual info from the snippets.
+${descriptionLine}You will receive multiple snippets. Merge them into one clean, concise paragraph or bullet list.
+${prioritizeLine}Remove duplicates, keep URLs, fix formatting. Keep only factual info from the snippets.
 **Return ONLY the merged text.**
 
 **Snippets:**
