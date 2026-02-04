@@ -431,7 +431,7 @@ export class MarketDataService {
         const newStr = value.newData != null ? String(value.newData) : '';
         const mergedStr = value.mergedText != null ? String(value.mergedText) : '';
         debugPayload[field.name] =
-          'isUpdate:\n\n' + isUpdateStr +
+          isUpdateStr +
           sep + 'existingData:\n\n' + existingStr +
           sep + 'newData:\n\n' + newStr +
           sep + 'mergedText:\n\n' + mergedStr;
