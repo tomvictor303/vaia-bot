@@ -23,8 +23,8 @@ export const MD_CAT_FIELDS = [
 	{ name: 'food_beverage', description: 'Food & beverage (Dining, bar, café, and catering services provided; plus cuisine, meals, and drinks served)' },
 	{
 		name: 'guest_rooms',
-		description: 'Guest Rooms - Room types and inventory count per type; renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities, and more',
-		extract_guide: 'Extract all Guest Room content. For each room type capture: room type; number of rooms per type (if stated); renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities, and more. Do not omit any details.'
+		description: 'Guest Rooms - Room types and all details including inventory count per type; renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities.',
+		extract_guide: 'Extract all Guest Room content. For each room type capture: room type and all details including number of rooms per type (if stated); renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities. Do not omit any details.'
 	},		
 	{ name: 'guest_services_front_desk', description: 'Guest Services / Front Desk - Bell/porter service, Concierge, Lost & found inquiries, Luggage storage, Wake-up calls' },
 	{ name: 'housekeeping_laundry', description: 'Housekeeping / Laundry - Cleaning, room upkeep, linens, guest laundry, guest clothing care' },
