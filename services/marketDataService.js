@@ -426,13 +426,12 @@ export class MarketDataService {
           continue;
         }
         const sep = '\n\n==========================\n==========================\n==========================\n';
-        const isUpdateStr = value.isUpdate ? 'UPDATED' : '.'.repeat(50) + '\n'+ 'REJECTED';
+        const isUpdateStr = value.isUpdate ? 'UPDATED\n   \n' : '.'.repeat(50) + '\n'+ 'REJECTED' + sep;
         const existingStr = value.existingData != null ? String(value.existingData) : '';
         const newStr = value.newData != null ? String(value.newData) : '';
         const mergedStr = value.mergedText != null ? String(value.mergedText) : '';
         debugPayload[field.name] =
-          isUpdateStr +
-          sep + 'existingData:\n\n' + existingStr +
+          isUpdateStr + 'existingData:\n\n' + existingStr +
           sep + 'newData:\n\n' + newStr +
           sep + 'mergedText:\n\n' + mergedStr;
       } catch (err) {
