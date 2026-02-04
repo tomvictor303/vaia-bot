@@ -36,7 +36,8 @@ export const MD_CAT_FIELDS = [
 	{ 
 		name: 'recreation_fitness', 
 		description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity',
-		capture_guide: 'Capture all Recreation & fitness content, including facilities, activities, and services that support leisure, wellness, and physical activity; summarizing is allowed, but do not omit any details.' 
+		capture_guide: 'Capture all Recreation & fitness content, including facilities, activities, and services that support leisure, wellness, and physical activity; summarizing is allowed, but do not omit any details.', 
+		merge_guide: 'Do not compose or invent room type name or item names. Use the exact name as stated on the page. Single room type can have nick names, but do not compose or invent them.'
 	},
 	{ name: 'safety_security', description: 'Safety & Security - Emergency procedures (fire exits, severe weather protocols, Safe deposit boxes or in-room safes, Security staff or surveillance)' },
 	{ name: 'technology_business_services', description: 'Technology / Business Services - Business center computers, printing, fax, and copying, Wi-Fi details, Public computer access' },
