@@ -136,7 +136,7 @@ async function mergeAndRefineSnippets(fieldName, snippets) {
   const isOtherField = fieldName === 'other' || fieldName === 'other_structured';
   const fieldDescription = fieldDef?.description?.trim() || '';
   const descriptionLine = (!isOtherField && fieldDescription) ? `Field description: ${fieldDescription}\n` : '';
-  const prioritizeLine = isOtherField ? '' : 'First priority: facts from snippets whose page URL is related to this field. Second priority: content from the homepage.\n';
+  const prioritizeLine = isOtherField ? '' : 'First priority: facts from snippets whose page URL is related to this field. Second priority: facts from the homepage.\n';
 
   const prompt = `You are consolidating hotel information for the field "${fieldName}".
 ${descriptionLine}You will receive multiple snippets. Merge them into one clean, concise paragraph or bullet list.
