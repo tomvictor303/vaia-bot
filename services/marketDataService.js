@@ -320,7 +320,7 @@ export class MarketDataService {
 
   /**
    * Build debug1 payload from fieldBuckets (snippets per field) and newData (refined value per field).
-   * @param {Object} fieldBuckets - Object keyed by field name, values are string arrays (snippets)
+   * @param {Object} fieldBuckets - Object keyed by field name, values are Array<{ page_url: string, value: string }>
    * @param {Object} newData - Object keyed by field name, values are strings (refined text)
    * @param {string} hotelUuid - Hotel UUID for debug log
    * @returns {Object} Object keyed by field name, values are string or null for DB
@@ -334,7 +334,9 @@ export class MarketDataService {
         const newDataVal = newData[field.name] ?? null;
         const bothNull = (snippets == null || (Array.isArray(snippets) && snippets.length === 0)) &&
           (newDataVal == null || newDataVal === '' || newDataVal === 'N/A');
-        const snippetsStr = snippets == null ? '' : snippets.join('\n==========================\n');
+        const snippetsStr = snippets == null ? '' : (Array.isArray(snippets)
+          ? snippets.map((s) => (s && s.value != null) ? `[${s.page_url || ''}]\n${s.value}` : '').filter(Boolean).join('\n==========================\n')
+          : '');
         const newDataStr = newDataVal == null ? '' : String(newDataVal);
         debugPayload[field.name] = bothNull ? null
           : 'snippets:\n\n' + snippetsStr + '\n\n==========================\n==========================\n==========================\nnew Data:\n\n' + newDataStr;
@@ -349,7 +351,7 @@ export class MarketDataService {
   /**
    * Upsert into market_data_debug1 (same structure as market_data).
    * Composes debug payload from fieldBuckets and newData, then upserts by hotel_uuid.
-   * @param {Object} fieldBuckets - Object keyed by field name, values are string arrays (snippets)
+   * @param {Object} fieldBuckets - Object keyed by field name, values are Array<{ page_url: string, value: string }>
    * @param {Object} newData - Object keyed by field name, values are strings (refined text)
    * @param {string} hotelUuid - Hotel UUID for upsert key
    * @returns {Promise<Object>} { action: 'insert'|'update', insertId?: number, affectedRows?: number, id?: number }

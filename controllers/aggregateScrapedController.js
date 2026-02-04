@@ -118,21 +118,27 @@ ${markdown}
 /**
  * Merge and refine snippets for a given field using LLM to remove duplicates and clean formatting.
  * @param {string} fieldName - Field name being refined.
- * @param {string[]} snippets - Snippets collected from pages.
+ * @param {Array<{ page_url: string, value: string }>} snippets - Snippets per page (page_url + value).
  * @returns {Promise<string>} Refined field value.
  */
 async function mergeAndRefineSnippets(fieldName, snippets) {
-  const joined = snippets.filter(Boolean).join('\n- ');
+  const items = (snippets || []).filter((s) => s && s.value);
+  const formatSnippet = (s) => {
+    const lines = String(s.value).split('\n');
+    const first = lines[0] ?? '';
+    const rest = lines.slice(1).map((l) => '  ' + l).join('\n');
+    return `[${s.page_url || ''}]\n- ${first}${rest ? '\n' + rest : ''}`;
+  };
+  const joined = items.map(formatSnippet).join('\n\n');
   if (!joined) return '';
 
   const prompt = `You are consolidating hotel information for the field "${fieldName}".
 You will receive multiple snippets (bullets). Merge them into one clean, concise paragraph or bullet list.
 Remove duplicates, keep URLs, fix formatting. Keep only factual info from the snippets.
+**Return ONLY the merged text.**
 
-Snippets:
-- ${joined}
-
-Return ONLY the merged text.`;
+**Snippets:**
+${joined}`;
 
   const completion = await openai.chat.completions.create({
     model: 'sonar-pro',
@@ -225,7 +231,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
       CATEGORY_FIELDS.forEach((field) => {
         const val = extracted[field.name];
         if (typeof val === 'string' && val.trim()) {
-          fieldBuckets[field.name].push(val.trim());
+          fieldBuckets[field.name].push({ page_url: page.page_url, value: val.trim() });
         }
       });
       await markLLMInput(page.id, page.checksum, JSON.stringify(extracted));
