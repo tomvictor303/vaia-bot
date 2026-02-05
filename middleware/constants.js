@@ -20,7 +20,7 @@ export const MD_CAT_FIELDS = [
 	{ name: 'accessibility', description: 'Accessibility - ADA-compliant rooms, Accessible entrances, restrooms, and elevators, Assistive devices or services' },
 	{ name: 'amenities', description: 'Amenities - Feature, facility, or service offered to enhance the guest experience' },
 	{ name: 'cleanliness_enhancements', description: 'Cleanliness enhancements - Specific improvements or additional measures to maintain a higher level of hygiene and sanitation' },
-	{ name: 'food_beverage', description: 'Food & beverage (Dining, bar, café, and catering services provided; plus cuisine, meals, and drinks served)' },
+	{ name: 'food_beverage', description: 'Food & beverage - Dining, bar, café, and catering; cuisine, meals, and drinks; hours and service times; bar details; private events and catering; staff handling instructions' },
 	{
 		name: 'guest_rooms',
 		description: 'Guest Rooms - Room types and all details including inventory count pet types; renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities.',
