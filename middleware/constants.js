@@ -32,8 +32,8 @@ export const MD_CAT_FIELDS = [
 	{ 
 		name: 'local_area_information', 
 		description: 'Local Area Information - Outside the hotel: all named attractions, businesses, venues, services, and amenities, plus all their details including distances, attraction context, activities, food options, local transportation access, tour operators, and seasonality.',
-		capture_guide: 'Do not drop or replace explicitly named places, businesses, or properties with generic labels.',
-		merge_guide: 'Do not drop or replace explicitly named places, businesses, or properties with generic labels.'
+		capture_guide: 'Do not drop or replace explicitly named places, businesses, or properties with generic labels. Do not omit any details.',
+		merge_guide: 'Do not drop or replace explicitly named places, businesses, or properties with generic labels. Do not omit any details.'
 	},
 	{ name: 'meeting_events', description: 'Meeting & events - Spaces, services, and resources for hosting meetings, conferences, banquets, weddings, and social gatherings' },
 	{ name: 'on_property_convenience', description: 'On property convenience - Practical, guest-facing services that make the stay more seamless, accessible, and comfortable' },
