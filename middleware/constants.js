@@ -31,7 +31,7 @@ export const MD_CAT_FIELDS = [
 	{ name: 'housekeeping_laundry', description: 'Housekeeping / Laundry - Cleaning, room upkeep, linens, guest laundry, guest clothing care' },
 	{ 
 		name: 'local_area_information', 
-		description: 'Local Area Information - Outside the hotel: all named attractions, businesses, venues, services, and amenities, plus their details including distances, attraction context, activities, food options, local transportation access, tour operators, and seasonality.',
+		description: 'Local Area Information - Outside the hotel: all named attractions, businesses, venues, services, and amenities, plus all their details including distances, attraction context, activities, food options, local transportation access, tour operators, and seasonality.',
 		capture_guide: 'Do not drop or replace explicitly named places, businesses, or properties with generic labels.',
 		merge_guide: 'Do not drop or replace explicitly named places, businesses, or properties with generic labels.'
 	},
