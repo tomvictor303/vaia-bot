@@ -88,7 +88,7 @@ ${describedFields}
 
 Rules:
 - Base your answers ONLY on the provided Markdown.
-- Keep text concise but complete; preserve bullet-like lists as text (comma or semicolon separated).
+- Preserve bullet-like lists as text (comma or semicolon separated).
 - Do not invent data.
 - If nothing relevant for a key, use "".
 - Keep URLs if present.
