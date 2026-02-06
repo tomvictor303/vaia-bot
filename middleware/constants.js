@@ -36,7 +36,7 @@ export const MD_CAT_FIELDS = [
 		merge_guide: 'Do not drop or replace explicitly named places, businesses, or properties with generic labels. Do not omit any details.'
 	},
 	{ name: 'meeting_events', description: 'Meeting & events - Spaces, services, and resources for hosting meetings, conferences, banquets, weddings, and social gatherings' },
-	{ name: 'on_property_convenience', description: 'On property convenience - Practical, guest-facing services that make the stay more seamless, accessible, and comfortable' },
+	{ name: 'on_property_convenience', description: 'On-property convenience – Practical, guest-facing services that make the stay more seamless, accessible, and comfortable, along with supporting details such as equipment, availability or seasonality, and basic usage guidance where applicable.' },
 	{ name: 'parking_transportation', description: 'Parking & transportation - Services, instructions, and logistics related to guest vehicles, access to the property, and travel options to and from the hotel' },
 	{ name: 'policies', description: 'Policies - Formal set of guidelines, rules, or procedures' },
 	{ 
