@@ -29,7 +29,12 @@ export const MD_CAT_FIELDS = [
 	},
 	{ name: 'guest_services_front_desk', description: 'Guest Services / Front Desk - Bell/porter service, Concierge, Lost & found inquiries, Luggage storage, Wake-up calls' },
 	{ name: 'housekeeping_laundry', description: 'Housekeeping / Laundry - Cleaning, room upkeep, linens, guest laundry, guest clothing care' },
-	{ name: 'local_area_information', description: 'Local Area Information - Outside the hotel: all named attractions, businesses, venues, services, and amenities (do not generalize to categories), plus their details including distances, attraction context, activities, food options, local transportation access, tour operators, and seasonality.' },
+	{ 
+		name: 'local_area_information', 
+		description: 'Local Area Information - Outside the hotel: all named attractions, businesses, venues, services, and amenities, plus their details including distances, attraction context, activities, food options, local transportation access, tour operators, and seasonality.',
+		capture_guide: 'Do not drop or replace explicitly named places, businesses, or properties with generic labels.',
+		merge_guide: 'Do not drop or replace explicitly named places, businesses, or properties with generic labels.'
+	},
 	{ name: 'meeting_events', description: 'Meeting & events - Spaces, services, and resources for hosting meetings, conferences, banquets, weddings, and social gatherings' },
 	{ name: 'on_property_convenience', description: 'On property convenience - Practical, guest-facing services that make the stay more seamless, accessible, and comfortable' },
 	{ name: 'parking_transportation', description: 'Parking & transportation - Services, instructions, and logistics related to guest vehicles, access to the property, and travel options to and from the hotel' },
