@@ -87,7 +87,7 @@ Return a JSON object with EXACTLY these keys (all string values; use "" if not f
 ${describedFields}
 
 Rules:
-- Use **only the Markdown below** as the source. Do not fill fields from memory, training, or any source other than this Markdown.
+- Use **only the Markdown below** as the source. Do not fill keys from memory, training, or any source other than this Markdown.
 - If nothing in the Markdown is relevant to a key, use "".
 - Preserve bullet-like lists as text (comma or semicolon separated).
 - Do not invent data.
