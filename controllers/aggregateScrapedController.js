@@ -87,10 +87,10 @@ Return a JSON object with EXACTLY these keys (all string values; use "" if not f
 ${describedFields}
 
 Rules:
-- Base your answers ONLY on the provided Markdown.
+- Use **only the Markdown below** as the source. Do not fill fields from memory, training, or any source other than this Markdown.
+- If nothing in the Markdown is relevant to a key, use "".
 - Preserve bullet-like lists as text (comma or semicolon separated).
 - Do not invent data.
-- If nothing relevant for a key, use "".
 - Keep URLs if present.
 
 Markdown source (from ${pageUrl}):
