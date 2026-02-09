@@ -50,8 +50,8 @@ export const MD_CAT_FIELDS = [
 	{
 		name: 'faq',
 		description: 'FAQ - Frequently Asked Questions',
-		capture_guide: 'Only capture explicit Q&A pairs from sections explicitly labeled as FAQ (Frequently Asked Questions). Keep original question and answer as is',
-		merge_guide: 'Keep original question and answer as is. Do not abstract or summarize FAQ questions and answers.'
+		capture_guide: 'Only capture explicit Q&A pairs from sections explicitly labeled as FAQ (Frequently Asked Questions). **Keep original question and answer as is. Do not abstract or summarize FAQ questions and answers.**',
+		merge_guide: '**Keep original question and answer as is. Do not abstract or summarize FAQ questions and answers.**'
 	},
 	// Plus, "other" field
 	{ name: 'other', description: 'Other - Any other information that is not covered by the other categories' },
