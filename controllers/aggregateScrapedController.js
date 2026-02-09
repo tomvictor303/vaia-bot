@@ -270,24 +270,24 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
 
   const unitTestAction = String(process.env.UNIT_TEST_ACTION || '').toLowerCase();
 
-  const pages = await getActiveMarkdownPages(hotelUuid);
-  if (!pages.length) {
-    console.log(`⚠️  No markdown pages to aggregate for hotel ${hotelUuid}`);
-    return null;
-  }
-
   const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f.name, []]));
 
   // BEGIN EXTRACT_DATA_FROM_PAGES
   if (unitTestAction === 'after_extract') {
     // Load field buckets from cached outputs
     // This test action is used to **skip** the extraction step in the unit test.
+    console.log(`🧪 UNIT_TEST_ACTION=after_extract: loading cached llm_output into field buckets (skipping per-page extraction).`);
     const ok = await loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets);
     if (!ok) {
       return null;
     }
   } else {
     // BEGIN EXTRACT_DATA_FROM_PAGES_BODY
+    const pages = await getActiveMarkdownPages(hotelUuid);
+    if (!pages.length) {
+      console.log(`⚠️  No markdown pages to aggregate for hotel ${hotelUuid}`);
+      return null;
+    }
     // Per-page extraction (Count(pages) LLM calls)
     console.log(`🔍 Extracting fields' data from pages...`);
     for (const page of pages) {
