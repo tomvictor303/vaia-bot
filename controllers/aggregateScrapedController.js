@@ -3,7 +3,7 @@ import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
 import { MD_CAT_FIELDS } from '../middleware/constants.js';
-import { llmOutputToJson } from '../utils/custom.js';
+import { llmOutputToJson, isNonEmptyObject } from '../utils/custom.js';
 
 const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
 
@@ -293,18 +293,11 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     for (const page of pages) {
       try {
         let extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
-        // check if the extracted is an object and has content
-        const isObject = extracted != null && typeof extracted === 'object' && !Array.isArray(extracted);
-        const hasContent = isObject && Object.keys(extracted).some((k) => {
-          const v = extracted[k];
-          return v != null && String(v).trim() !== '';
-        });
-        if (!hasContent) {
-          // retry once more
+        if (!isNonEmptyObject(extracted)) {
           console.log(`⚠️ Extraction empty for page ${page.id}, retrying once more...`);
-          extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
+          const retried = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
+          extracted = isNonEmptyObject(retried) ? retried : {};
         }
-        // fill the field buckets with the extracted data
         CATEGORY_FIELDS.forEach((field) => {
           const val = extracted[field.name];
           if (typeof val === 'string' && val.trim()) {
