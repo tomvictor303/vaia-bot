@@ -250,6 +250,12 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     }
   }
 
+  const unitTestAction = String(process.env.UNIT_TEST_ACTION || '').toLowerCase();
+  if (unitTestAction === 'extract') {
+    console.log(`🧪 UNIT_TEST_ACTION=extract: stopping after extraction (skipping compose, merge, upsert).`);
+    return null;
+  }
+
   // Per-field composition (Count(schema fields) LLM calls)
   // This is where the new data is composed from the extracted snippets (from multiple pages) by iterating each field.
   console.log(`🔍 Composing new data from extracted fields...`);
