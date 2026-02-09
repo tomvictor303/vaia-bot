@@ -292,7 +292,19 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     console.log(`🔍 Extracting fields' data from pages...`);
     for (const page of pages) {
       try {
-        const extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
+        let extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
+        // check if the extracted is an object and has content
+        const isObject = extracted != null && typeof extracted === 'object' && !Array.isArray(extracted);
+        const hasContent = isObject && Object.keys(extracted).some((k) => {
+          const v = extracted[k];
+          return v != null && String(v).trim() !== '';
+        });
+        if (!hasContent) {
+          // retry once more
+          console.log(`⚠️ Extraction empty for page ${page.id}, retrying once more...`);
+          extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
+        }
+        // fill the field buckets with the extracted data
         CATEGORY_FIELDS.forEach((field) => {
           const val = extracted[field.name];
           if (typeof val === 'string' && val.trim()) {
