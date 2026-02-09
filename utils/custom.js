@@ -5,7 +5,7 @@ import extractJson from 'extract-json-from-string';
  * @param {*} value
  * @returns {boolean}
  */
-export function isNonEmptyObject(value) {
+export function isValidStringMap(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   return Object.values(value).some((v) => typeof v === 'string' && v.trim() !== '');
 }

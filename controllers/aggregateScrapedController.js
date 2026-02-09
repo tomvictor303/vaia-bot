@@ -3,7 +3,7 @@ import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
 import { MD_CAT_FIELDS } from '../middleware/constants.js';
-import { llmOutputToJson, isNonEmptyObject } from '../utils/custom.js';
+import { llmOutputToJson, isValidStringMap } from '../utils/custom.js';
 
 const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
 
@@ -293,10 +293,10 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     for (const page of pages) {
       try {
         let extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
-        if (!isNonEmptyObject(extracted)) {
+        if (!isValidStringMap(extracted)) {
           console.log(`⚠️ Extraction empty for page ${page.id}, retrying once more...`);
           const retried = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
-          extracted = isNonEmptyObject(retried) ? retried : {};
+          extracted = isValidStringMap(retried) ? retried : {};
         }
         CATEGORY_FIELDS.forEach((field) => {
           const val = extracted[field.name];
