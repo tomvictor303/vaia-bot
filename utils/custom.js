@@ -15,7 +15,9 @@ export function llmOutputToJson(raw) {
   try {
     const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
     return JSON.parse(cleaned);
-  } catch {
+  } catch (error) {
+    console.error('❌ Error parsing JSON::llmOutputToJson', error.message);
+    console.error('❌ Raw JSON::llmOutputToJson', raw);
     return {};
   }
 }
