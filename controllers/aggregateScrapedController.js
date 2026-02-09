@@ -281,7 +281,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
   // BEGIN EXTRACT_DATA_FROM_PAGES
   if (unitTestAction === 'after_extract') {
     // Load field buckets from cached outputs
-    // This test action is used to skip the extraction step in the unit test.
+    // This test action is used to **skip** the extraction step in the unit test.
     const ok = await loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets);
     if (!ok) {
       return null;
