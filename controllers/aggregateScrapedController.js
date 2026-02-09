@@ -63,6 +63,50 @@ async function markLLMInput(pageId, checksum, llm_output) {
 }
 // END markLLMInput
 
+// BEGIN loadFieldBucketsFromCachedOutputs
+/**
+ * Load fieldBuckets from cached LLM outputs stored in hotel_page_data.llm_output.
+ * Used by UNIT_TEST_ACTION=after_extract to skip per-page extraction LLM calls.
+ * @param {string} hotelUuid - Hotel UUID.
+ * @param {Object<string, Array<{ page_url: string, value: string }>>} fieldBuckets - Buckets to populate.
+ * @returns {Promise<boolean>} True on success, false on fatal error.
+ */
+async function loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets) {
+  console.log('🧪 UNIT_TEST_ACTION=after_extract: loading cached llm_output into field buckets (skipping per-page extraction).');
+  const cachedQuery = `
+    SELECT page_url, llm_output
+    FROM ${HOTEL_PAGE_DATA_TABLE}
+    WHERE active = 1 AND hotel_uuid = ? AND llm_output IS NOT NULL AND llm_output != ''
+  `;
+  let cachedPages = [];
+  try {
+    cachedPages = await executeQuery(cachedQuery, [hotelUuid]);
+  } catch (error) {
+    console.error('❌ Error loading cached llm_output for after_extract mode:', error.message);
+    return false;
+  }
+
+  for (const page of cachedPages) {
+    if (!page.llm_output) continue;
+    let extracted;
+    try {
+      extracted = JSON.parse(page.llm_output);
+    } catch (err) {
+      console.error(`⚠️ Could not parse cached llm_output for page ${page.page_url}:`, err.message);
+      continue;
+    }
+    CATEGORY_FIELDS.forEach((field) => {
+      const val = extracted[field.name];
+      if (typeof val === 'string' && val.trim()) {
+        fieldBuckets[field.name].push({ page_url: page.page_url, value: val.trim() });
+      }
+    });
+  }
+
+  return true;
+}
+// END loadFieldBucketsFromCachedOutputs
+
 // BEGIN extractFieldsFromPage
 /**
  * Extract category fields from a single markdown page via LLM.
@@ -224,6 +268,8 @@ function isFieldUpdated(fieldName, mergedData) {
 export async function aggregateScrapedData(hotelUuid, hotelName) {
   if (!hotelUuid) throw new Error('hotelUuid is required');
 
+  const unitTestAction = String(process.env.UNIT_TEST_ACTION || '').toLowerCase();
+
   const pages = await getActiveMarkdownPages(hotelUuid);
   if (!pages.length) {
     console.log(`⚠️  No markdown pages to aggregate for hotel ${hotelUuid}`);
@@ -232,25 +278,30 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
 
   const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f.name, []]));
 
-  // Per-page extraction (Count(pages) LLM calls)
-  console.log(`🔍 Extracting fields' data from pages...`);
-  for (const page of pages) {
-    try {
-      const extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
-      CATEGORY_FIELDS.forEach((field) => {
-        const val = extracted[field.name];
-        if (typeof val === 'string' && val.trim()) {
-          fieldBuckets[field.name].push({ page_url: page.page_url, value: val.trim() });
-        }
-      });
-      await markLLMInput(page.id, page.checksum, JSON.stringify(extracted));
-      console.log(`✅ Extraction: processed page ${page.id} (${page.page_url})`);
-    } catch (error) {
-      console.log(`❌ Extraction: failed page ${page.id} (${page.page_url}) -> ${error.message}`);
+  if (unitTestAction === 'after_extract') {
+    const ok = await loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets);
+    if (!ok) {
+      return null;
+    }
+  } else {
+    // Per-page extraction (Count(pages) LLM calls)
+    console.log(`🔍 Extracting fields' data from pages...`);
+    for (const page of pages) {
+      try {
+        const extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
+        CATEGORY_FIELDS.forEach((field) => {
+          const val = extracted[field.name];
+          if (typeof val === 'string' && val.trim()) {
+            fieldBuckets[field.name].push({ page_url: page.page_url, value: val.trim() });
+          }
+        });
+        await markLLMInput(page.id, page.checksum, JSON.stringify(extracted));
+        console.log(`✅ Extraction: processed page ${page.id} (${page.page_url})`);
+      } catch (error) {
+        console.log(`❌ Extraction: failed page ${page.id} (${page.page_url}) -> ${error.message}`);
+      }
     }
   }
-
-  const unitTestAction = String(process.env.UNIT_TEST_ACTION || '').toLowerCase();
   if (unitTestAction === 'extract') {
     console.log(`🧪 UNIT_TEST_ACTION=extract: stopping after extraction (skipping compose, merge, upsert).`);
     return null;

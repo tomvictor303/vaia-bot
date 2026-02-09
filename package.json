@@ -9,7 +9,8 @@
     "dev": "set NODE_ENV=development&& node index.js",
     "dev:scrape": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=scrape&& node index.js",
     "dev:ai": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=ai&& node index.js",
-    "dev:ai:extract": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=ai&& set UNIT_TEST_ACTION=extract&& node index.js"
+    "dev:ai:extract": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=ai&& set UNIT_TEST_ACTION=extract&& node index.js",
+    "dev:ai:after_extract": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=ai&& set UNIT_TEST_ACTION=after_extract&& node index.js"
     },
     "dependencies": {
         "crawlee": "^3.9.0",
