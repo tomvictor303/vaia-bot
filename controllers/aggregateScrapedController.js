@@ -306,7 +306,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     }
   }
   if (unitTestAction === 'extract') {
-    console.log(`🧪 UNIT_TEST_ACTION=extract: stopping after extraction (skipping compose, merge, upsert).`);
+    console.log(`🧪 UNIT_TEST_ACTION=extract: stopping after extraction (skipping compose, merge, upsert). We are only interested in testing the extraction step.`);
     return null;
   }
   // END EXTRACT_DATA_FROM_PAGES
