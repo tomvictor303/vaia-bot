@@ -279,6 +279,8 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
   const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f.name, []]));
 
   if (unitTestAction === 'after_extract') {
+    // Load field buckets from cached outputs
+    // This is used to skip the extraction step in the unit test.
     const ok = await loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets);
     if (!ok) {
       return null;
