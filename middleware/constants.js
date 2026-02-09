@@ -18,7 +18,7 @@ export const MD_CAT_FIELDS = [
 	{ name: 'basic_information', description: 'Basic Information (of [hotelName]) - name, description, history, location (city, state, country, zipcode, street address)' },
 	{ name: 'contacts', description: 'Contacts (of [hotelName]) - phone numbers (with descriptions), email addresses (with descriptions) and other contact channels (with descriptions)' },
 	{ name: 'accessibility', description: 'Accessibility - ADA-compliant rooms, Accessible entrances, restrooms, and elevators, Assistive devices or services' },
-	{ name: 'amenities', description: 'Amenities - Feature, facility, or service offered to enhance the guest experience' },
+	{ name: 'amenities', description: 'Amenities - Features, facilities, or services offered to enhance the guest experience, with details such as key inclusions, availability, access rules, and property applicability.'},
 	{ name: 'cleanliness_enhancements', description: 'Cleanliness enhancements - Specific improvements or additional measures to maintain a higher level of hygiene and sanitation' },
 	{ name: 'food_beverage', description: 'Food & beverage - Dining, bar, café, and catering; cuisine, meals, and drinks; hours and service times; bar details; private events and catering; staff handling instructions' },
 	{
