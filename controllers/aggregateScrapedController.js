@@ -287,6 +287,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
       return null;
     }
   } else {
+    // BEGIN EXTRACT_DATA_FROM_PAGES_BODY
     // Per-page extraction (Count(pages) LLM calls)
     console.log(`🔍 Extracting fields' data from pages...`);
     for (const page of pages) {
@@ -304,6 +305,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
         console.log(`❌ Extraction: failed page ${page.id} (${page.page_url}) -> ${error.message}`);
       }
     }
+    // END EXTRACT_DATA_FROM_PAGES_BODY
   }
   if (unitTestAction === 'extract') {
     console.log(`🧪 UNIT_TEST_ACTION=extract: stopping after extraction (skipping compose, merge, upsert). We are only interested in testing the extraction step.`);
