@@ -278,9 +278,10 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
 
   const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f.name, []]));
 
+  // BEGIN EXTRACT_DATA_FROM_PAGES
   if (unitTestAction === 'after_extract') {
     // Load field buckets from cached outputs
-    // This is used to skip the extraction step in the unit test.
+    // This test action is used to skip the extraction step in the unit test.
     const ok = await loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets);
     if (!ok) {
       return null;
@@ -308,6 +309,7 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     console.log(`🧪 UNIT_TEST_ACTION=extract: stopping after extraction (skipping compose, merge, upsert).`);
     return null;
   }
+  // END EXTRACT_DATA_FROM_PAGES
 
   // Per-field composition (Count(schema fields) LLM calls)
   // This is where the new data is composed from the extracted snippets (from multiple pages) by iterating each field.
