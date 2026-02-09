@@ -8,7 +8,7 @@
     "start": "node index.js",
     "dev": "set NODE_ENV=development&& node index.js",
     "dev:scrape": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=scrape&& node index.js",
-    "dev:aggregate": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=aggregate&& node index.js"
+    "dev:ai": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=ai&& node index.js"
     },
     "dependencies": {
         "crawlee": "^3.9.0",

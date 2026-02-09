@@ -10,11 +10,11 @@ async function main() {
   const isUnitTest = String(process.env.UNIT_TEST || '').toLowerCase() === 'true';
   const unitTestModule = String(process.env.UNIT_TEST_MODULE || '').toLowerCase();
   const shouldRunScrape = !isUnitTest || unitTestModule === 'scrape';
-  const shouldRunAggregate = !isUnitTest || unitTestModule === 'aggregate';
+  const shouldRunAggregate = !isUnitTest || unitTestModule === 'ai';
 
   if (isUnitTest) {
     if (!unitTestModule) {
-      throw new Error('UNIT_TEST mode requires UNIT_TEST_MODULE to be set (scrape|aggregate)');
+      throw new Error('UNIT_TEST mode requires UNIT_TEST_MODULE to be set (scrape|ai)');
     }
     console.log(`🧪 UNIT_TEST mode enabled (module: ${unitTestModule})`);
   }
