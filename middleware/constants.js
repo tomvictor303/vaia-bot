@@ -38,7 +38,7 @@ export const MD_CAT_FIELDS = [
 	{ name: 'meeting_events', description: 'Meeting & events - Spaces, services, and resources for hosting meetings, conferences, banquets, weddings, and social gatherings' },
 	{ name: 'on_property_convenience', description: 'On-property convenience – Practical, guest-facing services that make the stay more seamless, accessible, and comfortable, along with supporting details such as equipment, availability or seasonality, and basic usage guidance where applicable.' },
 	{ name: 'parking_transportation', description: 'Parking & transportation - Services, instructions, and logistics related to guest vehicles, access to the property, and travel options to and from the hotel' },
-	{ name: 'policies', description: 'Policies - Formal set of guidelines, rules, or procedures' },
+	{ name: 'policies', description: 'Policies - Formal rules, procedures, or guidelines for stays, covering check-in/out, payments, restrictions, fees, eligibility, and stated exceptions.' },
 	{ 
 		name: 'recreation_fitness', 
 		description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity',
