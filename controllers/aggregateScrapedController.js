@@ -250,12 +250,13 @@ export async function aggregateScrapedData(hotelUuid, hotelName) {
     }
   }
 
-  // Per-field refinement (Count(schema fields) LLM calls)
-  console.log(`🔍 Refining extracted fields' data...`);
+  // Per-field composition (Count(schema fields) LLM calls)
+  // This is where the new data is composed from the extracted snippets (from multiple pages) by iterating each field.
+  console.log(`🔍 Composing new data from extracted fields...`);
   const newData = {};
   for (const field of CATEGORY_FIELDS) {
     newData[field.name] = await mergeAndRefineSnippets(field.name, fieldBuckets[field.name]);
-    console.log(`✅ Refining done: ${field.name}`);
+    console.log(`✅ Composed new data for field: ${field.name}`);
   }
 
   // DEBUG LOG: Save newData and source of new data (joined snippets from pages) to database
