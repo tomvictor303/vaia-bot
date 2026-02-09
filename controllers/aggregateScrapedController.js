@@ -152,7 +152,7 @@ ${joined}`;
   const completion = await openai.chat.completions.create({
     model: 'sonar-pro',
     messages: [{ role: 'user', content: prompt }],
-    max_tokens: 1024 * 10,
+    max_tokens: 1024 * 24,
   });
 
   return completion.choices[0]?.message?.content?.trim() || '';
