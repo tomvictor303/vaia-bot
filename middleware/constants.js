@@ -38,7 +38,12 @@ export const MD_CAT_FIELDS = [
 	{ name: 'meeting_events', description: 'Meeting & events - Spaces, services, and resources for hosting meetings, conferences, banquets, weddings, and social gatherings' },
 	{ name: 'on_property_convenience', description: 'On-property convenience – Practical, guest-facing services that make the stay more seamless, accessible, and comfortable, along with supporting details such as equipment, availability or seasonality, and basic usage guidance where applicable.' },
 	{ name: 'parking_transportation', description: 'Parking & transportation - Services, instructions, and logistics related to guest vehicles, access to the property, and travel options to and from the hotel' },
-	{ name: 'policies', description: 'Policies - Formal rules, procedures, or guidelines for stays, covering check-in and check-out; early arrival or departure conditions; payments, deposits, taxes, and accepted methods; minimum stays; cancellations and changes; occupancy or age limits; pets, children, smoking, and additional guest fees; group or event reservation rules; and any stated exceptions, contingencies, or enforcement notes (e.g., weather, transportation disruptions, or management discretion).' },
+	{ 
+		name: 'policies', 
+		description: 'Policies - Formal rules, procedures, or guidelines for stays, covering check-in and check-out; early arrival or departure conditions; payments, deposits, taxes, and accepted methods; minimum stays; cancellations and changes; occupancy or age limits; pets, children, smoking, and additional guest fees; group or event reservation rules; and any stated exceptions, contingencies, or enforcement notes (e.g., weather, transportation disruptions, or management discretion).', 
+		capture_guide: 'Capture all stated policies without omission. When a fee, surcharge, or mandatory charge is stated, also capture what the fee includes, what services or amenities it grants access to, and any stated conditions, limitations, or seasonality.',
+		merge_guide: 'Do not drop or compress fee details. When merging policy content, preserve the relationship between a fee and what it includes, the services or amenities it grants access to, and any stated conditions or seasonality.'
+	},
 	{
 		name: 'recreation_fitness', 
 		description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity',
