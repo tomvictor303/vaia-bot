@@ -182,7 +182,7 @@ async function mergeAndRefineSnippets(fieldName, snippets) {
   const descriptionLine = (!isOtherField && fieldDescription) ? `Field description: ${fieldDescription}\n` : '';
   const defaultMergeGuide = `Do not drop, rename, or replace explicitly named places, businesses, properties, room types, brands, services or programs, amenities, events, or routes with generic labels.`;
   const mergeGuide = fieldDef?.merge_guide?.trim() || '';
-  const mergeGuideLine = `Merge guide: ${mergeGuide} ${defaultMergeGuide}\n`;
+  const mergeGuideLine = `Merge guide: ${`${mergeGuide} ${defaultMergeGuide}`.trim()}\n`;
   const prioritizeLine = isOtherField ? '' : 'First priority: facts from snippets whose page URL is related to this field. Second priority: facts from the homepage.\n';
   
   const prompt = `You are consolidating hotel information for the field "${fieldName}".
