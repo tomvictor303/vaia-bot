@@ -134,6 +134,7 @@ Rules:
 - Use **only the Markdown below** as the source. Do not fill keys from memory, training, or any source other than this Markdown.
 - If nothing in the Markdown is relevant to a key, use "".
 - Preserve bullet-like lists as text (comma or semicolon separated).
+- Do not summarize the text. Keep the text as is.
 - Do not invent data.
 - Keep URLs if present.
 
@@ -187,7 +188,7 @@ async function mergeAndRefineSnippets(fieldName, snippets) {
   
   const prompt = `You are consolidating hotel information for the field "${fieldName}".
 ${descriptionLine}${mergeGuideLine}
-You will receive multiple snippets. Merge them into one clean, concise paragraph or bullet list.
+You will receive multiple snippets. Merge them into one clean, readable, well structured markdown text.
 ${prioritizeLine}**Remove duplicates**, fix formatting. But keep all factual information from the snippets.
 Do not include source page URLs in the merged text.
 **Return ONLY the merged text.**
