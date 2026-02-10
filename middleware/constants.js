@@ -23,7 +23,7 @@ export const MD_CAT_FIELDS = [
 	{ name: 'food_beverage', description: 'Food & beverage - Dining, bar, café, and catering; cuisine, meals, and drinks; hours and service times; bar details; private events and catering; staff handling instructions' },
 	{
 		name: 'guest_rooms',
-		description: 'Guest Rooms - Room types and all details including inventory count pet types; renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities.',
+		description: 'Guest Rooms - Room types and all details including inventory count pet types; renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities; plus, when stated, room physical specifications (e.g., size, layout, temperature controls), kitchen or kitchenette contents, bathroom details, and outdoor space type or floor placement.',
 		capture_guide: 'For each room type, try to capture all stated details. Do not omit any details.',
 		merge_guide: 'Do not compose or invent room type name or item names. Use the exact name as stated on the page. A single room type can have multiple names; mention all of those names in merged text.'
 	},
