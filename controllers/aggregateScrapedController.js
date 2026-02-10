@@ -188,7 +188,7 @@ async function mergeAndRefineSnippets(fieldName, snippets) {
   
   const prompt = `You are consolidating hotel information for the field "${fieldName}".
 ${descriptionLine}${mergeGuideLine}
-You will receive multiple snippets. Merge them into one clean, human-readable, well-structured markdown text.
+You will receive multiple snippets. Merge them into **one clean, human-readable, well-structured markdown text**.
 ${prioritizeLine}**Remove duplicates**, fix formatting. But keep all factual information from the snippets.
 Do not include source page URLs in the merged text.
 **Return ONLY the merged text.**
