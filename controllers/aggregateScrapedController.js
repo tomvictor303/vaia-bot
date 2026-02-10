@@ -183,10 +183,9 @@ async function mergeAndRefineSnippets(fieldName, snippets) {
   const mergeGuide = fieldDef?.merge_guide?.trim() || '';
   const mergeGuideLine = mergeGuide ? `Merge guide: ${mergeGuide}\n` : '';
   const prioritizeLine = isOtherField ? '' : 'First priority: facts from snippets whose page URL is related to this field. Second priority: facts from the homepage.\n';
-
+  
   const prompt = `You are consolidating hotel information for the field "${fieldName}".
 ${descriptionLine}${mergeGuideLine}
-Do not drop, rename, or replace explicitly named places, businesses, properties, room types, or brands with generic labels.
 You will receive multiple snippets. Merge them into one clean, concise paragraph or bullet list.
 ${prioritizeLine}**Remove duplicates**, fix formatting. But keep all factual information from the snippets.
 Do not include source page URLs in the merged text.
