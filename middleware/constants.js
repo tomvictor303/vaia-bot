@@ -23,9 +23,9 @@ export const MD_CAT_FIELDS = [
 	{ name: 'food_beverage', description: 'Food & beverage - Dining, bar, café, and catering; cuisine, meals, and drinks; hours and service times; bar details; private events and catering; staff handling instructions; plus property-specific service routing and named partners when stated.' },  
 	{
 		name: 'guest_rooms',
-		description: 'Guest Rooms - Room types and all details including inventory count pet types; renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities; plus, when stated, room physical specifications (e.g., size, layout, temperature controls), kitchen or kitchenette contents, bathroom details, and outdoor space type or floor placement.',
-		capture_guide: 'For each room type, try to capture all stated details. Do not omit any details.',
-		merge_guide: 'Do not compose or invent room type name or item names. Use the exact name as stated on the page. A single room type can have multiple names; mention all of those names in merged text.'
+		description: 'Guest Rooms - Room types and all details including inventory count pet types; renovation status; bed type; sleeps count / occupancy; special features; accessibility, pet, and non-smoking notes; key room amenities; including room-specific views, outdoor access such as balcony, patio, or walkout, floor or location when stated, and explicitly named in-room brands or products.',
+		capture_guide: 'For each room type, try to capture all stated details. Do not omit any details, especially room-type-specific differentiators.',
+		merge_guide: 'Do not compose or invent room type name or item names. Use the exact name as stated on the page. A single room type can have multiple names; mention all of those names in merged text, and do not replace specific room features with generic wording.'
 	},
 	{ name: 'guest_services_front_desk', description: 'Guest Services / Front Desk - Bell/porter service, Concierge, Lost & found inquiries, Luggage storage, Wake-up calls' },
 	{ name: 'housekeeping_laundry', description: 'Housekeeping / Laundry - Cleaning, room upkeep, linens, guest laundry, guest clothing care' },
@@ -38,7 +38,12 @@ export const MD_CAT_FIELDS = [
 	{ name: 'meeting_events', description: 'Meeting & events - Spaces, services, and resources for hosting meetings, conferences, banquets, weddings, and social gatherings' },
 	{ name: 'on_property_convenience', description: 'On-property convenience – Practical, guest-facing services that make the stay more seamless, accessible, and comfortable, along with supporting details such as equipment, availability or seasonality, and basic usage guidance where applicable.' },
 	{ name: 'parking_transportation', description: 'Parking & transportation - Services, instructions, and logistics related to guest vehicles, access to the property, and travel options to and from the hotel' },
-	{ name: 'policies', description: 'Policies - Formal rules, procedures, or guidelines for stays, covering check-in and check-out; early arrival or departure conditions; payments, deposits, taxes, and accepted methods; minimum stays; cancellations and changes; occupancy or age limits; pets, children, smoking, and additional guest fees; group or event reservation rules; and any stated exceptions, contingencies, or enforcement notes (e.g., weather, transportation disruptions, or management discretion).' },
+	{ 
+		name: 'policies', 
+		description: 'Policies - Formal rules, procedures, or guidelines for stays, covering check-in and check-out; early arrival or departure conditions; payments, deposits, taxes, and accepted methods; minimum stays; cancellations and changes; occupancy or age limits; pets, children, smoking, and additional guest fees; group or event reservation rules; and any stated exceptions, contingencies, or enforcement notes (e.g., weather, transportation disruptions, or management discretion).', 
+		capture_guide: 'Capture all stated policies without omission. When a fee, surcharge, or mandatory charge is stated, also capture what the fee includes, what services or amenities it grants access to, and any stated conditions, limitations, or seasonality.',
+		merge_guide: 'Do not drop or compress fee details. When merging policy content, preserve the relationship between a fee and what it includes, the services or amenities it grants access to, and any stated conditions or seasonality.'
+	},
 	{
 		name: 'recreation_fitness', 
 		description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity',
