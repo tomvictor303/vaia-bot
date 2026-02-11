@@ -45,9 +45,9 @@ export const MD_CAT_FIELDS = [
 		merge_guide: 'Do not drop or compress fee details. When merging policy content, preserve the relationship between a fee and what it includes, the services or amenities it grants access to, and any stated conditions or seasonality.'
 	},
 	{
-		name: 'recreation_fitness', 
-		description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity',
-		capture_guide: 'Capture all Recreation & fitness content, including facilities, activities, and services that support leisure, wellness, and physical activity; Do not omit any details.', 
+		name: 'recreation_fitness',
+		description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity, plus operational details including hours (regular and holiday), pricing and fees, seasonal availability, access limitations (e.g., age restrictions), reservation requirements (e.g., certification/card), equipment inclusions (included/installed/provided/required), named instructors or partners, safety requirements, pickup or service locations, group bookings, and related contact information.',
+		capture_guide: 'Capture all stated Recreation & fitness details without omission, including operational rules and facility-specific policies when provided.',
 	},
 	{ name: 'safety_security', description: 'Safety & Security - Emergency procedures (fire exits, severe weather protocols, Safe deposit boxes or in-room safes, Security staff or surveillance)' },
 	{ name: 'technology_business_services', description: 'Technology / Business Services - Business center computers, printing, fax, and copying, Wi-Fi details, Public computer access' },
