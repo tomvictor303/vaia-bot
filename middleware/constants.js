@@ -18,7 +18,7 @@ export const MD_CAT_FIELDS = [
 	{
 		name: 'basic_information',
 		description: 'Basic Information (of [propertyName]) - name, description, history, and property-level location (city, state, country, zipcode, street address).',
-		capture_guide: 'Only capture top-level property information for [propertyName]. If the page/markdown describes an on-property sub-entity (e.g., venue, outlet, building, or service) or any off-property place (e.g., local area or partner business), **do NOT** extract its name, description, or location into basic_information; **route that content to other appropriate key instead**.'
+		capture_guide: 'Only capture top-level property information for [propertyName]. If the page/markdown describes an on-property sub-entity (e.g., venue, outlet, building, or service) or any off-property place (e.g., local area or partner business), **do NOT** extract its name, description, or location into basic_information; **route that content to other appropriate key (category field) instead**.'
 	},
 	{ name: 'contacts', description: 'Contacts - phone numbers (with descriptions), email addresses (with descriptions) and other contact channels (with descriptions)' },
 	{ name: 'accessibility', description: 'Accessibility - ADA-compliant rooms, Accessible entrances, restrooms, and elevators, Assistive devices or services' },
