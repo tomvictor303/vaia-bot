@@ -5,12 +5,12 @@
     "type": "module",
     "main": "index.js",
     "scripts": {
-    "start": "node index.js",
-    "dev": "set NODE_ENV=development&& node index.js",
-    "dev:scrape": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=scrape&& node index.js",
-    "dev:ai": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=ai&& node index.js",
-    "dev:ai:extract": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=ai&& set UNIT_TEST_ACTION=extract&& node index.js",
-    "dev:ai:after_extract": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=ai&& set UNIT_TEST_ACTION=after_extract&& node index.js"
+        "start": "node index.js",
+        "dev": "set NODE_ENV=development&& node index.js",
+        "dev:scrape": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=scrape&& node index.js",
+        "dev:ai": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=ai&& node index.js",
+        "dev:ai:extract": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=ai&& set UNIT_TEST_ACTION=extract&& node index.js",
+        "dev:ai:after_extract": "set NODE_ENV=development&& set UNIT_TEST=true&& set UNIT_TEST_MODULE=ai&& set UNIT_TEST_ACTION=after_extract&& node index.js"
     },
     "dependencies": {
         "crawlee": "^3.9.0",
@@ -20,5 +20,8 @@
         "openai": "^4.56.0",
         "playwright": "^1.48.0",
         "turndown": "^7.1.3"
+    },
+    "devDependencies": {
+        "cross-env": "^10.1.0"
     }
 }
