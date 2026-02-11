@@ -134,7 +134,7 @@ Rules:
 - Use **only the Markdown below** as the source. Do not fill keys from memory, training, or any source other than this Markdown.
 - If nothing in the Markdown is relevant to a key, use "".
 - Preserve bullet-like lists as text (comma or semicolon separated).
-- Do not summarize the text. Keep the text as is.
+- Do not drop, rename, or replace explicitly named places, businesses, properties, room types, brands, services or programs, amenities, events, or routes with generic labels.
 - Do not invent data.
 - Keep URLs if present.
 
