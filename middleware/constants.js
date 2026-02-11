@@ -38,7 +38,7 @@ export const MD_CAT_FIELDS = [
 	{
 		name: 'meeting_events',
 		description: 'Meeting & events - Spaces, services, and resources for hosting meetings, conferences, banquets, weddings, conventions, retreats, buyouts, and social gatherings, plus operational details such as space metrics (e.g., total square footage vs exhibit space), capacities by setup type (e.g., banquet vs theater), configurations/divisibility, building segmentation, indoor/outdoor designation, space attributes, package pricing and inclusions, service partners, accessibility routing, group accommodation support, and related contact or brochure information.',
-		capture_guide: 'Capture all stated Meeting & events details without omission, especially numeric metrics, setup types, named venues, package pricing/inclusions, and operational conditions.',
+		capture_guide: 'Capture all stated Meeting & events operational details without omission.',
 		merge_guide: 'Preserve numeric metrics, setup types, named venues, building/venue distinctions, space attributes, and package pricing/inclusions. Do not generalize room-specific capacities, configurations, or service relationships.'
 	},
 	{ name: 'on_property_convenience', description: 'On-property convenience – Practical, guest-facing services that make the stay more seamless, accessible, and comfortable, along with supporting details such as equipment, availability or seasonality, and basic usage guidance where applicable.' },
@@ -46,7 +46,7 @@ export const MD_CAT_FIELDS = [
 	{ 
 		name: 'policies', 
 		description: 'Policies - Formal rules, procedures, or guidelines for stays, covering check-in and check-out; early arrival or departure conditions; payments, deposits, taxes, and accepted methods; minimum stays; cancellations and changes; occupancy or age limits; pets, children, smoking, and additional guest fees; group or event reservation rules; and any stated exceptions, contingencies, or enforcement notes (e.g., weather, transportation disruptions, or management discretion).', 
-		capture_guide: 'Capture all stated policies without omission. When a fee, surcharge, or mandatory charge is stated, also capture what the fee includes, what services or amenities it grants access to, and any stated conditions, limitations, or seasonality.',
+		capture_guide: 'Capture all stated policies without omission. When fees or mandatory charges are mentioned, include what they cover and any stated conditions or limitations.',
 		merge_guide: 'Do not drop or compress fee details. When merging policy content, preserve the relationship between a fee and what it includes, the services or amenities it grants access to, and any stated conditions or seasonality.'
 	},
 	{
