@@ -15,8 +15,12 @@ const MD_PR_FIELDS = [
 
 // Category text fields (16 categories plus "other")
 export const MD_CAT_FIELDS = [
-	{ name: 'basic_information', description: 'Basic Information (of [hotelName]) - name, description, history, location (city, state, country, zipcode, street address)' },
-	{ name: 'contacts', description: 'Contacts (of [hotelName]) - phone numbers (with descriptions), email addresses (with descriptions) and other contact channels (with descriptions)' },
+	{
+		name: 'basic_information',
+		description: 'Basic Information (of [propertyName]) - name, description, history, and property-level location (city, state, country, zipcode, street address).',
+		capture_guide: 'Only capture top-level property information for [propertyName]. If the page/markdown describes an on-property sub-entity (e.g., venue, outlet, building, or service) or any off-property place, do NOT extract its name, description, or location into basic_information; route that content to the relevant category or other field instead.'
+	},
+	{ name: 'contacts', description: 'Contacts - phone numbers (with descriptions), email addresses (with descriptions) and other contact channels (with descriptions)' },
 	{ name: 'accessibility', description: 'Accessibility - ADA-compliant rooms, Accessible entrances, restrooms, and elevators, Assistive devices or services' },
 	{ name: 'amenities', description: 'Amenities - Features, facilities, or services offered to enhance the guest experience, with details such as key inclusions, availability, access rules, and property applicability.'},
 	{ name: 'cleanliness_enhancements', description: 'Cleanliness enhancements - Specific improvements or additional measures to maintain a higher level of hygiene and sanitation' },
