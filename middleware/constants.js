@@ -53,6 +53,7 @@ export const MD_CAT_FIELDS = [
 		name: 'recreation_fitness',
 		description: 'Recreation & fitness - Facilities, activities, and services that support leisure, wellness, and physical activity, plus operational details including hours (regular and holiday), pricing and fees, seasonal availability, access limitations (e.g., age restrictions), requirements (e.g., certification,card,equipment), equipment inclusions (installed/provided/required), named instructors or partners, safety requirements, pickup or service locations, group bookings, and related contact information.',
 		capture_guide: 'Capture all stated Recreation & fitness details without omission.',
+		merge_guide: 'Preserve all numeric and conditional details (hours, pricing tiers, seasonal notes), and keep access limitations separate from participation requirements. Do not generalize equipment status (included vs required) or combine distinct facilities, activities, or time-based rules into one.'
 	},
 	{ name: 'safety_security', description: 'Safety & Security - Emergency procedures (fire exits, severe weather protocols, Safe deposit boxes or in-room safes, Security staff or surveillance)' },
 	{ name: 'technology_business_services', description: 'Technology / Business Services - Business center computers, printing, fax, and copying, Wi-Fi details, Public computer access' },
