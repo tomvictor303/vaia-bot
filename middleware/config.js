@@ -1,4 +1,7 @@
-import { executeQuery } from '../config/database.js';
+// import { executeQuery } from '../config/database.js';
+// DATABASE configuration will not be included here.
+// We also **mostly rely on .ENV file** for configuration.
+// This is flexible layer to provide same configuration interface from different configuration sources.
 
 let config = {
     modelVersion: null, // e.g: gpt-4o, sonar-pro, etc.
@@ -16,7 +19,8 @@ async function initConfig() {
     //     config.modelVersion = row.model_version;
     //     config.promptVersion = row.prompt_version;
     // }
-    config.modelVersion = 'gpt-4o';
+    // Currently, we rely on static config.
+    config.modelVersion = 'sonar-pro';
     config.promptVersion = '1.0';
 }
 
