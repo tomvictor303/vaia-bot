@@ -5,7 +5,7 @@ let config = {
     promptVersion: null // Decimal (10, 1). e.g: 1.0, 1.1, 1.2, etc.
 }
 
-async function init() {
+async function initConfig() {
     // We still do not use DB based config.
     // const rows = await executeQuery(
     //     'SELECT model_version, prompt_version FROM llm_config LIMIT 1',
@@ -21,6 +21,6 @@ async function init() {
 }
 
 export {
-    init,
+    initConfig,
     config
 }
