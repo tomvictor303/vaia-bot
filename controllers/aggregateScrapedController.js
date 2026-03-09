@@ -144,7 +144,7 @@ ${markdown}
 ---`;
 
   const completion = await openai.chat.completions.create({
-    model: 'sonar-pro',
+    model: process.env.LLM_MODEL_VERSION,
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 1024 * 16 * 4,
   });
@@ -197,7 +197,7 @@ Do not include source page URLs in the merged text.
 ${joined}`;
 
   const completion = await openai.chat.completions.create({
-    model: 'sonar-pro',
+    model: process.env.LLM_MODEL_VERSION,
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 1024 * 48,
   });

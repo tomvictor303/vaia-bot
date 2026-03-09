@@ -54,7 +54,7 @@ Please do **deep** live web search to get current information. Do not make up an
 
     try {
       const completions = await openai.chat.completions.create({
-        model: "sonar-pro",
+        model: process.env.LLM_MODEL_VERSION,
         messages: [{ role: "user", content: prompt }],
         max_tokens: 1024 * 10 * 4,
         stream: true,
@@ -126,7 +126,7 @@ Rules:
 
     try {
       const completions = await openai.chat.completions.create({
-        model: "sonar-pro",
+        model: process.env.LLM_MODEL_VERSION,
         messages: [{ role: "user", content: prompt }],
         max_tokens: 1024 * 10 * 8,
         stream: true,
@@ -196,7 +196,7 @@ ${incoming}
 
     try {
       const completion = await openai.chat.completions.create({
-        model: "sonar-pro",
+        model: process.env.LLM_MODEL_VERSION,
         messages: [{ role: "user", content: prompt }],
         max_tokens: 1024 * 10 * 4,
       });
@@ -245,7 +245,7 @@ Rules:
 
     try {
       const completion = await openai.chat.completions.create({
-        model: "sonar-pro",
+        model: process.env.LLM_MODEL_VERSION,
         messages: [{ role: "user", content: prompt }],
         max_tokens: 1024 * 10 * 4,
       });
