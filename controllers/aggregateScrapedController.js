@@ -14,7 +14,7 @@ const CATEGORY_FIELDS = MD_CAT_FIELDS.map(f => ({
 }));
 
 const openai = new OpenAI({
-  apiKey: process.env['PERPLEXITY_API_KEY'],
+  apiKey: process.env['LLM_API_KEY'],
   baseURL: 'https://api.perplexity.ai',
 });
 

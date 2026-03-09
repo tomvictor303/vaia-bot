@@ -3,7 +3,7 @@ import { MD_DATA_FIELDS } from '../middleware/constants.js';
 import { llmOutputToJson } from '../utils/custom.js';
 
 const openai = new OpenAI({
-  apiKey: process.env["PERPLEXITY_API_KEY"],
+  apiKey: process.env["LLM_API_KEY"],
   baseURL: "https://api.perplexity.ai",
 });
 
