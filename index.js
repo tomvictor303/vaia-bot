@@ -3,7 +3,6 @@ import { testConnection, closePool } from './config/database.js';
 import { HotelService } from './services/hotelService.js';
 import { scrapeHotel } from './controllers/scrapeController.js';
 import { aggregateScrapedData } from './controllers/aggregateScrapedController.js';
-import { config, initConfig } from './middleware/config.js';
 async function main() {
   console.log("🚀 Starting Hotel Data Fetcher...");
 
@@ -25,10 +24,6 @@ async function main() {
     console.error("❌ Cannot proceed without database connection");
     process.exit(1);
   }
-
-  // Initialize config
-  await initConfig();
-  console.log(`🤖 Using model: ${config.modelVersion} with prompt version: ${config.promptVersion}`);
 
   try {
     // Get all active hotels from database
