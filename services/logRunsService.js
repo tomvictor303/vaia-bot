@@ -32,9 +32,9 @@ export class LogRunsService {
    */
   static async insert(payload = {}) {
     const base = { ...payload };
-    if (!base.hotel_uuid) throw new Error('logRuns.insert requires hotel_uuid');
-    if (!base.status) throw new Error('logRuns.insert requires status');
-    if (!base.stage) throw new Error('logRuns.insert requires stage');
+    if (!base.hotel_uuid) throw new Error(`${TABLE}.insert requires hotel_uuid`);
+    if (!base.status) throw new Error(`${TABLE}.insert requires status`);
+    if (!base.stage) throw new Error(`${TABLE}.insert requires stage`);
 
     if (!base.started_at) {
       base.started_at = new Date();
@@ -61,7 +61,7 @@ export class LogRunsService {
    * @returns {Promise<number>} affected rows
    */
   static async updatePartialById(id, patch = {}) {
-    if (!id) throw new Error('logRuns.updatePartialById requires id');
+    if (!id) throw new Error(`${TABLE}.updatePartialById requires id`);
 
     const fields = this.UPDATABLE_FIELDS.filter(
       (f) => Object.prototype.hasOwnProperty.call(patch, f) && patch[f] !== undefined
