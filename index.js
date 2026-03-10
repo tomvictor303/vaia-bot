@@ -64,7 +64,7 @@ async function main() {
         if (run_id > 0) {
           console.log(`✅ Log run started with ID: ${run_id}`);
         } else {
-          console.error(`❌ Failed to start log run: ${hotel.hotel_uuid} (${hotel.name}). Skip this hotel.`);
+          console.error(`❌ Failed to start log run: ${hotel.hotel_uuid}. Skip this hotel.`);
           continue;
         }
         // BEGIN SCRAPE_HOTEL
