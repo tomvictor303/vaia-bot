@@ -7,7 +7,7 @@ const openai = new OpenAI({
 });
 
 const MERGE_SHORT_OUTPUT_REDUCTION_THRESHOLD_PERCENT = 80;
-const MERGE_SHORT_OUTPUT_MIN_LENGTH = 20;
+const MERGE_SHORT_OUTPUT_MIN_LENGTH = 27; // Bigger than "No update from new text.". lol.
 
 export class AIService {
   /**
@@ -120,13 +120,13 @@ Only update if the NEW text adds notable information beyond the EXISTING text.
 
 Output contract (STRICT):
 - You must return ONE of these two outputs only:
-  1) NO_UPDATE_AT_MERGE_TEXTS
+  1) NO_UPDATE_FROM_NEW_TEXT
   2) only the merged markdown text
 - Do not return JSON.
 - Do not return explanations, labels, prefixes, suffixes, or quotes.
 
 Rules:
-- If new text is redundant or adds nothing meaningful, return NO_UPDATE_AT_MERGE_TEXTS.
+- If new text is redundant or adds nothing meaningful, return NO_UPDATE_FROM_NEW_TEXT.
 - If new text adds or improves information, return a merged version.
 - Merge new text into the EXISTING text smoothly; you may add or update factual parts.
 - If new text includes facts that are never mentioned in the old text, just add them to the merged result.
@@ -153,7 +153,7 @@ ${incoming}
       });
 
       const output = (text || '').trim();
-      if (!output || /^NO_UPDATE_AT_MERGE_TEXTS\.?$/i.test(output)) {
+      if (!output || /^NO_UPDATE_FROM_NEW_TEXT\.?$/i.test(output)) {
         return { isUpdate: false, mergedText: existing };
       }
 
