@@ -58,7 +58,7 @@ async function main() {
         const run_id = await LogRunsService.insert({
           hotel_uuid: hotel.hotel_uuid,
           status: 'running',
-          stage: 'started',
+          stage: 'scrape',
           started_at: new Date(),
         });
         if (run_id > 0) {
