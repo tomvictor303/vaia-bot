@@ -54,14 +54,14 @@ export class LogRunsService {
   }
 
   /**
-   * Partial update by log run id.
+   * Update (partial or full) by id.
    * Only keys in UPDATABLE_FIELDS are applied.
    * @param {number} id
    * @param {Object} patch
    * @returns {Promise<number>} affected rows
    */
-  static async updatePartialById(id, patch = {}) {
-    if (!id) throw new Error(`${TABLE}.updatePartialById requires id`);
+  static async updateById(id, patch = {}) {
+    if (!id) throw new Error(`${TABLE}.updateById requires id`);
 
     const fields = this.UPDATABLE_FIELDS.filter(
       (f) => Object.prototype.hasOwnProperty.call(patch, f) && patch[f] !== undefined
