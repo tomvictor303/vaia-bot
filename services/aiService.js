@@ -115,10 +115,16 @@ export class AIService {
     const prompt = `You will merge two pieces of markdown text about a hotel field.
 Only update if the NEW text adds notable information beyond the EXISTING text.
 
-**Return strict JSON: { "isUpdate": boolean, "mergedText": string }**
+Output contract (STRICT):
+- You must return ONE of these two outputs only:
+  1) no
+  2) only the merged markdown text
+- Do not return JSON.
+- Do not return explanations, labels, prefixes, suffixes, or quotes.
+
 Rules:
-- If new text is redundant or adds nothing meaningful, set isUpdate=false and mergedText=EXISTING.
-- If new text adds or improves information, set isUpdate=true and mergedText to a merged version.
+- If new text is redundant or adds nothing meaningful, return 1) no.
+- If new text adds or improves information, return a merged version.
 - Merge new text into the EXISTING text smoothly; you may add or update factual parts.
 - If new text includes facts that are never mentioned in the old text, just add them to the merged result.
 - If new and old text conflict on facts (yes/no, contact info, dates, prices, numbers, or other concrete info), treat the NEW text as the standard and use it in the merged result.
@@ -140,19 +146,20 @@ ${incoming}
       const { text } = await AIService.askLLM({
         prompt,
         maxTokens: 1024 * 64,
-        jsonMode: true,
+        jsonMode: false,
       });
 
-      const parsed = llmOutputToJson(text);
-      if (
-        parsed &&
-        typeof parsed === 'object' &&
-        typeof parsed.isUpdate === 'boolean' &&
-        typeof parsed.mergedText === 'string'
-      ) {
-        return parsed;
+      const output = (text || '').trim();
+      if (!output || /^1\)\s*no\.?$/i.test(output)) {
+        return { isUpdate: false, mergedText: existing };
       }
-      return { isUpdate: false, mergedText: existing };
+
+      // Safety: if model returned unchanged text, treat as no update.
+      if (output === existing) {
+        return { isUpdate: false, mergedText: existing };
+      }
+
+      return { isUpdate: true, mergedText: output };
     } catch (error) {
       console.error(`❌ Error merging text via LLM:`, error.message);
       return { isUpdate: false, mergedText: existing };
