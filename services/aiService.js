@@ -8,6 +8,92 @@ const openai = new OpenAI({
 
 export class AIService {
   /**
+   * Generic LLM call helper.
+   * - Receives a user prompt and maxTokens.
+   * - Uses non-streaming completions.
+   * - If finish_reason === "length", automatically sends continuation prompts
+   *   until completion or maxContinuations is reached.
+   *
+   * @param {object} params
+   * @param {string} params.prompt - User prompt to send to the LLM.
+   * @param {number} [params.maxTokens=2000] - max_tokens per request.
+   * @param {boolean} [params.jsonMode=false] - If true, continuations instruct the model to continue JSON safely.
+   * @param {number} [params.temperature=0] - Sampling temperature.
+   * @param {number} [params.maxContinuations=5] - Max continuation loops when finish_reason === "length".
+   * @returns {Promise<{ text: string, finishReason: string | null, continuationCount: number, modelVersion: string | undefined }>}
+   */
+  static async askLLM({
+    prompt,
+    maxTokens = 2000,
+    jsonMode = false,
+    temperature = 0,
+    maxContinuations = 5,
+  }) {
+    if (!prompt || typeof prompt !== 'string') {
+      throw new Error('prompt must be a non-empty string');
+    }
+
+    const modelVersion = process.env.LLM_MODEL_VERSION;
+    const workingMessages = [
+      { role: 'user', content: prompt },
+    ];
+
+    let fullText = '';
+    let continuationCount = 0;
+    let lastFinishReason = null;
+
+    // Continue while the model stops due to token limit and we have budget to continue.
+    // We intentionally do not stream here; callers get the full text at the end.
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const response = await openai.chat.completions.create({
+        model: modelVersion,
+        messages: workingMessages,
+        max_tokens: maxTokens,
+        temperature,
+      });
+
+      const choice = response.choices?.[0];
+      const content = choice?.message?.content ?? '';
+      const finishReason = choice?.finish_reason ?? null;
+
+      fullText += content;
+      lastFinishReason = finishReason;
+
+      // Add assistant chunk to the running conversation so the model can resume from where it stopped.
+      workingMessages.push({
+        role: 'assistant',
+        content,
+      });
+
+      if (finishReason !== 'length') {
+        break;
+      }
+
+      continuationCount += 1;
+      if (continuationCount > maxContinuations) {
+        throw new Error(`Exceeded maximum continuation attempts (${maxContinuations})`);
+      }
+
+      const continueInstruction = jsonMode
+        ? 'Continue the JSON output from where you stopped. Do not repeat previous content. Do not restart the JSON object. Return only the remaining JSON.'
+        : 'Continue exactly from where you stopped. Do not repeat previous text.';
+
+      workingMessages.push({
+        role: 'user',
+        content: continueInstruction,
+      });
+    }
+
+    return {
+      text: fullText,
+      finishReason: lastFinishReason,
+      continuationCount,
+      modelVersion,
+    };
+  }
+
+  /**
    * Merge existing and new text via LLM only when there is a notable change.
    * If texts are effectively the same (trim/identity), returns the existing text without an update.
    * @param {string} existingText - Current stored text.
