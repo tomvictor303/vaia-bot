@@ -138,7 +138,7 @@ ${markdown}
 ---`;
   const { text } = await AIService.askLLM({
     prompt,
-    maxTokens: 1024 * 16 * 4,
+    maxTokens: 1024 * 64,
     jsonMode: true,
   });
 
@@ -189,7 +189,7 @@ Do not include source page URLs in the merged text.
 ${joined}`;
   const { text } = await AIService.askLLM({
     prompt,
-    maxTokens: 1024 * 48,
+    maxTokens: 1024 * 64,
     jsonMode: false,
   });
 

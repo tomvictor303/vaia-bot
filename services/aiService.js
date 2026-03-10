@@ -24,7 +24,7 @@ export class AIService {
    */
   static async askLLM({
     prompt,
-    maxTokens = 2000,
+    maxTokens = 1024 * 8,
     jsonMode = false,
     temperature = 0,
     maxContinuations = 5,
@@ -139,7 +139,7 @@ ${incoming}
     try {
       const { text } = await AIService.askLLM({
         prompt,
-        maxTokens: 1024 * 10 * 4,
+        maxTokens: 1024 * 64,
         jsonMode: true,
       });
 
@@ -187,7 +187,7 @@ Rules:
     try {
       const { text } = await AIService.askLLM({
         prompt,
-        maxTokens: 1024 * 10 * 4,
+        maxTokens: 1024 * 64,
         jsonMode: true,
       });
 
