@@ -1,11 +1,8 @@
 import 'dotenv/config';
 import { executeQuery } from '../config/database.js';
-import { MD_ALL_FIELDS, MD_DATA_FIELDS, BOOLEAN_FIELDS } from '../middleware/constants.js';
+import { MD_ALL_FIELDS, MD_DATA_FIELDS, BOOLEAN_FIELDS, TABLE_NAMES } from '../middleware/constants.js';
 
-// Get table name from environment variable, default to 'market_data'
-const MARKET_DATA_TABLE = process.env.MARKET_DATA_TABLE || 'market_data';
-const MARKET_DATA_DEBUG1_TABLE = process.env.MARKET_DATA_DEBUG1_TABLE || 'market_data_debug1';
-const MARKET_DATA_DEBUG2_TABLE = process.env.MARKET_DATA_DEBUG2_TABLE || 'market_data_debug2';
+const { MARKET_DATA_TABLE, MARKET_DATA_DEBUG1_TABLE, MARKET_DATA_DEBUG2_TABLE } = TABLE_NAMES;
 
 export class MarketDataService {
   

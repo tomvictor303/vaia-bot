@@ -2,9 +2,9 @@ import { PlaywrightCrawler } from 'crawlee';
 import crypto from 'crypto';
 import TurndownService from 'turndown';
 import { executeQuery } from '../config/database.js';
+import { TABLE_NAMES } from '../middleware/constants.js';
 
-// Get table name from environment variable, default to 'hotel_page_data'
-const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
+const { HOTEL_PAGE_DATA_TABLE } = TABLE_NAMES;
 
 /* ⭐ Fully pinned Turndown configuration (NO defaults) */
 const turndown = new TurndownService({

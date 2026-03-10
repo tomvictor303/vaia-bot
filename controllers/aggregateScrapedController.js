@@ -2,10 +2,10 @@ import OpenAI from 'openai';
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
-import { MD_CAT_FIELDS } from '../middleware/constants.js';
+import { MD_CAT_FIELDS, TABLE_NAMES } from '../middleware/constants.js';
 import { llmOutputToJson, isValidStringMap } from '../utils/custom.js';
 
-const HOTEL_PAGE_DATA_TABLE = process.env.HOTEL_PAGE_DATA_TABLE || 'hotel_page_data';
+const { HOTEL_PAGE_DATA_TABLE } = TABLE_NAMES;
 
 const CATEGORY_FIELDS = MD_CAT_FIELDS.map(f => ({
   name: f.name,

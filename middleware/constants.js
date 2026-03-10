@@ -1,6 +1,14 @@
 // Centralized field definitions for market_data
 // Only stable identifiers are id and hotel_uuid; others are defined here
 
+/** Table names used across the app (no env overrides). */
+export const TABLE_NAMES = {
+	MARKET_DATA_TABLE: 'market_data',
+	HOTEL_PAGE_DATA_TABLE: 'hotel_page_data',
+	MARKET_DATA_DEBUG1_TABLE: 'market_data_debug1',
+	MARKET_DATA_DEBUG2_TABLE: 'market_data_debug2',
+};
+
 // Deprecated: Primary/Principal fields (basic fields)
 const MD_PR_FIELDS = [
 	{ name: 'name', description: 'hotel name' },

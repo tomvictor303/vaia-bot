@@ -2,9 +2,9 @@ import 'dotenv/config';
 import { Tiktoken } from 'js-tiktoken/lite';
 import cl100k_base from 'js-tiktoken/ranks/cl100k_base';
 import { executeQuery, closePool } from './config/database.js';
-import { MD_DATA_FIELDS } from './middleware/constants.js';
+import { MD_DATA_FIELDS, TABLE_NAMES } from './middleware/constants.js';
 
-const MARKET_DATA_TABLE = process.env.MARKET_DATA_TABLE || 'market_data';
+const { MARKET_DATA_TABLE } = TABLE_NAMES;
 
 // Encoder used by GPT-3.5/4 and Perplexity sonar (OpenAI-compatible)
 const encoder = new Tiktoken(cl100k_base);
