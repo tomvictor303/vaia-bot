@@ -6,6 +6,8 @@ const openai = new OpenAI({
   baseURL: process.env.LLM_API_BASE_URL,
 });
 
+const MERGE_SHORT_OUTPUT_REDUCTION_THRESHOLD_PERCENT = 75;
+
 export class AIService {
   /**
    * Generic LLM call helper.
@@ -117,13 +119,13 @@ Only update if the NEW text adds notable information beyond the EXISTING text.
 
 Output contract (STRICT):
 - You must return ONE of these two outputs only:
-  1) no
+  1) NO_UPDATE_VAIA_MERGE_TEXTS
   2) only the merged markdown text
 - Do not return JSON.
 - Do not return explanations, labels, prefixes, suffixes, or quotes.
 
 Rules:
-- If new text is redundant or adds nothing meaningful, return 1) no.
+- If new text is redundant or adds nothing meaningful, return NO_UPDATE_VAIA_MERGE_TEXTS.
 - If new text adds or improves information, return a merged version.
 - Merge new text into the EXISTING text smoothly; you may add or update factual parts.
 - If new text includes facts that are never mentioned in the old text, just add them to the merged result.
@@ -150,13 +152,22 @@ ${incoming}
       });
 
       const output = (text || '').trim();
-      if (!output || /^1\)\s*no\.?$/i.test(output)) {
+      if (!output || /^NO_UPDATE_VAIA_MERGE_TEXTS\.?$/i.test(output)) {
         return { isUpdate: false, mergedText: existing };
       }
 
       // Safety: if model returned unchanged text, treat as no update.
       if (output === existing) {
         return { isUpdate: false, mergedText: existing };
+      }
+
+      // Safety: if merged output is significantly shorter than existing text,
+      // treat as no update to avoid accidental over-compression/truncation.
+      if (existing && output.length < existing.length) {
+        const reductionPercent = ((existing.length - output.length) / existing.length) * 100;
+        if (reductionPercent >= MERGE_SHORT_OUTPUT_REDUCTION_THRESHOLD_PERCENT) {
+          return { isUpdate: false, mergedText: existing };
+        }
       }
 
       return { isUpdate: true, mergedText: output };
