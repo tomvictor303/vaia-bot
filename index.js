@@ -3,6 +3,7 @@ import { testConnection, closePool } from './config/database.js';
 import { HotelService } from './services/hotelService.js';
 import { scrapeHotel } from './controllers/scrapeController.js';
 import { aggregateScrapedData } from './controllers/aggregateScrapedController.js';
+import { LogRunsService } from './services/logRunsService.js';
 async function main() {
   console.log("🚀 Starting Hotel Data Fetcher...");
 
@@ -54,6 +55,18 @@ async function main() {
 
       if (hotel.hotel_url) {
         // BEGIN PROCESS_SINGLE_HOTEL
+        const run_id = await LogRunsService.insert({
+          hotel_uuid: hotel.hotel_uuid,
+          status: 'running',
+          stage: 'started',
+          started_at: new Date(),
+        });
+        if (run_id > 0) {
+          console.log(`✅ Log run started with ID: ${run_id}`);
+        } else {
+          console.error(`❌ Failed to start log run: ${hotel.hotel_uuid} (${hotel.name}). Skip this hotel.`);
+          continue;
+        }
         // BEGIN SCRAPE_HOTEL
         let scrapedSuccess = false;
         if (shouldRunScrape) {
