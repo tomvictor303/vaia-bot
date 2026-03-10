@@ -1,4 +1,3 @@
-import OpenAI from 'openai';
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
@@ -12,11 +11,6 @@ const CATEGORY_FIELDS = MD_CAT_FIELDS.map(f => ({
   description: f.description,
   capture_guide: f.capture_guide,
 }));
-
-const openai = new OpenAI({
-  apiKey: process.env.LLM_API_KEY,
-  baseURL: process.env.LLM_API_BASE_URL,
-});
 
 // BEGIN getActiveMarkdownPages
 /**
@@ -142,15 +136,13 @@ Markdown source (from ${pageUrl}):
 ---
 ${markdown}
 ---`;
-
-  const completion = await openai.chat.completions.create({
-    model: process.env.LLM_MODEL_VERSION,
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 1024 * 16 * 4,
+  const { text } = await AIService.askLLM({
+    prompt,
+    maxTokens: 1024 * 16 * 4,
+    jsonMode: true,
   });
 
-  const content = completion.choices?.[0]?.message?.content || '';
-  const parsed = llmOutputToJson(content);
+  const parsed = llmOutputToJson(text);
   if (!parsed || typeof parsed !== 'object') {
     console.error('⚠️  Could not parse extraction response; returning empty object');
     return {};
@@ -195,14 +187,13 @@ Do not include source page URLs in the merged text.
 
 **Snippets:**
 ${joined}`;
-
-  const completion = await openai.chat.completions.create({
-    model: process.env.LLM_MODEL_VERSION,
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 1024 * 48,
+  const { text } = await AIService.askLLM({
+    prompt,
+    maxTokens: 1024 * 48,
+    jsonMode: false,
   });
 
-  return completion.choices[0]?.message?.content?.trim() || '';
+  return text.trim() || '';
 }
 // END mergeAndRefineSnippets
 

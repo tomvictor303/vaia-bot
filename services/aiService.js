@@ -137,14 +137,13 @@ ${incoming}
 >>>`;
 
     try {
-      const completion = await openai.chat.completions.create({
-        model: process.env.LLM_MODEL_VERSION,
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 1024 * 10 * 4,
+      const { text } = await AIService.askLLM({
+        prompt,
+        maxTokens: 1024 * 10 * 4,
+        jsonMode: true,
       });
 
-      const content = completion.choices?.[0]?.message?.content || '';
-      const parsed = llmOutputToJson(content);
+      const parsed = llmOutputToJson(text);
       if (
         parsed &&
         typeof parsed === 'object' &&
@@ -186,14 +185,13 @@ Rules:
 - Output must be valid JSON object (not an array).`;
 
     try {
-      const completion = await openai.chat.completions.create({
-        model: process.env.LLM_MODEL_VERSION,
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 1024 * 10 * 4,
+      const { text } = await AIService.askLLM({
+        prompt,
+        maxTokens: 1024 * 10 * 4,
+        jsonMode: true,
       });
 
-      const content = completion.choices?.[0]?.message?.content || '';
-      const parsed = llmOutputToJson(content);
+      const parsed = llmOutputToJson(text);
       return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
     } catch (error) {
       console.error(`❌ Error converting text to JSON via LLM:`, error.message);
