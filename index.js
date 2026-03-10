@@ -55,14 +55,16 @@ async function main() {
 
       if (hotel.hotel_url) {
         // BEGIN PROCESS_SINGLE_HOTEL
-        const run_id = await LogRunsService.insert({
+        const startAt = new Date();
+        const startMs = startAt.getTime();
+        const runId = await LogRunsService.insert({
           hotel_uuid: hotel.hotel_uuid,
           status: 'running',
           stage: 'scrape',
-          started_at: new Date(),
+          started_at: startAt,
         });
-        if (run_id > 0) {
-          console.log(`✅ Log run started with ID: ${run_id}`);
+        if (runId > 0) {
+          console.log(`✅ Log run started with ID: ${runId}`);
         } else {
           console.error(`❌ Failed to start log run: ${hotel.hotel_uuid}. Skip this hotel.`);
           continue;
@@ -72,7 +74,7 @@ async function main() {
         if (shouldRunScrape) {
           // BEGIN SCRAPE_HOTEL_BODY
           try {
-            await scrapeHotel(hotel.hotel_url, hotel.hotel_uuid, hotel.name);
+            await scrapeHotel(runId, hotel.hotel_url, hotel.hotel_uuid, hotel.name);
             scrapedSuccess = true;
           } catch (error) {
             console.error(`❌ Error scraping ${hotel.name}:`, error.message);
@@ -88,10 +90,15 @@ async function main() {
         // BEGIN AGGREGATE_SCRAPED_HOTEL_DATA
         if (shouldRunAggregate && scrapedSuccess) {
           // BEGIN AGGREGATE_SCRAPED_HOTEL_DATA_BODY
-          await aggregateScrapedData(hotel.hotel_uuid, hotel.name);
+          await aggregateScrapedData(runId, hotel.hotel_uuid, hotel.name);
           // END AGGREGATE_SCRAPED_HOTEL_DATA_BODY
         }
         // END AGGREGATE_SCRAPED_HOTEL_DATA 
+        await LogRunsService.updateById(runId, {
+          status: 'success',
+          finished_at: new Date(),
+          duration_ms: Date.now() - startMs,
+        });
         // END PROCESS_SINGLE_HOTEL
       } else {
         console.log(`⚠️  No hotel_url found for ${hotel.name}, skipping scraping`);

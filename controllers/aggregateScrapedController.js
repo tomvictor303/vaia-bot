@@ -255,11 +255,14 @@ function isFieldUpdated(fieldName, mergedData) {
  * **Entry point** of this controller.
  * 
  * Aggregates scraped markdown pages into structured market data via LLM extraction and refinement.
+ * @param {number} runId - Run log id
  * @param {string} hotelUuid - Hotel UUID to process.
  * @param {string} hotelName - Hotel name for prompt context and logging.
  * @returns {Promise<Object>} Aggregated market data payload.
  */
-export async function aggregateScrapedData(hotelUuid, hotelName) {
+export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
+  // reserved for run-level logging linkage
+  void runId;
   if (!hotelUuid) throw new Error('hotelUuid is required');
 
   const unitTestAction = String(process.env.UNIT_TEST_ACTION || '').toLowerCase();

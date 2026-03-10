@@ -298,12 +298,15 @@ async function waitForDomToSettle(page, {
  * Scrape a hotel website using PlaywrightCrawler
  * Crawls all pages from the hotel's main URL (crawl all mode)
  * 
+ * @param {number} runId - Run log id
  * @param {string} hotelUrl - Starting URL for the hotel
  * @param {string} hotelUuid - Hotel UUID
  * @param {string} hotelName - Hotel name (for logging)
  * @returns {Promise<Object>} Scraping statistics
  */
-export async function scrapeHotel(hotelUrl, hotelUuid, hotelName) {
+export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
+  // reserved for run-level logging linkage
+  void runId;
   if (!hotelUrl || !hotelUrl.startsWith('http')) {
     throw new Error(`Invalid hotel URL: ${hotelUrl}`);
   }
