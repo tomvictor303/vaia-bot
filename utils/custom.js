@@ -27,7 +27,7 @@ export function llmOutputToJson(raw) {
     return JSON.parse(cleaned);
   } catch (error) {
     console.error('❌ Error parsing JSON::llmOutputToJson', error.message);
-    console.error('❌ Raw JSON::llmOutputToJson', raw);
+    console.error('❌ Raw JSON Input which caused the error::llmOutputToJson', raw);
     return {};
   }
 }
