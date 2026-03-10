@@ -108,6 +108,9 @@ export class AIService {
     const incoming = (newText || '').trim();
 
     // Guardrails: nothing new or identical content
+    if (!existing && incoming) {
+      return { isUpdate: true, mergedText: incoming };
+    }
     if (!incoming) {
       return { isUpdate: false, mergedText: existing };
     }
