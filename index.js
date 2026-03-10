@@ -25,6 +25,14 @@ async function main() {
     process.exit(1);
   }
 
+  // LLM configuration (API key omitted)
+  console.log('🤖 LLM config:', {
+    LLM_API_BASE_URL: process.env.LLM_API_BASE_URL || '(not set)',
+    LLM_MODEL_VERSION: process.env.LLM_MODEL_VERSION || '(not set)',
+    LLM_PROMPT_VERSION: process.env.LLM_PROMPT_VERSION || '(not set)',
+    LLM_API_KEY: process.env.LLM_API_KEY ? '(set)' : '(not set)',
+  });
+
   try {
     // Get all active hotels from database
     const hotels = await HotelService.getActiveHotels();
