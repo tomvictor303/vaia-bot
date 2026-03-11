@@ -9,6 +9,13 @@ export const TABLE_NAMES = {
 	MARKET_DATA_DEBUG2_TABLE: 'market_data_debug2',
 };
 
+export const T = {
+	TEXT: 'text',
+	NUMBER: 'number',
+	BOOLEAN: 'boolean',
+	TIMESTAMP: 'timestamp',
+};
+
 // Category text fields (16 categories plus "other")
 export const MD_CAT_FIELDS = [
 	{

@@ -1,25 +1,26 @@
 import { executeQuery } from '../config/database.js';
+import { T } from '../middleware/constants.js';
 
 const TABLE = 'market_data_log_runs';
 
 export class LogRunsService {
   static COMMON_MUTABLE_FIELDS = [
-    'status',
-    'stage',
-    'started_at',
-    'finished_at',
-    'duration_ms',
-    'pages_scraped',
-    'pages_analyzed',
-    'categories_updated',
-    'tokens_used',
-    'cost',
-    'model_version',
-    'prompt_version',
-    'error_message',
+    { name: 'status', type: T.TEXT },
+    { name: 'stage', type: T.TEXT },
+    { name: 'started_at', type: T.TIMESTAMP },
+    { name: 'finished_at', type: T.TIMESTAMP },
+    { name: 'duration_ms', type: T.NUMBER },
+    { name: 'pages_scraped', type: T.NUMBER },
+    { name: 'pages_analyzed', type: T.NUMBER },
+    { name: 'categories_updated', type: T.NUMBER },
+    { name: 'tokens_used', type: T.NUMBER },
+    { name: 'cost', type: T.NUMBER },
+    { name: 'model_version', type: T.TEXT },
+    { name: 'prompt_version', type: T.TEXT },
+    { name: 'error_message', type: T.TEXT },
   ];
 
-  static INSERTABLE_FIELDS = ['hotel_uuid', ...this.COMMON_MUTABLE_FIELDS];
+  static INSERTABLE_FIELDS = [{ name: 'hotel_uuid', type: T.TEXT }, ...this.COMMON_MUTABLE_FIELDS];
 
   static UPDATABLE_FIELDS = [...this.COMMON_MUTABLE_FIELDS];
 
@@ -40,8 +41,10 @@ export class LogRunsService {
       base.started_at = new Date();
     }
 
-    const fields = this.INSERTABLE_FIELDS.filter((f) => Object.prototype.hasOwnProperty.call(base, f));
-    const values = fields.map((f) => base[f]);
+    const fields = this.INSERTABLE_FIELDS
+      .map((f) => f.name)
+      .filter((name) => Object.prototype.hasOwnProperty.call(base, name));
+    const values = fields.map((name) => base[name]);
     const placeholders = fields.map(() => '?').join(', ');
 
     const query = `
@@ -63,13 +66,15 @@ export class LogRunsService {
   static async updateById(id, patch = {}) {
     if (!id) throw new Error(`${TABLE}.updateById requires id`);
 
-    const fields = this.UPDATABLE_FIELDS.filter(
-      (f) => Object.prototype.hasOwnProperty.call(patch, f) && patch[f] !== undefined
+    const fields = this.UPDATABLE_FIELDS
+      .map((f) => f.name)
+      .filter(
+        (name) => Object.prototype.hasOwnProperty.call(patch, name) && patch[name] !== undefined
     );
     if (fields.length === 0) return 0;
 
-    const setClause = fields.map((f) => `${f} = ?`).join(', ');
-    const params = fields.map((f) => patch[f]);
+    const setClause = fields.map((name) => `${name} = ?`).join(', ');
+    const params = fields.map((name) => patch[name]);
     params.push(id);
 
     const query = `
