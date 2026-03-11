@@ -9,18 +9,6 @@ export const TABLE_NAMES = {
 	MARKET_DATA_DEBUG2_TABLE: 'market_data_debug2',
 };
 
-// Deprecated: Primary/Principal fields (basic fields)
-const MD_PR_FIELDS = [
-	{ name: 'name', description: 'hotel name' },
-	{ name: 'city_state_country', description: 'city, state, country' },
-	{ name: 'address', description: 'street address' },
-	{ name: 'zipcode', description: 'zipcode or postal code' },
-	{ name: 'description', description: 'hotel description' },
-	{ name: 'email', description: 'contact email' },
-	{ name: 'main_phone', description: 'main phone number' },
-	{ name: 'other_phones', description: 'All phone numbers with descriptions. e.g: "Front Desk: (123) 456-7890"' },
-];
-
 // Category text fields (16 categories plus "other")
 export const MD_CAT_FIELDS = [
 	{
@@ -94,5 +82,3 @@ export const MD_EXTRA_FIELDS = [
 // All fields - merge of meaningful data fields and extra fields
 export const MD_ALL_FIELDS = [...MD_DATA_FIELDS, ...MD_EXTRA_FIELDS];
 
-// (Deprecated) Boolean fields - array of field names that are boolean values. 
-export const BOOLEAN_FIELDS = [];

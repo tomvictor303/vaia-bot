@@ -1,66 +1,10 @@
 import 'dotenv/config';
 import { executeQuery } from '../config/database.js';
-import { MD_ALL_FIELDS, MD_DATA_FIELDS, BOOLEAN_FIELDS, TABLE_NAMES } from '../middleware/constants.js';
+import { MD_ALL_FIELDS, MD_DATA_FIELDS, TABLE_NAMES } from '../middleware/constants.js';
 
 const { MARKET_DATA_TABLE, MARKET_DATA_DEBUG1_TABLE, MARKET_DATA_DEBUG2_TABLE } = TABLE_NAMES;
 
 export class MarketDataService {
-  
-  // Boolean fields that need conversion from string to integer
-  static booleanKeysList = [...BOOLEAN_FIELDS];
-  
-  /**
-   * Convert boolean string values to integers for database storage
-   * Only processes boolean fields that are actually present in the input data
-   * @param {Object} data - Data object to process
-   * @returns {Object} Data object with boolean values converted
-   */
-  static convertBooleanValues(data) {
-    const convertedData = { ...data };
-    
-    // Only process boolean fields that are actually present in the data
-    this.booleanKeysList.forEach(key => {
-      // Skip if this key is not in the input data
-      // This is **IMPORTANT** to prevent unintentional data fields in insert/update
-      if (!(key in data)) {
-        return;
-      }
-      
-      const value = convertedData[key];
-      
-      // Handle boolean values
-      if (typeof value === 'boolean') {
-        convertedData[key] = value ? 1 : 0;
-      }
-      // Handle number values (0 or 1)
-      else if (typeof value === 'number') {
-        convertedData[key] = value === 0 ? 0 : (value === 1 ? 1 : null);
-      }
-      // Handle string values
-      else if (typeof value === 'string') {
-        const flatValue = value.toLowerCase().replaceAll(' ', '');
-        if (flatValue === 'true' || flatValue === 'yes' || flatValue === 'ok' || flatValue === 'y' || flatValue === '1') {
-          convertedData[key] = 1;
-        } else if (flatValue === 'false' || flatValue === 'no' || flatValue === 'n' || flatValue === '0') {
-          convertedData[key] = 0;
-        } else if (flatValue === '' || flatValue === 'n/a') {
-          convertedData[key] = null;
-        } else {
-          convertedData[key] = null; // If not sure about the value, set to null
-        }
-      }
-      // Handle null/undefined - keep as is (already null or will be undefined)
-      else if (value === undefined || value === null) {
-        convertedData[key] = null;
-      }
-      // Unknown type - set to null
-      else {
-        convertedData[key] = null;
-      }
-    });
-    
-    return convertedData;
-  }
   
   /**
    * Get market data ID by hotel_uuid
@@ -184,9 +128,7 @@ export class MarketDataService {
   static async insertMarketData(data) {
     // Filter out invalid fields first
     const filteredData = this.filterValidFields(data);
-    
-    // Convert boolean values before processing
-    const fineData = this.convertBooleanValues(filteredData);
+    const fineData = filteredData;
 
     // Build columns array from fields that actually exist in the filtered data
     // Since fineData is already filtered to only contain valid fields, we can use Object.keys directly
@@ -237,9 +179,7 @@ export class MarketDataService {
     // Filter out invalid fields first (exclude hotel_uuid for safety)
     const { hotel_uuid, ...dataWithoutUuid } = data;
     const filteredData = this.filterValidFields(dataWithoutUuid);
-    
-    // Convert boolean values before processing
-    const fineData = this.convertBooleanValues(filteredData);
+    const fineData = filteredData;
     
     // If no valid fields to update, return early
     const columns = Object.keys(fineData);
