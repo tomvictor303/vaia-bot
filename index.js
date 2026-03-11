@@ -96,7 +96,6 @@ async function main() {
         // END AGGREGATE_SCRAPED_HOTEL_DATA 
         await LogRunsService.updateById(runId, {
           status: 'success',
-          stage: 'completed',
           finished_at: new Date(),
           duration_ms: Date.now() - startMs,
         });
