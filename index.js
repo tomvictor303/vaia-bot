@@ -71,10 +71,18 @@ async function main() {
         }
         // BEGIN SCRAPE_HOTEL
         let scrapedSuccess = false;
+        let scrapeStats = null;
         if (shouldRunScrape) {
           // BEGIN SCRAPE_HOTEL_BODY
           try {
-            await scrapeHotel(runId, hotel.hotel_url, hotel.hotel_uuid, hotel.name);
+            scrapeStats = await scrapeHotel(runId, hotel.hotel_url, hotel.hotel_uuid, hotel.name);
+            await LogRunsService.updateById(runId, {
+              crawler_max_depth: scrapeStats?.crawlerMaxDepth ?? null,
+              crawler_skipped: scrapeStats?.pagesSkipped ?? 0,
+              crawler_errors: scrapeStats?.errors ?? 0,
+              pages_scraped: scrapeStats?.pagesScraped ?? 0,
+              pages_deactivated: scrapeStats?.pagesDeactivated ?? 0,
+            });
             scrapedSuccess = true;
           } catch (error) {
             console.error(`❌ Error scraping ${hotel.name}:`, error.message);
@@ -95,7 +103,7 @@ async function main() {
         }
         // END AGGREGATE_SCRAPED_HOTEL_DATA 
         await LogRunsService.updateById(runId, {
-          status: 'success',
+          status: 'success', // NOTE: Do not mark stage as 'completed' here, cuz we want to track which stage the pipeline ends at.
           finished_at: new Date(),
           duration_ms: Date.now() - startMs,
         });

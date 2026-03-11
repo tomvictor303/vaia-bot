@@ -322,6 +322,7 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
   const existingPages = await getExistingPages(hotelUuid);
   const nonScrapedPageMap = new Map((existingPages || []).map((page) => [page.page_url, page.id]));
   const stats = { scraped: 0, skipped: 0, errors: 0 };
+  let pagesDeactivated = 0;
 
   console.log(`\n🕷️  Crawl-all mode: ${hotelName}`);
   console.log(`📍 Start URL: ${hotelUrl}`);
@@ -628,8 +629,8 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
   // Deactivate pages that were present before but not scraped in this run
   const stalePageIds = Array.from(nonScrapedPageMap.values());
   if (stalePageIds.length > 0) {
-    const deactivated = await deactivatePagesByIds(stalePageIds);
-    console.log(`🗂️  Deactivated ${deactivated} outdated page(s) for ${hotelName}`);
+    pagesDeactivated = await deactivatePagesByIds(stalePageIds);
+    console.log(`🗂️  Deactivated ${pagesDeactivated} outdated page(s) for ${hotelName}`);
   }
 
   console.log(`\n📊 Crawl summary for ${hotelName}`);
@@ -642,6 +643,8 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
     hotelName,
     hotelUrl,
     pagesScraped: stats.scraped,
+    pagesDeactivated,
+    crawlerMaxDepth: maxDepth === Infinity ? -1 : maxDepth,
     pagesSkipped: stats.skipped,
     errors: stats.errors,
     totalPages: stats.scraped + stats.skipped,
