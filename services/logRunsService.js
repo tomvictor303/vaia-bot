@@ -12,6 +12,8 @@ export class LogRunsService {
     { name: 'duration_ms', type: T.NUMBER },
     { name: 'pages_scraped', type: T.NUMBER },
     { name: 'pages_analyzed', type: T.NUMBER },
+    { name: 'pages_deactivated', type: T.NUMBER },
+    { name: 'crawler_max_depth', type: T.NUMBER },
     { name: 'categories_updated', type: T.NUMBER },
     { name: 'tokens_used', type: T.NUMBER },
     { name: 'cost', type: T.NUMBER },
