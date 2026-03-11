@@ -50,45 +50,6 @@ export class MarketDataService {
   }
 
   /**
-   * Get list of empty fields from existing market data
-   * @param {Object} existingData - Existing market data object
-   * @param {Array} allFields - Array of all field names to check
-   * @returns {Array<string>} Array of field names that are empty or null
-   */
-  static getEmptyFields(existingData, allFields) {
-    if (!existingData) {
-      return allFields;
-    }
-    
-    return allFields.filter(fieldName => {
-      const value = existingData[fieldName];
-      return value === null || value === undefined || value === '' || value === 'N/A';
-    });
-  }
-
-  /**
-   * Merge new data with existing data, only updating non-empty values
-   * Prevents overwriting existing data with empty values
-   * @param {Object} existingData - Existing market data
-   * @param {Object} newData - New data to merge
-   * @returns {Object} Merged data object
-   */
-  static mergeDataSafely(existingData, newData) {
-    const merged = { ...existingData };
-    
-    // Only update fields that have non-empty values in newData
-    Object.keys(newData).forEach(key => {
-      const newValue = newData[key];
-      // Only update if new value is not empty/null/N/A
-      if (newValue !== null && newValue !== undefined && newValue !== '' && newValue !== 'N/A') {
-        merged[key] = newValue;
-      }
-    });
-    
-    return merged;
-  }
-
-  /**
    * Filter data object to only include fields that are in MD_ALL_FIELDS
    * Prevents SQL crashes from invalid field names
    * @param {Object} data - Data object to filter
