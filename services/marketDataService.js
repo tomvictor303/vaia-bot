@@ -78,10 +78,11 @@ export class MarketDataService {
    * @example
    * const marketData = {
    *   hotel_uuid: 'uuid-123',
-   *   name: 'Grand Hotel',
-   *   description: 'A luxurious hotel in the heart of the city',
-   *   amenities: 'Pool,Spa,Restaurant,WiFi',
-   *   email: 'info@grandhotel.com'
+  *   basic_information: 'Grand Hotel in New York, full-service waterfront property.',
+  *   contacts: 'Phone: +1-555-0123; Email: info@grandhotel.com',
+  *   amenities: 'Outdoor pool, spa, complimentary Wi-Fi, valet parking',
+  *   policies: 'Check-in 4 PM; Check-out 11 AM; Pets allowed with fee',
+  *   parking_transportation: 'Valet parking available; airport shuttle on request'
    * };
    * const insertId = await MarketDataService.insertMarketData(marketData);
    * console.log(`Market data inserted with ID: ${insertId}`);
@@ -129,9 +130,10 @@ export class MarketDataService {
    * @throws {Error} When database update fails or market data with given ID doesn't exist
    * @example
    * const updatedData = {
-   *   name: 'Grand Hotel Updated',
-   *   description: 'An updated luxurious hotel description',
-   *   main_phone: '+1-555-0124'
+  *   contacts: 'Phone: +1-555-0124; Email: reservations@grandhotel.com',
+  *   amenities: 'Outdoor pool, spa, fitness center, complimentary Wi-Fi',
+  *   meeting_events: '12,000 sq ft event space; ballroom capacity up to 300',
+  *   food_beverage: 'All-day dining restaurant, lobby bar, in-room dining'
    * };
    * const affectedRows = await MarketDataService.updateMarketData(123, updatedData);
    * console.log(`Updated ${affectedRows} market data record(s)`);
@@ -184,9 +186,11 @@ export class MarketDataService {
    * @throws {Error} When database operation fails
    * @example
    * const marketData = {
-   *   name: 'Grand Hotel',
-   *   location: 'New York, NY',
-   *   description: 'A luxurious hotel'
+  *   basic_information: 'Grand Hotel, New York, NY',
+  *   contacts: 'Phone: +1-555-0123',
+  *   guest_rooms: 'King Room, Double Queen Room, Suite options',
+  *   recreation_fitness: 'Fitness center open 24/7; rooftop pool',
+  *   policies: 'No smoking; cancellation up to 48 hours before arrival'
    * };
    * const result = await MarketDataService.upsertMarketData(marketData, 'uuid-123');
    * if (result.action === 'insert') {
