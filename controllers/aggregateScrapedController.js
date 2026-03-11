@@ -1,6 +1,7 @@
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
+import { LogRunsService } from '../services/logRunsService.js';
 import { MD_CAT_FIELDS, TABLE_NAMES } from '../middleware/constants.js';
 import { llmOutputToJson, isValidStringMap } from '../utils/custom.js';
 
@@ -270,6 +271,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f.name, []]));
 
   // BEGIN EXTRACT_DATA_FROM_PAGES
+  await LogRunsService.markStage(runId, 'ai_extract');
   if (unitTestAction === 'after_extract') {
     // Load field buckets from cached outputs
     // This test action is used to **skip** the extraction step in the unit test.
@@ -317,6 +319,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
 
   // Per-field composition (Count(schema fields) LLM calls)
   // This is where the new data is composed from the extracted snippets (from multiple pages) by iterating each field.
+  await LogRunsService.markStage(runId, 'ai_aggregate');
   console.log(`🔍 Composing new data from extracted fields...`);
   const newData = {};
   for (const field of CATEGORY_FIELDS) {
@@ -335,6 +338,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   // END DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
 
   // Merge the new data with the existing data
+  await LogRunsService.markStage(runId, 'ai_merge');
   let mergedData = {};
   let DEBUG2_LOGS = {};
   const existingData = await MarketDataService.getMarketDataByUuid(hotelUuid);
@@ -378,6 +382,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   // END SAVE_DEBUG2_LOG
 
   // Track "other" changes in a single check
+  await LogRunsService.markStage(runId, 'ai_finalize');
   const otherUpdated = isFieldUpdated('other', mergedData);
   console.log('otherUpdated', otherUpdated);
 
@@ -389,6 +394,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   }
 
   // Guardrail: no meaningful updates
+  await LogRunsService.markStage(runId, 'save');
   const updatedFieldsCount = Object.keys(mergedData).length;
   if (updatedFieldsCount === 0) {
     console.log(`⚠️ [${hotelName || hotelUuid}]: There is no significant new info to update.`);
