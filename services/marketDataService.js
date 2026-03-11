@@ -222,6 +222,7 @@ export class MarketDataService {
 
   /**
    * Build debug1 payload from fieldBuckets (snippets per field) and newData (refined value per field).
+   * Note: debug table has same schema with market data table.
    * @param {Object} fieldBuckets - Object keyed by field name, values are Array<{ page_url: string, value: string }>
    * @param {Object} newData - Object keyed by field name, values are strings (refined text)
    * @param {string} hotelUuid - Hotel UUID for debug log
@@ -252,6 +253,7 @@ export class MarketDataService {
 
   /**
    * Upsert into market_data_debug1 (same structure as market_data).
+   * Note: debug table has same schema with market data table.
    * Composes debug payload from fieldBuckets and newData, then upserts by hotel_uuid.
    * @param {Object} fieldBuckets - Object keyed by field name, values are Array<{ page_url: string, value: string }>
    * @param {Object} newData - Object keyed by field name, values are strings (refined text)
@@ -315,6 +317,7 @@ export class MarketDataService {
 
   /**
    * Build payload for market_data_debug2: one column per field, value = readable string (like debug1) or null.
+   * Note: debug table has same schema with market data table.
    * DEBUG2_LOGS[field] is { isUpdate, existingData, newData, mergedText }.
    * @param {Object} DEBUG2_LOGS - Object keyed by field name, values are { isUpdate, existingData, newData, mergedText }
    * @returns {Object} Object keyed by field name, values are strings or null for DB
@@ -349,6 +352,7 @@ export class MarketDataService {
 
   /**
    * Upsert into market_data_debug2 (same structure as market_data).
+   * Note: debug table has same schema with market data table.
    * Payload per field is JSON.stringify of DEBUG2_LOGS[field] (merge log: isUpdate, existingData, newData, mergedText).
    * @param {Object} DEBUG2_LOGS - Object keyed by field name, values are { isUpdate, existingData, newData, mergedText }
    * @param {string} hotelUuid - Hotel UUID for upsert key
