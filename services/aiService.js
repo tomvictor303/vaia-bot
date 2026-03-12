@@ -23,7 +23,7 @@ export class AIService {
    * @param {boolean} [params.jsonMode=false] - If true, continuations instruct the model to continue JSON safely.
    * @param {number} [params.temperature=0] - Sampling temperature.
    * @param {number} [params.maxContinuations=5] - Max continuation loops when finish_reason === "length".
-   * @param {Object|null} [params.usage_summary=null] - Optional accumulator object for usage totals.
+   * @param {Object|null} [usage_summary=null] - Optional accumulator object for usage totals.
    * @returns {Promise<{
    *   text: string,
    *   finishReason: string | null,
@@ -37,14 +37,16 @@ export class AIService {
    *   }
    * }>}
    */
-  static async askLLM({
-    prompt,
-    maxTokens = 1024 * 8,
-    jsonMode = false,
-    temperature = 0,
-    maxContinuations = 5,
-    usage_summary = null,
-  }) {
+  static async askLLM(
+    {
+      prompt,
+      maxTokens = 1024 * 8,
+      jsonMode = false,
+      temperature = 0,
+      maxContinuations = 5,
+    },
+    usage_summary = null
+  ) {
     if (!prompt || typeof prompt !== 'string') {
       throw new Error('prompt must be a non-empty string');
     }
