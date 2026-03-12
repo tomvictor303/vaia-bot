@@ -110,10 +110,10 @@ async function loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets) {
  * @param {string} markdown - Markdown content of the page.
  * @param {string} pageUrl - Source page URL (for context).
  * @param {string} hotelNameLabel - Human-friendly hotel name for prompts.
- * @param {Object} hotelLlmUsage - Per-hotel LLM usage accumulator.
+ * @param {Object} hotelLLMUsage - Per-hotel LLM usage accumulator.
  * @returns {Promise<Object<string, string>>} Key/value pairs for category fields.
  */
-async function extractFieldsFromPage(markdown, pageUrl, hotelNameLabel, hotelLlmUsage) {
+async function extractFieldsFromPage(markdown, pageUrl, hotelNameLabel, hotelLLMUsage) {
   hotelNameLabel = hotelNameLabel || 'the hotel';
 
   const describedFields = CATEGORY_FIELDS.map((f) => {
@@ -144,7 +144,7 @@ ${markdown}
     prompt,
     maxTokens: 1024 * 64,
     jsonMode: true,
-  }, hotelLlmUsage);
+  }, hotelLLMUsage);
 
   const parsed = llmOutputToJson(text);
   if (!parsed || typeof parsed !== 'object') {
@@ -160,12 +160,12 @@ ${markdown}
  * Merge and refine snippets for a given field using LLM to remove duplicates and clean formatting.
  * @param {string} fieldName - Field name being refined.
  * @param {Array<{ page_url: string, value: string }>} snippets - Snippets per page (page_url + value).
- * @param {Object} hotelLlmUsage - Per-hotel LLM usage accumulator.
+ * @param {Object} hotelLLMUsage - Per-hotel LLM usage accumulator.
  * @returns {Promise<string>} Refined field value.
  */
 const SNIPPET_DELIM = '\n<<<<<\n\n';
 
-async function mergeAndRefineSnippets(fieldName, snippets, hotelLlmUsage) {
+async function mergeAndRefineSnippets(fieldName, snippets, hotelLLMUsage) {
   const items = (snippets || []).filter((s) => s && s.value);
   const formatSnippet = (s, i) => {
     const value = String(s.value).trim();
@@ -196,7 +196,7 @@ ${joined}`;
     prompt,
     maxTokens: 1024 * 64,
     jsonMode: false,
-  }, hotelLlmUsage);
+  }, hotelLLMUsage);
 
   return text.trim() || '';
 }
@@ -272,7 +272,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   const unitTestAction = String(process.env.UNIT_TEST_ACTION || '').toLowerCase();
   let pagesActive = 0;
   let pagesAnalyzed = 0;
-  const hotelLlmUsage = { total_tokens: 0, input_tokens: 0, output_tokens: 0, cost: 0 };
+  const hotelLLMUsage = { total_tokens: 0, input_tokens: 0, output_tokens: 0, cost: 0 };
 
   const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f.name, []]));
 
@@ -301,10 +301,10 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     for (const page of pages) {
       pagesAnalyzed += 1;
       try {
-        let extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName, hotelLlmUsage);
+        let extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName, hotelLLMUsage);
         if (!isValidStringMap(extracted)) {
           console.log(`⚠️ Extraction empty for page ${page.id}, retrying once more...`);
-          const retried = await extractFieldsFromPage(page.markdown, page.page_url, hotelName, hotelLlmUsage);
+          const retried = await extractFieldsFromPage(page.markdown, page.page_url, hotelName, hotelLLMUsage);
           extracted = isValidStringMap(retried) ? retried : {};
         }
         CATEGORY_FIELDS.forEach((field) => {
@@ -324,8 +324,8 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   await LogRunsService.updateById(runId, {
     pages_active: pagesActive,
     pages_analyzed: pagesAnalyzed,
-    tokens_used: hotelLlmUsage.total_tokens,
-    cost: hotelLlmUsage.cost,
+    tokens_used: hotelLLMUsage.total_tokens,
+    cost: hotelLLMUsage.cost,
   });
   if (unitTestAction === 'extract') {
     console.log(`🧪 UNIT_TEST_ACTION=extract: stopping after extraction (skipping compose, merge, upsert). We are only interested in testing the extraction step.`);
@@ -339,7 +339,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   console.log(`🔍 Composing new data from extracted fields...`);
   const newData = {};
   for (const field of CATEGORY_FIELDS) {
-    newData[field.name] = await mergeAndRefineSnippets(field.name, fieldBuckets[field.name], hotelLlmUsage);
+    newData[field.name] = await mergeAndRefineSnippets(field.name, fieldBuckets[field.name], hotelLLMUsage);
     console.log(`✅ Composed new data for field: ${field.name}`);
   }
 
@@ -374,7 +374,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
         continue;
       }
       // Use LLM merge to determine if update is meaningful
-      const { isUpdate, mergedText } = await AIService.mergeTextsByLLM(existingData[fieldName], newData[fieldName], hotelLlmUsage);
+      const { isUpdate, mergedText } = await AIService.mergeTextsByLLM(existingData[fieldName], newData[fieldName], hotelLLMUsage);
       if (isUpdate && mergedText) {
         mergedData[fieldName] = mergedText;
       }
@@ -405,7 +405,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   // If "other" changed, store structured JSON representation
   if (otherUpdated) {
     const sourceOther = mergedData.other || existingData?.other || '';
-    let other_json = await AIService.textToJsonByLLM(sourceOther, hotelLlmUsage);
+    let other_json = await AIService.textToJsonByLLM(sourceOther, hotelLLMUsage);
     mergedData.other_structured = JSON.stringify(other_json);
   }
 
@@ -422,8 +422,8 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
       categories_updated: updatedFieldsCount,
       model_version: process.env.LLM_MODEL_VERSION || '',
       prompt_version: process.env.LLM_PROMPT_VERSION || '',
-      tokens_used: hotelLlmUsage.total_tokens,
-      cost: hotelLlmUsage.cost,
+      tokens_used: hotelLLMUsage.total_tokens,
+      cost: hotelLLMUsage.cost,
     });
   }
   console.log(`✅ Finished aggregating data for hotel ${hotelName || hotelUuid} (fields updated: ${updatedFieldsCount})`);
