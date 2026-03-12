@@ -23,7 +23,7 @@ export class AIService {
    * @param {boolean} [params.jsonMode=false] - If true, continuations instruct the model to continue JSON safely.
    * @param {number} [params.temperature=0] - Sampling temperature.
    * @param {number} [params.maxContinuations=5] - Max continuation loops when finish_reason === "length".
-   * @param {Object|null} [usage_summary=null] - Optional accumulator object for usage totals.
+   * @param {Object|null} [llm_usage_summary=null] - Optional accumulator object for usage totals.
    * @returns {Promise<{
    *   text: string,
    *   finishReason: string | null,
@@ -45,7 +45,7 @@ export class AIService {
       temperature = 0,
       maxContinuations = 5,
     },
-    usage_summary = null
+    llm_usage_summary = null
   ) {
     if (!prompt || typeof prompt !== 'string') {
       throw new Error('prompt must be a non-empty string');
@@ -125,12 +125,12 @@ export class AIService {
       cost: usedCost,
     };
 
-    if (usage_summary && typeof usage_summary === 'object') {
+    if (llm_usage_summary && typeof llm_usage_summary === 'object') {
       // NOTE: This is log tracking for upper level caller. e.g. llm usage for hotel
-      usage_summary.total_tokens = (usage_summary.total_tokens ?? 0) + usage.total_tokens;
-      usage_summary.input_tokens = (usage_summary.input_tokens ?? 0) + usage.input_tokens;
-      usage_summary.output_tokens = (usage_summary.output_tokens ?? 0) + usage.output_tokens;
-      usage_summary.cost = (usage_summary.cost ?? 0) + usage.cost;
+      llm_usage_summary.total_tokens = (llm_usage_summary.total_tokens ?? 0) + usage.total_tokens;
+      llm_usage_summary.input_tokens = (llm_usage_summary.input_tokens ?? 0) + usage.input_tokens;
+      llm_usage_summary.output_tokens = (llm_usage_summary.output_tokens ?? 0) + usage.output_tokens;
+      llm_usage_summary.cost = (llm_usage_summary.cost ?? 0) + usage.cost;
     }
 
     return {
@@ -147,10 +147,10 @@ export class AIService {
    * If texts are effectively the same (trim/identity), returns the existing text without an update.
    * @param {string} existingText - Current stored text.
    * @param {string} newText - Newly scraped/extracted text to evaluate.
-   * @param {Object|null} [usage_summary=null] - Optional usage accumulator object.
+   * @param {Object|null} [llm_usage_summary=null] - Optional usage accumulator object.
    * @returns {Promise<{isUpdate: boolean, mergedText: string}>} Whether to update and the merged text.
    */
-  static async mergeTextsByLLM(existingText, newText, usage_summary = null) {
+  static async mergeTextsByLLM(existingText, newText, llm_usage_summary = null) {
     const existing = (existingText || '').trim();
     const incoming = (newText || '').trim();
 
@@ -200,7 +200,7 @@ ${incoming}
         prompt,
         maxTokens: 1024 * 64,
         jsonMode: false,
-      }, usage_summary);
+      }, llm_usage_summary);
 
       const output = (text || '').trim();
       if (!output || /^NO_UPDATE_FROM_NEW_TEXT\.?$/i.test(output)) {
@@ -234,10 +234,10 @@ ${incoming}
   /**
    * Convert free-form text into a structured JSON object via LLM.
    * @param {string} rawText - Unstructured text describing a hotel (or resort agency).
-   * @param {Object|null} [usage_summary=null] - Optional usage accumulator object.
+   * @param {Object|null} [llm_usage_summary=null] - Optional usage accumulator object.
    * @returns {Promise<object>} Parsed JSON object (empty object on failure).
    */
-  static async textToJsonByLLM(rawText, usage_summary = null) {
+  static async textToJsonByLLM(rawText, llm_usage_summary = null) {
     const text = (rawText || '').trim();
     if (!text) return {};
 
@@ -262,7 +262,7 @@ Rules:
         prompt,
         maxTokens: 1024 * 64,
         jsonMode: true,
-      }, usage_summary);
+      }, llm_usage_summary);
 
       const parsed = llmOutputToJson(text);
       return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
