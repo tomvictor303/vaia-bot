@@ -18,7 +18,7 @@ export class LogRunsService {
     { name: 'pages_active', type: T.NUMBER },
     { name: 'pages_analyzed', type: T.NUMBER },
     { name: 'categories_updated', type: T.NUMBER },
-    { name: 'tokens_used', type: T.NUMBER },
+    { name: 'total_tokens', type: T.NUMBER },
     { name: 'cost', type: T.NUMBER },
     { name: 'model_version', type: T.TEXT },
     { name: 'prompt_version', type: T.TEXT },

@@ -324,7 +324,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   await LogRunsService.updateById(runId, {
     pages_active: pagesActive,
     pages_analyzed: pagesAnalyzed,
-    tokens_used: hotelLLMUsage.total_tokens,
+    total_tokens: hotelLLMUsage.total_tokens,
     cost: hotelLLMUsage.cost,
   });
   if (unitTestAction === 'extract') {
@@ -422,7 +422,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
       categories_updated: updatedFieldsCount,
       model_version: process.env.LLM_MODEL_VERSION || '',
       prompt_version: process.env.LLM_PROMPT_VERSION || '',
-      tokens_used: hotelLLMUsage.total_tokens,
+      total_tokens: hotelLLMUsage.total_tokens,
       cost: hotelLLMUsage.cost,
     });
   }
