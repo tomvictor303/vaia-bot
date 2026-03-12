@@ -15,6 +15,7 @@ export class LogRunsService {
     { name: 'crawler_errors', type: T.NUMBER },
     { name: 'pages_scraped', type: T.NUMBER },
     { name: 'pages_deactivated', type: T.NUMBER },
+    { name: 'pages_active', type: T.NUMBER },
     { name: 'pages_analyzed', type: T.NUMBER },
     { name: 'categories_updated', type: T.NUMBER },
     { name: 'tokens_used', type: T.NUMBER },

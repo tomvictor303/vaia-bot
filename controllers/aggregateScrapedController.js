@@ -64,7 +64,7 @@ async function markLLMInput(pageId, checksum, llm_output) {
  * Used by UNIT_TEST_ACTION=after_extract to skip per-page extraction LLM calls.
  * @param {string} hotelUuid - Hotel UUID.
  * @param {Object<string, Array<{ page_url: string, value: string }>>} fieldBuckets - Buckets to populate.
- * @returns {Promise<boolean>} True on success, false on fatal error.
+ * @returns {Promise<{ ok: boolean, pagesActive: number, pagesAnalyzed: number }>} Operation status and page counts.
  */
 async function loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets) {
   console.log('🧪 UNIT_TEST_ACTION=after_extract: loading cached llm_output into field buckets (skipping per-page extraction).');
@@ -78,10 +78,12 @@ async function loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets) {
     cachedPages = await executeQuery(cachedQuery, [hotelUuid]);
   } catch (error) {
     console.error('❌ Error loading cached llm_output for after_extract mode:', error.message);
-    return false;
+    return { ok: false, pagesActive: 0, pagesAnalyzed: 0 };
   }
 
+  let pagesAnalyzed = 0;
   for (const page of cachedPages) {
+    pagesAnalyzed += 1;
     if (!page.llm_output) continue;
     let extracted;
     try {
@@ -98,7 +100,7 @@ async function loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets) {
     });
   }
 
-  return true;
+  return { ok: true, pagesActive: cachedPages.length, pagesAnalyzed };
 }
 // END loadFieldBucketsFromCachedOutputs
 
@@ -267,6 +269,8 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   if (!hotelUuid) throw new Error('hotelUuid is required');
 
   const unitTestAction = String(process.env.UNIT_TEST_ACTION || '').toLowerCase();
+  let pagesActive = 0;
+  let pagesAnalyzed = 0;
 
   const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f.name, []]));
 
@@ -276,8 +280,10 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     // Load field buckets from cached outputs
     // This test action is used to **skip** the extraction step in the unit test.
     console.log(`🧪 UNIT_TEST_ACTION=after_extract: loading cached llm_output into field buckets (skipping per-page extraction).`);
-    const ok = await loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets);
-    if (!ok) {
+    const cachedResult = await loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets);
+    pagesActive = cachedResult?.pagesActive ?? 0;
+    pagesAnalyzed = cachedResult?.pagesAnalyzed ?? 0;
+    if (!cachedResult?.ok) {
       return null;
     }
   } else {
@@ -287,9 +293,11 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
       console.log(`⚠️  No markdown pages to aggregate for hotel ${hotelUuid}`);
       return null;
     }
+    pagesActive = pages.length;
     // Per-page extraction (Count(pages) LLM calls)
     console.log(`🔍 Extracting fields' data from pages...`);
     for (const page of pages) {
+      pagesAnalyzed += 1;
       try {
         let extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName);
         if (!isValidStringMap(extracted)) {
@@ -311,6 +319,10 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     }
     // END EXTRACT_DATA_FROM_PAGES_BODY
   }
+  await LogRunsService.updateById(runId, {
+    pages_active: pagesActive,
+    pages_analyzed: pagesAnalyzed,
+  });
   if (unitTestAction === 'extract') {
     console.log(`🧪 UNIT_TEST_ACTION=extract: stopping after extraction (skipping compose, merge, upsert). We are only interested in testing the extraction step.`);
     return null;
