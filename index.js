@@ -77,7 +77,6 @@ async function main() {
           try {
             scrapeStats = await scrapeHotel(runId, hotel.hotel_url, hotel.hotel_uuid, hotel.name);
             await LogRunsService.updateById(runId, {
-              crawler_max_depth: scrapeStats?.crawlerMaxDepth ?? null,
               crawler_skipped: scrapeStats?.pagesSkipped ?? 0,
               crawler_errors: scrapeStats?.errors ?? 0,
               pages_scraped: scrapeStats?.pagesScraped ?? 0,

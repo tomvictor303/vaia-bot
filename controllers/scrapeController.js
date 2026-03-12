@@ -644,7 +644,6 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
     hotelUrl,
     pagesScraped: stats.scraped,
     pagesDeactivated,
-    crawlerMaxDepth: maxDepth === Infinity ? -1 : maxDepth,
     pagesSkipped: stats.skipped,
     errors: stats.errors,
     totalPages: stats.scraped + stats.skipped,

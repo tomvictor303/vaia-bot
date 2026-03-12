@@ -10,7 +10,6 @@ export class LogRunsService {
     { name: 'started_at', type: T.TIMESTAMP },
     { name: 'finished_at', type: T.TIMESTAMP },
     { name: 'duration_ms', type: T.NUMBER },
-    { name: 'crawler_max_depth', type: T.NUMBER },
     { name: 'crawler_skipped', type: T.NUMBER },
     { name: 'crawler_errors', type: T.NUMBER },
     { name: 'pages_scraped', type: T.NUMBER },
