@@ -637,6 +637,7 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
   console.log(`   ✅ Scraped: ${stats.scraped}`);
   console.log(`   ⏭️  Skipped: ${stats.skipped}`);
   console.log(`   ❌ Errors: ${stats.errors}`);
+  // We will not track maxDepthReached yet, cuz it's not necessary for now.
 
   return {
     hotelUuid,
