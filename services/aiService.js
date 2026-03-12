@@ -28,7 +28,7 @@ export class AIService {
    *   finishReason: string | null,
    *   continuationCount: number,
    *   modelVersion: string | undefined,
-   *   used_tokens: number,
+ *   used_total_tokens: number,
    *   used_input_tokens: number,
    *   used_output_tokens: number,
    *   used_cost: number,
@@ -53,7 +53,7 @@ export class AIService {
     let fullText = '';
     let continuationCount = 0;
     let lastFinishReason = null;
-    let usedTokens = 0;
+    let usedTotalTokens = 0;
     let usedInputTokens = 0;
     let usedOutputTokens = 0;
     let usedCost = 0;
@@ -80,7 +80,7 @@ export class AIService {
 
       fullText += content;
       lastFinishReason = finishReason;
-      usedTokens += totalTokens;
+      usedTotalTokens += totalTokens;
       usedInputTokens += inputTokens;
       usedOutputTokens += outputTokens;
       usedCost += cost;
@@ -115,7 +115,7 @@ export class AIService {
       finishReason: lastFinishReason,
       continuationCount,
       modelVersion,
-      used_tokens: usedTokens,
+      used_total_tokens: usedTotalTokens,
       used_input_tokens: usedInputTokens,
       used_output_tokens: usedOutputTokens,
       used_cost: usedCost,
