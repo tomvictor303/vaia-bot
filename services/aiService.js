@@ -28,10 +28,12 @@ export class AIService {
    *   finishReason: string | null,
    *   continuationCount: number,
    *   modelVersion: string | undefined,
- *   used_total_tokens: number,
-   *   used_input_tokens: number,
-   *   used_output_tokens: number,
-   *   used_cost: number,
+   *   usage: {
+   *     total_tokens: number,
+   *     input_tokens: number,
+   *     output_tokens: number,
+   *     cost: number
+   *   }
    * }>}
    */
   static async askLLM({
@@ -115,10 +117,12 @@ export class AIService {
       finishReason: lastFinishReason,
       continuationCount,
       modelVersion,
-      used_total_tokens: usedTotalTokens,
-      used_input_tokens: usedInputTokens,
-      used_output_tokens: usedOutputTokens,
-      used_cost: usedCost,
+      usage: {
+        total_tokens: usedTotalTokens,
+        input_tokens: usedInputTokens,
+        output_tokens: usedOutputTokens,
+        cost: usedCost,
+      },
     };
   }
 
