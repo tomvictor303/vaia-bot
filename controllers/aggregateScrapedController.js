@@ -413,7 +413,12 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   } else {
     // If there are significant new info, update the market_data
     console.log(`🔄 [${hotelName || hotelUuid}]: Update market_data via upsert... (fields updated: ${updatedFieldsCount})`);
-    await MarketDataService.upsertMarketData(mergedData, hotelUuid);
+    await MarketDataService.upsertMarketData(mergedData, hotelUuid);    
+    await LogRunsService.updateById(runId, {
+      categories_updated: updatedFieldsCount,
+      model_version: process.env.LLM_MODEL_VERSION || '',
+      prompt_version: process.env.LLM_PROMPT_VERSION || '',
+    });
   }
   console.log(`✅ Finished aggregating data for hotel ${hotelName || hotelUuid} (fields updated: ${updatedFieldsCount})`);
 
