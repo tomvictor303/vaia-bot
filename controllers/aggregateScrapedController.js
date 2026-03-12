@@ -324,6 +324,8 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   await LogRunsService.updateById(runId, {
     pages_active: pagesActive,
     pages_analyzed: pagesAnalyzed,
+    model_version: process.env.LLM_MODEL_VERSION || '',
+    prompt_version: process.env.LLM_PROMPT_VERSION || '',
     total_tokens: hotelLLMUsage.total_tokens,
     cost: hotelLLMUsage.cost,
   });
