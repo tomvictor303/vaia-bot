@@ -23,7 +23,16 @@ export class AIService {
    * @param {boolean} [params.jsonMode=false] - If true, continuations instruct the model to continue JSON safely.
    * @param {number} [params.temperature=0] - Sampling temperature.
    * @param {number} [params.maxContinuations=5] - Max continuation loops when finish_reason === "length".
-   * @returns {Promise<{ text: string, finishReason: string | null, continuationCount: number, modelVersion: string | undefined }>}
+   * @returns {Promise<{
+   *   text: string,
+   *   finishReason: string | null,
+   *   continuationCount: number,
+   *   modelVersion: string | undefined,
+   *   used_tokens: number,
+   *   used_input_tokens: number,
+   *   used_output_tokens: number,
+   *   used_cost: number,
+   * }>}
    */
   static async askLLM({
     prompt,
@@ -44,6 +53,10 @@ export class AIService {
     let fullText = '';
     let continuationCount = 0;
     let lastFinishReason = null;
+    let usedTokens = 0;
+    let usedInputTokens = 0;
+    let usedOutputTokens = 0;
+    let usedCost = 0;
 
     // Continue while the model stops due to token limit and we have budget to continue.
     // We intentionally do not stream here; callers get the full text at the end.
@@ -59,9 +72,18 @@ export class AIService {
       const choice = response.choices?.[0];
       const content = choice?.message?.content ?? '';
       const finishReason = choice?.finish_reason ?? null;
+      const usage = response?.usage || {};
+      const inputTokens = usage.prompt_tokens ?? usage.input_tokens ?? 0;
+      const outputTokens = usage.completion_tokens ?? usage.output_tokens ?? 0;
+      const totalTokens = usage.total_tokens ?? (inputTokens + outputTokens);
+      const cost = usage.cost ?? 0;
 
       fullText += content;
       lastFinishReason = finishReason;
+      usedTokens += totalTokens;
+      usedInputTokens += inputTokens;
+      usedOutputTokens += outputTokens;
+      usedCost += cost;
 
       // Add assistant chunk to the running conversation so the model can resume from where it stopped.
       workingMessages.push({
@@ -93,6 +115,10 @@ export class AIService {
       finishReason: lastFinishReason,
       continuationCount,
       modelVersion,
+      used_tokens: usedTokens,
+      used_input_tokens: usedInputTokens,
+      used_output_tokens: usedOutputTokens,
+      used_cost: usedCost,
     };
   }
 
