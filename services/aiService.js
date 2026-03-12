@@ -147,9 +147,10 @@ export class AIService {
    * If texts are effectively the same (trim/identity), returns the existing text without an update.
    * @param {string} existingText - Current stored text.
    * @param {string} newText - Newly scraped/extracted text to evaluate.
+   * @param {Object|null} [usage_summary=null] - Optional usage accumulator object.
    * @returns {Promise<{isUpdate: boolean, mergedText: string}>} Whether to update and the merged text.
    */
-  static async mergeTextsByLLM(existingText, newText) {
+  static async mergeTextsByLLM(existingText, newText, usage_summary = null) {
     const existing = (existingText || '').trim();
     const incoming = (newText || '').trim();
 
@@ -199,7 +200,7 @@ ${incoming}
         prompt,
         maxTokens: 1024 * 64,
         jsonMode: false,
-      });
+      }, usage_summary);
 
       const output = (text || '').trim();
       if (!output || /^NO_UPDATE_FROM_NEW_TEXT\.?$/i.test(output)) {
@@ -233,9 +234,10 @@ ${incoming}
   /**
    * Convert free-form text into a structured JSON object via LLM.
    * @param {string} rawText - Unstructured text describing a hotel (or resort agency).
+   * @param {Object|null} [usage_summary=null] - Optional usage accumulator object.
    * @returns {Promise<object>} Parsed JSON object (empty object on failure).
    */
-  static async textToJsonByLLM(rawText) {
+  static async textToJsonByLLM(rawText, usage_summary = null) {
     const text = (rawText || '').trim();
     if (!text) return {};
 
@@ -260,7 +262,7 @@ Rules:
         prompt,
         maxTokens: 1024 * 64,
         jsonMode: true,
-      });
+      }, usage_summary);
 
       const parsed = llmOutputToJson(text);
       return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
