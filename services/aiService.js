@@ -23,6 +23,7 @@ export class AIService {
    * @param {boolean} [params.jsonMode=false] - If true, continuations instruct the model to continue JSON safely.
    * @param {number} [params.temperature=0] - Sampling temperature.
    * @param {number} [params.maxContinuations=5] - Max continuation loops when finish_reason === "length".
+   * @param {Object|null} [params.usage_summary=null] - Optional accumulator object for usage totals.
    * @returns {Promise<{
    *   text: string,
    *   finishReason: string | null,
@@ -42,6 +43,7 @@ export class AIService {
     jsonMode = false,
     temperature = 0,
     maxContinuations = 5,
+    usage_summary = null,
   }) {
     if (!prompt || typeof prompt !== 'string') {
       throw new Error('prompt must be a non-empty string');
@@ -63,6 +65,7 @@ export class AIService {
     // Continue while the model stops due to token limit and we have budget to continue.
     // We intentionally do not stream here; callers get the full text at the end.
     // eslint-disable-next-line no-constant-condition
+    // BEGIN LLM_CALL_LOOP
     while (true) {
       const response = await openai.chat.completions.create({
         model: modelVersion,
@@ -111,18 +114,29 @@ export class AIService {
         content: continueInstruction,
       });
     }
+    // END LLM_CALL_LOOP
+
+    const usage = {
+      total_tokens: usedTotalTokens,
+      input_tokens: usedInputTokens,
+      output_tokens: usedOutputTokens,
+      cost: usedCost,
+    };
+
+    if (usage_summary && typeof usage_summary === 'object') {
+      // NOTE: This is log tracking for upper level caller. e.g. llm usage for hotel
+      usage_summary.total_tokens = (usage_summary.total_tokens ?? 0) + usage.total_tokens;
+      usage_summary.input_tokens = (usage_summary.input_tokens ?? 0) + usage.input_tokens;
+      usage_summary.output_tokens = (usage_summary.output_tokens ?? 0) + usage.output_tokens;
+      usage_summary.cost = (usage_summary.cost ?? 0) + usage.cost;
+    }
 
     return {
       text: fullText,
       finishReason: lastFinishReason,
       continuationCount,
       modelVersion,
-      usage: {
-        total_tokens: usedTotalTokens,
-        input_tokens: usedInputTokens,
-        output_tokens: usedOutputTokens,
-        cost: usedCost,
-      },
+      usage,
     };
   }
 
