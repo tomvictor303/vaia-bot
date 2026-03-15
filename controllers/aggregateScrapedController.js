@@ -1,7 +1,7 @@
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
-import { LogRunsService } from '../services/logRunsService.js';
+import { LogRunsService } from '../services/log/logRunsService.js';
 import { MD_CAT_FIELDS, TABLE_NAMES } from '../middleware/constants.js';
 import { llmOutputToJson, isValidStringMap } from '../utils/custom.js';
 

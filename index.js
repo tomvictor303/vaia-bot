@@ -3,7 +3,7 @@ import { testConnection, closePool } from './config/database.js';
 import { HotelService } from './services/hotelService.js';
 import { scrapeHotel } from './controllers/scrapeController.js';
 import { aggregateScrapedData } from './controllers/aggregateScrapedController.js';
-import { LogRunsService } from './services/logRunsService.js';
+import { LogRunsService } from './services/log/logRunsService.js';
 async function main() {
   console.log("🚀 Starting Hotel Data Fetcher...");
 

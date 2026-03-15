@@ -1,5 +1,5 @@
-import { executeQuery } from '../config/database.js';
-import { T } from '../middleware/constants.js';
+import { executeQuery } from '../../config/database.js';
+import { T } from '../../middleware/constants.js';
 
 const TABLE = 'market_data_log_runs';
 
