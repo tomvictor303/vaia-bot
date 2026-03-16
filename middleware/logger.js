@@ -19,12 +19,12 @@ export function createLogger({ runId, hotelUuid }) {
       return LogRunsService.updateById(runId, data);
     },
 
-    async updatePageLog(pageUrl, patch = {}) {
-      return LogPagesService.saveLog(runId, hotelUuid, pageUrl, patch);
-    },
-
     async pageLog(pageUrl, payload = {}) {
       return LogPagesService.saveLog(runId, hotelUuid, pageUrl, payload, true);
+    },
+
+    async updatePageLog(pageUrl, patch = {}) {
+      return LogPagesService.saveLog(runId, hotelUuid, pageUrl, patch);
     },
 
     async fail(stage, error) {
