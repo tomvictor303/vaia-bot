@@ -344,12 +344,6 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
 
       if (visited.has(pageUrl)) {
         stats.skipped += 1;
-        await logger.savePageLog(pageUrl, {
-          page_depth: currentDepth,
-          scrape_status: 'skipped',
-          duration_ms: Date.now() - pageStartedAtMs,
-          error_message: 'Skipped: already visited in current crawl run',
-        });
         return;
       }
       if (maxDepth !== Infinity && currentDepth > maxDepth) {
