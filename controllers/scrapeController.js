@@ -348,7 +348,7 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
       }
       if (maxDepth !== Infinity && currentDepth > maxDepth) {
         stats.skipped += 1;
-        await logger.savePageLog(pageUrl, {
+        await logger.pageLog(pageUrl, {
           page_depth: currentDepth,
           scrape_status: 'skipped',
           duration_ms: Date.now() - pageStartedAtMs,
@@ -408,7 +408,7 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
         if (status && status >= 400) {
           log.warning(`⚠️  Skipping error page (status ${status}): ${pageUrl}`);
           stats.errors += 1;
-          await logger.savePageLog(pageUrl, {
+          await logger.pageLog(pageUrl, {
             page_depth: currentDepth,
             scrape_status: 'fail',
             duration_ms: Date.now() - pageStartedAtMs,
@@ -419,7 +419,7 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
         if (title.includes('404') || title.includes('500')) {
           log.warning(`⚠️  Skipping page due to error code intitle (${title}): ${pageUrl}`);
           stats.errors += 1;
-          await logger.savePageLog(pageUrl, {
+          await logger.pageLog(pageUrl, {
             page_depth: currentDepth,
             scrape_status: 'fail',
             duration_ms: Date.now() - pageStartedAtMs,
@@ -574,7 +574,7 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
         if (!html || html.length === 0 || html.trim().length === 0) {
           log.warning(`⚠️  Empty HTML: ${pageUrl}`);
           stats.errors += 1;
-          await logger.savePageLog(pageUrl, {
+          await logger.pageLog(pageUrl, {
             page_depth: currentDepth,
             scrape_status: 'fail',
             duration_ms: Date.now() - pageStartedAtMs,
@@ -588,7 +588,7 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
         const markdown = normalizeMarkdown(markdownRaw);
         const checksum = computeChecksum(markdown);
         await saveScrapedPage(hotelUuid, pageUrl, html, htmlRaw, markdown, checksum, currentDepth);
-        await logger.savePageLog(pageUrl, {
+        await logger.pageLog(pageUrl, {
           page_depth: currentDepth,
           scrape_status: 'success',
           markdown_hash: checksum,
@@ -643,7 +643,7 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
       } catch (error) {
         stats.errors += 1;
         log.error(`❌ Failed: ${request.url} -> ${error?.message || error}`);
-        await logger.savePageLog(pageUrl, {
+        await logger.pageLog(pageUrl, {
           page_depth: currentDepth,
           scrape_status: 'fail',
           duration_ms: Date.now() - pageStartedAtMs,

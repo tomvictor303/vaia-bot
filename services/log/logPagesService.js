@@ -90,19 +90,30 @@ export class LogPagesService {
 
   /**
    * Upsert page log by (run_id, hotel_uuid, page_url).
+   * - If insertMode=true, always insert a new row (no select/update).
    * - If a row exists, apply partial update and return existing id.
    * - If not found, insert a new row and return inserted id.
    * @param {number} run_id
    * @param {string} hotelUuid
    * @param {string} page_url
    * @param {Object} patch
+   * @param {boolean} [insertMode=false]
    * @returns {Promise<number>} row id
    */
-  static async saveLog(run_id, hotelUuid, page_url, patch = {}) {
+  static async saveLog(run_id, hotelUuid, page_url, patch = {}, insertMode = false) {
     try {
       if (!run_id) throw new Error(`${TABLE}.saveLog requires run_id`);
       if (!hotelUuid) throw new Error(`${TABLE}.saveLog requires hotelUuid`);
       if (!page_url) throw new Error(`${TABLE}.saveLog requires page_url`);
+
+      if (insertMode) {
+        return this.insert({
+          run_id,
+          hotel_uuid: hotelUuid,
+          page_url,
+          ...patch,
+        });
+      }
 
       const findQuery = `
         SELECT id

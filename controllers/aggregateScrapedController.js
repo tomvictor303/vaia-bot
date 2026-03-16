@@ -318,7 +318,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
           }
         });
         await markLLMInput(page.id, page.checksum, JSON.stringify(extracted));
-        await logger.savePageLog(page.page_url, {
+        await logger.updatePageLog(page.page_url, {
           page_depth: page.depth ?? 0,
           extraction_status: 'success',
           total_tokens: Math.max(0, (hotelLLMUsage.total_tokens || 0) - usedTokensBefore),
@@ -327,7 +327,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
         });
         console.log(`✅ Extraction: processed page ${page.id} (${page.page_url})`);
       } catch (error) {
-        await logger.savePageLog(page.page_url, {
+        await logger.updatePageLog(page.page_url, {
           page_depth: page.depth ?? 0,
           extraction_status: 'fail',
           total_tokens: Math.max(0, (hotelLLMUsage.total_tokens || 0) - usedTokensBefore),
