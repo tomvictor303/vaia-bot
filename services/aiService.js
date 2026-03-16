@@ -94,6 +94,9 @@ export class AIService {
           const parsedCost = Number(nestedTotalCost);
           cost = Number.isFinite(parsedCost) ? parsedCost : 0;
         }
+      } else {
+        // We have to calculate the cost manually.
+        // But we do not at the current phase.
       }
 
       fullText += content;
