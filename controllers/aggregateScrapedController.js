@@ -85,7 +85,6 @@ async function loadFieldBucketsFromCachedOutputs(hotelUuid, logger, fieldBuckets
   let pagesAnalyzed = 0;
   for (const page of cachedPages) {
     pagesAnalyzed += 1;
-    await logger.event('extract.page_analyzed');
     if (!page.llm_output) continue;
     let extracted;
     try {
@@ -281,7 +280,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
 
   // BEGIN EXTRACT_DATA_FROM_PAGES
   await logger.markStage('ai_extract');
-  await logger.event('extract.started');
+  await logger.event('ai_extract.started');
   if (unitTestAction === 'after_extract') {
     // Load field buckets from cached outputs
     // This test action is used to **skip** the extraction step in the unit test.
@@ -333,7 +332,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     total_tokens: hotelLLMUsage.total_tokens,
     cost: hotelLLMUsage.cost,
   });
-  await logger.event('extract.completed');
+  await logger.event('ai_extract.completed');
   if (unitTestAction === 'extract') {
     console.log(`🧪 UNIT_TEST_ACTION=extract: stopping after extraction (skipping compose, merge, upsert). We are only interested in testing the extraction step.`);
     return null;
@@ -343,14 +342,14 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   // Per-field composition (Count(schema fields) LLM calls)
   // This is where the new data is composed from the extracted snippets (from multiple pages) by iterating each field.
   await logger.markStage('ai_aggregate');
-  await logger.event('aggregate.started');
+  await logger.event('ai_aggregate.started');
   console.log(`🔍 Composing new data from extracted fields...`);
   const newData = {};
   for (const field of CATEGORY_FIELDS) {
     newData[field.name] = await mergeAndRefineSnippets(field.name, fieldBuckets[field.name], hotelLLMUsage);
     console.log(`✅ Composed new data for field: ${field.name}`);
   }
-  await logger.event('aggregate.completed');
+  await logger.event('ai_aggregate.completed');
 
   // DEBUG LOG: Save newData and source of new data (joined snippets from pages) to database
   // BEGIN DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
@@ -364,7 +363,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
 
   // Merge the new data with the existing data
   await logger.markStage('ai_merge');
-  await logger.event('compare.started');
+  await logger.event('ai_merge.started');
   let mergedData = {};
   let DEBUG2_LOGS = {};
   const existingData = await MarketDataService.getMarketDataByUuid(hotelUuid);
@@ -395,7 +394,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   } else {
     mergedData = newData;
   }
-  await logger.event('compare.completed');
+  await logger.event('ai_merge.completed');
   
   // BEGIN SAVE_DEBUG2_LOG
   if (Object.keys(DEBUG2_LOGS).length > 0) {    
@@ -410,6 +409,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
 
   // Track "other" changes in a single check
   await logger.markStage('ai_finalize');
+  await logger.event('ai_finalize.started');
   const otherUpdated = isFieldUpdated('other', mergedData);
   console.log('otherUpdated', otherUpdated);
 
@@ -419,6 +419,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     let other_json = await AIService.textToJsonByLLM(sourceOther, hotelLLMUsage);
     mergedData.other_structured = JSON.stringify(other_json);
   }
+  await logger.event('ai_finalize.completed');
 
   // Guardrail: no meaningful updates
   await logger.markStage('save');
@@ -429,7 +430,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     // If there are significant new info, update the market_data
     console.log(`🔄 [${hotelName || hotelUuid}]: Update market_data via upsert... (fields updated: ${updatedFieldsCount})`);
     await MarketDataService.upsertMarketData(mergedData, hotelUuid);    
-    await logger.event('upsert.completed');
+    await logger.event('save.completed');
     await logger.updateRun({
       categories_updated: updatedFieldsCount,
       model_version: process.env.LLM_MODEL_VERSION || '',
