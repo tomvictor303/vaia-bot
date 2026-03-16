@@ -63,11 +63,10 @@ async function markLLMInput(pageId, checksum, llm_output) {
  * Load fieldBuckets from cached LLM outputs stored in hotel_page_data.llm_output.
  * Used by UNIT_TEST_ACTION=after_extract to skip per-page extraction LLM calls.
  * @param {string} hotelUuid - Hotel UUID.
- * @param {Object} logger - Per-run logger object.
  * @param {Object<string, Array<{ page_url: string, value: string }>>} fieldBuckets - Buckets to populate.
  * @returns {Promise<{ ok: boolean, pagesActive: number, pagesAnalyzed: number }>} Operation status and page counts.
  */
-async function loadFieldBucketsFromCachedOutputs(hotelUuid, logger, fieldBuckets) {
+async function loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets) {
   console.log('🧪 UNIT_TEST_ACTION=after_extract: loading cached llm_output into field buckets (skipping per-page extraction).');
   const cachedQuery = `
     SELECT page_url, llm_output
@@ -285,7 +284,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     // Load field buckets from cached outputs
     // This test action is used to **skip** the extraction step in the unit test.
     console.log(`🧪 UNIT_TEST_ACTION=after_extract: loading cached llm_output into field buckets (skipping per-page extraction).`);
-    const cachedResult = await loadFieldBucketsFromCachedOutputs(hotelUuid, logger, fieldBuckets);
+    const cachedResult = await loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets);
     pagesActive = cachedResult?.pagesActive ?? 0;
     pagesAnalyzed = cachedResult?.pagesAnalyzed ?? 0;
     if (!cachedResult?.ok) {
