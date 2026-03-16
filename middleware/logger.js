@@ -30,7 +30,11 @@ export function createLogger({ runId, hotelUuid }) {
       return LogPagesService.saveLog(runId, hotelUuid, pageUrl, patch);
     },
 
-    async categoryLog(categoryName, patch = {}) {
+    async categoryLog(categoryName, payload = {}) {
+      return LogCategoriesService.saveLog(runId, hotelUuid, categoryName, payload, true);
+    },
+
+    async updateCategoryLog(categoryName, patch = {}) {
       return LogCategoriesService.saveLog(runId, hotelUuid, categoryName, patch);
     },
 
