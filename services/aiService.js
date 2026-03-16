@@ -83,7 +83,18 @@ export class AIService {
       const inputTokens = usage.prompt_tokens ?? usage.input_tokens ?? 0;
       const outputTokens = usage.completion_tokens ?? usage.output_tokens ?? 0;
       const totalTokens = usage.total_tokens ?? (inputTokens + outputTokens);
-      const cost = usage.cost ?? 0;
+      let cost = 0;
+      if (typeof usage.cost === 'number' || typeof usage.cost === 'string') {
+        const parsedCost = Number(usage.cost);
+        cost = Number.isFinite(parsedCost) ? parsedCost : 0;
+      } else if (usage.cost && typeof usage.cost === 'object') {
+        // Some providers return nested shape: usage.cost.total_cost
+        const nestedTotalCost = usage.cost.total_cost;
+        if (typeof nestedTotalCost === 'number' || typeof nestedTotalCost === 'string') {
+          const parsedCost = Number(nestedTotalCost);
+          cost = Number.isFinite(parsedCost) ? parsedCost : 0;
+        }
+      }
 
       fullText += content;
       lastFinishReason = finishReason;
