@@ -39,7 +39,8 @@ export function llmOutputToJson(raw) {
  * @returns {string} Hexadecimal checksum.
  */
 export function computeChecksum(content) {
-  if (content == null) return '';
+  // Preserve historical logging behavior: skip hashing for falsy inputs.
+  if (!content) return '';
   return crypto
     .createHash('sha256')
     .update(String(content).normalize('NFC'), 'utf8')
