@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import TurndownService from 'turndown';
 import { executeQuery } from '../config/database.js';
 import { TABLE_NAMES } from '../middleware/constants.js';
+import { createLogger } from '../middleware/logger.js';
 
 const { HOTEL_PAGE_DATA_TABLE } = TABLE_NAMES;
 
@@ -305,8 +306,7 @@ async function waitForDomToSettle(page, {
  * @returns {Promise<Object>} Scraping statistics
  */
 export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
-  // reserved for run-level logging linkage
-  void runId;
+  const logger = createLogger({ runId, hotelUuid });
   if (!hotelUrl || !hotelUrl.startsWith('http')) {
     throw new Error(`Invalid hotel URL: ${hotelUrl}`);
   }
@@ -337,16 +337,29 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
     async requestHandler({ page, request, response, enqueueLinks, log }) {
       const currentDepth = request.userData?.depth ?? 0;
       const pageUrl = response?.url() || request.url;
+      const pageStartedAtMs = Date.now();
       if (pageUrl !== request.url) {
         log.info(`🔁 Redirected: ${request.url} → ${pageUrl}`);
       }
 
       if (visited.has(pageUrl)) {
         stats.skipped += 1;
+        await logger.savePageLog(pageUrl, {
+          page_depth: currentDepth,
+          scrape_status: 'skipped',
+          duration_ms: Date.now() - pageStartedAtMs,
+          error_message: 'Skipped: already visited in current crawl run',
+        });
         return;
       }
       if (maxDepth !== Infinity && currentDepth > maxDepth) {
         stats.skipped += 1;
+        await logger.savePageLog(pageUrl, {
+          page_depth: currentDepth,
+          scrape_status: 'skipped',
+          duration_ms: Date.now() - pageStartedAtMs,
+          error_message: `Skipped: depth ${currentDepth} exceeds max depth`,
+        });
         return;
       }
 
@@ -401,11 +414,23 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
         if (status && status >= 400) {
           log.warning(`⚠️  Skipping error page (status ${status}): ${pageUrl}`);
           stats.errors += 1;
+          await logger.savePageLog(pageUrl, {
+            page_depth: currentDepth,
+            scrape_status: 'fail',
+            duration_ms: Date.now() - pageStartedAtMs,
+            error_message: `HTTP status ${status}`,
+          });
           return;
         }
         if (title.includes('404') || title.includes('500')) {
           log.warning(`⚠️  Skipping page due to error code intitle (${title}): ${pageUrl}`);
           stats.errors += 1;
+          await logger.savePageLog(pageUrl, {
+            page_depth: currentDepth,
+            scrape_status: 'fail',
+            duration_ms: Date.now() - pageStartedAtMs,
+            error_message: `Page title indicates server/client error (${title})`,
+          });
           return;
         }
 
@@ -555,6 +580,12 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
         if (!html || html.length === 0 || html.trim().length === 0) {
           log.warning(`⚠️  Empty HTML: ${pageUrl}`);
           stats.errors += 1;
+          await logger.savePageLog(pageUrl, {
+            page_depth: currentDepth,
+            scrape_status: 'fail',
+            duration_ms: Date.now() - pageStartedAtMs,
+            error_message: 'Empty HTML after cleanup',
+          });
           return;
         }
 
@@ -563,6 +594,14 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
         const markdown = normalizeMarkdown(markdownRaw);
         const checksum = computeChecksum(markdown);
         await saveScrapedPage(hotelUuid, pageUrl, html, htmlRaw, markdown, checksum, currentDepth);
+        await logger.savePageLog(pageUrl, {
+          page_depth: currentDepth,
+          scrape_status: 'success',
+          markdown_hash: checksum,
+          markdown_size: markdown.length,
+          duration_ms: Date.now() - pageStartedAtMs,
+          error_message: '',
+        });
         visited.add(pageUrl);
         if (nonScrapedPageMap.has(pageUrl)) {
           nonScrapedPageMap.delete(pageUrl);
@@ -610,6 +649,12 @@ export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
       } catch (error) {
         stats.errors += 1;
         log.error(`❌ Failed: ${request.url} -> ${error?.message || error}`);
+        await logger.savePageLog(pageUrl, {
+          page_depth: currentDepth,
+          scrape_status: 'fail',
+          duration_ms: Date.now() - pageStartedAtMs,
+          error_message: error?.message || String(error),
+        });
       }
     },
 

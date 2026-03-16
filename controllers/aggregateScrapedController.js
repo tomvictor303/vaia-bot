@@ -302,6 +302,8 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     console.log(`🔍 Extracting fields' data from pages...`);
     for (const page of pages) {
       pagesAnalyzed += 1;
+      const pageStartedAtMs = Date.now();
+      const usedTokensBefore = hotelLLMUsage.total_tokens || 0;
       try {
         let extracted = await extractFieldsFromPage(page.markdown, page.page_url, hotelName, hotelLLMUsage);
         if (!isValidStringMap(extracted)) {
@@ -316,8 +318,22 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
           }
         });
         await markLLMInput(page.id, page.checksum, JSON.stringify(extracted));
+        await logger.savePageLog(page.page_url, {
+          page_depth: page.depth ?? 0,
+          extraction_status: 'success',
+          total_tokens: Math.max(0, (hotelLLMUsage.total_tokens || 0) - usedTokensBefore),
+          duration_ms: Date.now() - pageStartedAtMs,
+          error_message: '',
+        });
         console.log(`✅ Extraction: processed page ${page.id} (${page.page_url})`);
       } catch (error) {
+        await logger.savePageLog(page.page_url, {
+          page_depth: page.depth ?? 0,
+          extraction_status: 'fail',
+          total_tokens: Math.max(0, (hotelLLMUsage.total_tokens || 0) - usedTokensBefore),
+          duration_ms: Date.now() - pageStartedAtMs,
+          error_message: error?.message || String(error),
+        });
         console.log(`❌ Extraction: failed page ${page.id} (${page.page_url}) -> ${error.message}`);
       }
     }
