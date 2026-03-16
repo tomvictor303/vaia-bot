@@ -1,10 +1,9 @@
 import { executeQuery } from '../config/database.js';
-import crypto from 'crypto';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
 import { createLogger } from '../middleware/logger.js';
 import { MD_CAT_FIELDS, TABLE_NAMES } from '../middleware/constants.js';
-import { llmOutputToJson, isValidStringMap } from '../utils/custom.js';
+import { llmOutputToJson, isValidStringMap, computeChecksum } from '../utils/custom.js';
 
 const { HOTEL_PAGE_DATA_TABLE } = TABLE_NAMES;
 
@@ -256,14 +255,6 @@ function isFieldUpdated(fieldName, mergedData) {
 }
 // END isFieldUpdated
 
-function sha256Text(text) {
-  if (!text) return '';
-  return crypto
-    .createHash('sha256')
-    .update(String(text), 'utf8')
-    .digest('hex');
-}
-
 // BEGIN aggregateScrapedData
 /**
  * **Entry point** of this controller.
@@ -377,7 +368,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     await logger.categoryLog(field.name, {
       snippets_count: (fieldBuckets[field.name] || []).length,
       merged_text: mergedText,
-      output_hash: sha256Text(mergedText),
+      output_hash: computeChecksum(mergedText),
       total_tokens: Math.max(0, (hotelLLMUsage.total_tokens || 0) - tokensBefore),
       duration_ms: Date.now() - categoryStartedAtMs,
     });
@@ -438,7 +429,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
       snippets_count: (fieldBuckets[field.name] || []).length,
       is_updated: isUpdated ? 1 : 0,
       merged_text: finalText,
-      output_hash: sha256Text(finalText),
+      output_hash: computeChecksum(finalText),
     });
   }
 

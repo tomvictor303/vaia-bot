@@ -1,4 +1,5 @@
 import extractJson from 'extract-json-from-string';
+import crypto from 'crypto';
 
 /**
  * True if value is a plain object (not null, not array) with at least one non-empty string value.
@@ -31,4 +32,18 @@ export function llmOutputToJson(raw) {
     return {};
   }
 }
+
+/**
+ * Compute SHA256 checksum of content.
+ * @param {string} content - Content to hash.
+ * @returns {string} Hexadecimal checksum.
+ */
+export function computeChecksum(content) {
+  if (content == null) return '';
+  return crypto
+    .createHash('sha256')
+    .update(String(content).normalize('NFC'), 'utf8')
+    .digest('hex');
+}
+
 

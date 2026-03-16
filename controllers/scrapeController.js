@@ -1,9 +1,9 @@
 import { PlaywrightCrawler } from 'crawlee';
-import crypto from 'crypto';
 import TurndownService from 'turndown';
 import { executeQuery } from '../config/database.js';
 import { TABLE_NAMES } from '../middleware/constants.js';
 import { createLogger } from '../middleware/logger.js';
+import { computeChecksum } from '../utils/custom.js';
 
 const { HOTEL_PAGE_DATA_TABLE } = TABLE_NAMES;
 
@@ -201,18 +201,6 @@ async function deactivatePagesByIds(pageIds = []) {
     console.error('❌ Error deactivating old pages:', error.message);
     return 0;
   }
-}
-
-/**
- * Compute SHA256 checksum of content
- * @param {string} content - Content to hash
- * @returns {string} Hexadecimal checksum
- */
-function computeChecksum(content) {
-  return crypto
-    .createHash('sha256')
-    .update(content.normalize('NFC'), 'utf8')
-    .digest('hex');
 }
 
 /**
