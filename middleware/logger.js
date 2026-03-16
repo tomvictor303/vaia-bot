@@ -20,6 +20,8 @@ export function createLogger({ runId, hotelUuid }) {
     },
 
     async pageLog(pageUrl, payload = {}) {
+      // In logging systems, append-only is the default, and updates are relatively rare.
+      // This method intentionally uses **insert-only mode**.
       return LogPagesService.saveLog(runId, hotelUuid, pageUrl, payload, true);
     },
 
