@@ -1,6 +1,7 @@
 import { LogRunsService, logMarkStage } from '../services/log/logRunsService.js';
 import { logRunEvent } from '../services/log/logRunEventsService.js';
 import { LogPagesService } from '../services/log/logPagesService.js';
+import { LogCategoriesService } from '../services/log/logCategoriesService.js';
 
 export function createLogger({ runId, hotelUuid }) {
   return {
@@ -27,6 +28,10 @@ export function createLogger({ runId, hotelUuid }) {
 
     async updatePageLog(pageUrl, patch = {}) {
       return LogPagesService.saveLog(runId, hotelUuid, pageUrl, patch);
+    },
+
+    async categoryLog(categoryName, patch = {}) {
+      return LogCategoriesService.saveLog(runId, hotelUuid, categoryName, patch);
     },
 
     async fail(stage, error) {
