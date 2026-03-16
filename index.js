@@ -4,6 +4,7 @@ import { HotelService } from './services/hotelService.js';
 import { scrapeHotel } from './controllers/scrapeController.js';
 import { aggregateScrapedData } from './controllers/aggregateScrapedController.js';
 import { LogRunsService } from './services/log/logRunsService.js';
+import { logRunEvent } from './services/log/logRunEventsService.js';
 async function main() {
   console.log("🚀 Starting Hotel Data Fetcher...");
 
@@ -75,6 +76,7 @@ async function main() {
         if (shouldRunScrape) {
           // BEGIN SCRAPE_HOTEL_BODY
           try {
+            await logRunEvent(runId, hotel.hotel_uuid, 'scrape', 'scrape.started');
             scrapeStats = await scrapeHotel(runId, hotel.hotel_url, hotel.hotel_uuid, hotel.name);
             await LogRunsService.updateById(runId, {
               crawler_skipped: scrapeStats?.pagesSkipped ?? 0,
@@ -82,6 +84,7 @@ async function main() {
               pages_scraped: scrapeStats?.pagesScraped ?? 0,
               pages_deactivated: scrapeStats?.pagesDeactivated ?? 0,
             });
+            await logRunEvent(runId, hotel.hotel_uuid, 'scrape', 'scrape.completed');
             scrapedSuccess = true;
           } catch (error) {
             console.error(`❌ Error scraping ${hotel.name}:`, error.message);
