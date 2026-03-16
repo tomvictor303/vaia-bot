@@ -1,4 +1,5 @@
 import { executeQuery } from '../config/database.js';
+import crypto from 'crypto';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
 import { createLogger } from '../middleware/logger.js';
@@ -255,6 +256,14 @@ function isFieldUpdated(fieldName, mergedData) {
 }
 // END isFieldUpdated
 
+function sha256Text(text) {
+  if (!text) return '';
+  return crypto
+    .createHash('sha256')
+    .update(String(text), 'utf8')
+    .digest('hex');
+}
+
 // BEGIN aggregateScrapedData
 /**
  * **Entry point** of this controller.
@@ -361,7 +370,17 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   console.log(`🔍 Composing new data from extracted fields...`);
   const newData = {};
   for (const field of CATEGORY_FIELDS) {
+    const categoryStartedAtMs = Date.now();
+    const tokensBefore = hotelLLMUsage.total_tokens || 0;
     newData[field.name] = await mergeAndRefineSnippets(field.name, fieldBuckets[field.name], hotelLLMUsage);
+    const mergedText = newData[field.name] || '';
+    await logger.categoryLog(field.name, {
+      snippets_count: (fieldBuckets[field.name] || []).length,
+      merged_text: mergedText,
+      output_hash: sha256Text(mergedText),
+      total_tokens: Math.max(0, (hotelLLMUsage.total_tokens || 0) - tokensBefore),
+      duration_ms: Date.now() - categoryStartedAtMs,
+    });
     console.log(`✅ Composed new data for field: ${field.name}`);
   }
   await logger.event('ai_aggregate.completed');
@@ -409,6 +428,20 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   } else {
     mergedData = newData;
   }
+
+  for (const field of CATEGORY_FIELDS) {
+    const isUpdated = isFieldUpdated(field.name, mergedData);
+    const finalText = isUpdated
+      ? (mergedData[field.name] || '')
+      : (newData[field.name] || existingData?.[field.name] || '');
+    await logger.updateCategoryLog(field.name, {
+      snippets_count: (fieldBuckets[field.name] || []).length,
+      is_updated: isUpdated ? 1 : 0,
+      merged_text: finalText,
+      output_hash: sha256Text(finalText),
+    });
+  }
+
   await logger.event('ai_merge.completed');
   
   // BEGIN SAVE_DEBUG2_LOG
