@@ -426,7 +426,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   // END AI_MERGE_FOR_NEW_AND_EXISTING_DATA_BODY
 
   // BEGIN DEBUG_LOG_FOR_UPDATED_CATEGORIES_DURING_MERGE
-  // DEBUG LOG:
+  // DEBUG LOG: Save updated categories during merge to logging system.
   for (const field of CATEGORY_FIELDS) {
     const isUpdated = isFieldUpdated(field.name, mergedData);
     const finalText = isUpdated
