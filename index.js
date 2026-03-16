@@ -4,7 +4,7 @@ import { HotelService } from './services/hotelService.js';
 import { scrapeHotel } from './controllers/scrapeController.js';
 import { aggregateScrapedData } from './controllers/aggregateScrapedController.js';
 import { LogRunsService } from './services/log/logRunsService.js';
-import { logRunEvent } from './services/log/logRunEventsService.js';
+import { createLogger } from './middleware/logger.js';
 async function main() {
   console.log("🚀 Starting Hotel Data Fetcher...");
 
@@ -70,21 +70,22 @@ async function main() {
           console.error(`❌ Failed to start log run: ${hotel.hotel_uuid}. Skip this hotel.`);
           continue;
         }
+        const logger = createLogger({ runId, hotelUuid: hotel.hotel_uuid });
         // BEGIN SCRAPE_HOTEL
         let scrapedSuccess = false;
         let scrapeStats = null;
         if (shouldRunScrape) {
           // BEGIN SCRAPE_HOTEL_BODY
           try {
-            await logRunEvent(runId, hotel.hotel_uuid, 'scrape', 'scrape.started');
+            await logger.event('scrape.started');
             scrapeStats = await scrapeHotel(runId, hotel.hotel_url, hotel.hotel_uuid, hotel.name);
-            await LogRunsService.updateById(runId, {
+            await logger.updateRun({
               crawler_skipped: scrapeStats?.pagesSkipped ?? 0,
               crawler_errors: scrapeStats?.errors ?? 0,
               pages_scraped: scrapeStats?.pagesScraped ?? 0,
               pages_deactivated: scrapeStats?.pagesDeactivated ?? 0,
             });
-            await logRunEvent(runId, hotel.hotel_uuid, 'scrape', 'scrape.completed');
+            await logger.event('scrape.completed');
             scrapedSuccess = true;
           } catch (error) {
             console.error(`❌ Error scraping ${hotel.name}:`, error.message);
@@ -104,7 +105,7 @@ async function main() {
           // END AGGREGATE_SCRAPED_HOTEL_DATA_BODY
         }
         // END AGGREGATE_SCRAPED_HOTEL_DATA 
-        await LogRunsService.updateById(runId, {
+        await logger.updateRun({
           status: 'success', // NOTE: Do not mark stage as 'completed' here, cuz we want to track which stage the pipeline ends at.
           finished_at: new Date(),
           duration_ms: Date.now() - startMs,

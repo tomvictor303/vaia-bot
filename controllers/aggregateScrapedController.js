@@ -1,8 +1,7 @@
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
-import { LogRunsService, logMarkStage } from '../services/log/logRunsService.js';
-import { logRunEvent } from '../services/log/logRunEventsService.js';
+import { createLogger } from '../middleware/logger.js';
 import { MD_CAT_FIELDS, TABLE_NAMES } from '../middleware/constants.js';
 import { llmOutputToJson, isValidStringMap } from '../utils/custom.js';
 
@@ -64,11 +63,11 @@ async function markLLMInput(pageId, checksum, llm_output) {
  * Load fieldBuckets from cached LLM outputs stored in hotel_page_data.llm_output.
  * Used by UNIT_TEST_ACTION=after_extract to skip per-page extraction LLM calls.
  * @param {string} hotelUuid - Hotel UUID.
- * @param {number} runId - Run log id.
+ * @param {Object} logger - Per-run logger object.
  * @param {Object<string, Array<{ page_url: string, value: string }>>} fieldBuckets - Buckets to populate.
  * @returns {Promise<{ ok: boolean, pagesActive: number, pagesAnalyzed: number }>} Operation status and page counts.
  */
-async function loadFieldBucketsFromCachedOutputs(hotelUuid, runId, fieldBuckets) {
+async function loadFieldBucketsFromCachedOutputs(hotelUuid, logger, fieldBuckets) {
   console.log('🧪 UNIT_TEST_ACTION=after_extract: loading cached llm_output into field buckets (skipping per-page extraction).');
   const cachedQuery = `
     SELECT page_url, llm_output
@@ -86,7 +85,7 @@ async function loadFieldBucketsFromCachedOutputs(hotelUuid, runId, fieldBuckets)
   let pagesAnalyzed = 0;
   for (const page of cachedPages) {
     pagesAnalyzed += 1;
-    await logRunEvent(runId, hotelUuid, 'extract', 'extract.page_analyzed');
+    await logger.event('extract.page_analyzed');
     if (!page.llm_output) continue;
     let extracted;
     try {
@@ -273,6 +272,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   if (!hotelUuid) throw new Error('hotelUuid is required');
 
   const unitTestAction = String(process.env.UNIT_TEST_ACTION || '').toLowerCase();
+  const logger = createLogger({ runId, hotelUuid });
   let pagesActive = 0;
   let pagesAnalyzed = 0;
   const hotelLLMUsage = { total_tokens: 0, input_tokens: 0, output_tokens: 0, cost: 0 };
@@ -280,13 +280,13 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f.name, []]));
 
   // BEGIN EXTRACT_DATA_FROM_PAGES
-  await logMarkStage(runId, 'ai_extract');
-  await logRunEvent(runId, hotelUuid, 'extract', 'extract.started');
+  await logger.markStage('ai_extract');
+  await logger.event('extract.started');
   if (unitTestAction === 'after_extract') {
     // Load field buckets from cached outputs
     // This test action is used to **skip** the extraction step in the unit test.
     console.log(`🧪 UNIT_TEST_ACTION=after_extract: loading cached llm_output into field buckets (skipping per-page extraction).`);
-    const cachedResult = await loadFieldBucketsFromCachedOutputs(hotelUuid, runId, fieldBuckets);
+    const cachedResult = await loadFieldBucketsFromCachedOutputs(hotelUuid, logger, fieldBuckets);
     pagesActive = cachedResult?.pagesActive ?? 0;
     pagesAnalyzed = cachedResult?.pagesAnalyzed ?? 0;
     if (!cachedResult?.ok) {
@@ -318,7 +318,6 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
           }
         });
         await markLLMInput(page.id, page.checksum, JSON.stringify(extracted));
-        await logRunEvent(runId, hotelUuid, 'extract', 'extract.page_analyzed');
         console.log(`✅ Extraction: processed page ${page.id} (${page.page_url})`);
       } catch (error) {
         console.log(`❌ Extraction: failed page ${page.id} (${page.page_url}) -> ${error.message}`);
@@ -326,7 +325,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     }
     // END EXTRACT_DATA_FROM_PAGES_BODY
   }
-  await LogRunsService.updateById(runId, {
+  await logger.updateRun({
     pages_active: pagesActive,
     pages_analyzed: pagesAnalyzed,
     model_version: process.env.LLM_MODEL_VERSION || '',
@@ -334,7 +333,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     total_tokens: hotelLLMUsage.total_tokens,
     cost: hotelLLMUsage.cost,
   });
-  await logRunEvent(runId, hotelUuid, 'extract', 'extract.completed');
+  await logger.event('extract.completed');
   if (unitTestAction === 'extract') {
     console.log(`🧪 UNIT_TEST_ACTION=extract: stopping after extraction (skipping compose, merge, upsert). We are only interested in testing the extraction step.`);
     return null;
@@ -343,15 +342,15 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
 
   // Per-field composition (Count(schema fields) LLM calls)
   // This is where the new data is composed from the extracted snippets (from multiple pages) by iterating each field.
-  await logMarkStage(runId, 'ai_aggregate');
-  await logRunEvent(runId, hotelUuid, 'aggregate', 'aggregate.started');
+  await logger.markStage('ai_aggregate');
+  await logger.event('aggregate.started');
   console.log(`🔍 Composing new data from extracted fields...`);
   const newData = {};
   for (const field of CATEGORY_FIELDS) {
     newData[field.name] = await mergeAndRefineSnippets(field.name, fieldBuckets[field.name], hotelLLMUsage);
     console.log(`✅ Composed new data for field: ${field.name}`);
   }
-  await logRunEvent(runId, hotelUuid, 'aggregate', 'aggregate.completed');
+  await logger.event('aggregate.completed');
 
   // DEBUG LOG: Save newData and source of new data (joined snippets from pages) to database
   // BEGIN DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
@@ -364,8 +363,8 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   // END DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
 
   // Merge the new data with the existing data
-  await logMarkStage(runId, 'ai_merge');
-  await logRunEvent(runId, hotelUuid, 'compare', 'compare.started');
+  await logger.markStage('ai_merge');
+  await logger.event('compare.started');
   let mergedData = {};
   let DEBUG2_LOGS = {};
   const existingData = await MarketDataService.getMarketDataByUuid(hotelUuid);
@@ -396,7 +395,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   } else {
     mergedData = newData;
   }
-  await logRunEvent(runId, hotelUuid, 'compare', 'compare.completed');
+  await logger.event('compare.completed');
   
   // BEGIN SAVE_DEBUG2_LOG
   if (Object.keys(DEBUG2_LOGS).length > 0) {    
@@ -410,7 +409,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   // END SAVE_DEBUG2_LOG
 
   // Track "other" changes in a single check
-  await logMarkStage(runId, 'ai_finalize');
+  await logger.markStage('ai_finalize');
   const otherUpdated = isFieldUpdated('other', mergedData);
   console.log('otherUpdated', otherUpdated);
 
@@ -422,7 +421,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   }
 
   // Guardrail: no meaningful updates
-  await logMarkStage(runId, 'save');
+  await logger.markStage('save');
   const updatedFieldsCount = Object.keys(mergedData).length;
   if (updatedFieldsCount === 0) {
     console.log(`⚠️ [${hotelName || hotelUuid}]: There is no significant new info to update.`);
@@ -430,8 +429,8 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     // If there are significant new info, update the market_data
     console.log(`🔄 [${hotelName || hotelUuid}]: Update market_data via upsert... (fields updated: ${updatedFieldsCount})`);
     await MarketDataService.upsertMarketData(mergedData, hotelUuid);    
-    await logRunEvent(runId, hotelUuid, 'upsert', 'upsert.completed');
-    await LogRunsService.updateById(runId, {
+    await logger.event('upsert.completed');
+    await logger.updateRun({
       categories_updated: updatedFieldsCount,
       model_version: process.env.LLM_MODEL_VERSION || '',
       prompt_version: process.env.LLM_PROMPT_VERSION || '',
