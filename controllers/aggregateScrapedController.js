@@ -354,6 +354,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   }
   // END EXTRACT_DATA_FROM_PAGES
 
+  // BEGIN NEW_DATA_COMPOSE_BY_AI_AGGREGATE_OF_SNIPPETS
   // Per-field composition (Count(schema fields) LLM calls)
   // This is where the new data is composed from the extracted snippets (from multiple pages) by iterating each field.
   await logger.markStage('ai_aggregate');
@@ -375,9 +376,10 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     console.log(`✅ Composed new data for field: ${field.name}`);
   }
   await logger.event('ai_aggregate.completed');
+  // END NEW_DATA_COMPOSE_BY_AI_AGGREGATE_OF_SNIPPETS
 
-  // DEBUG LOG: Save newData and source of new data (joined snippets from pages) to database
   // BEGIN DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
+  // DEBUG LOG: Save newData and source of new data (joined snippets from pages) to database
   try {
     await MarketDataService.upsertMarketDataDebug1(fieldBuckets, newData, hotelUuid);
     console.log(`✅ Debug1 logs saved: ${hotelUuid}`);
@@ -386,9 +388,11 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   }
   // END DEBUG_LOG_SAVE_NEW_DATA_AND_JOINED_SNIPPETS_FROM_PAGES
 
+  // BEGIN AI_MERGE_FOR_NEW_AND_EXISTING_DATA
   // Merge the new data with the existing data
   await logger.markStage('ai_merge');
   await logger.event('ai_merge.started');
+  // BEGIN AI_MERGE_FOR_NEW_AND_EXISTING_DATA_BODY
   let mergedData = {};
   let DEBUG2_LOGS = {};
   const existingData = await MarketDataService.getMarketDataByUuid(hotelUuid);
@@ -419,7 +423,10 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   } else {
     mergedData = newData;
   }
+  // END AI_MERGE_FOR_NEW_AND_EXISTING_DATA_BODY
 
+  // BEGIN DEBUG_LOG_FOR_UPDATED_CATEGORIES_DURING_MERGE
+  // DEBUG LOG:
   for (const field of CATEGORY_FIELDS) {
     const isUpdated = isFieldUpdated(field.name, mergedData);
     const finalText = isUpdated
@@ -432,8 +439,10 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
       output_hash: computeChecksum(finalText),
     });
   }
+  // END DEBUG_LOG_FOR_UPDATED_CATEGORIES_DURING_MERGE
 
   await logger.event('ai_merge.completed');
+  // END AI_MERGE_FOR_NEW_AND_EXISTING_DATA
   
   // BEGIN SAVE_DEBUG2_LOG
   if (Object.keys(DEBUG2_LOGS).length > 0) {    
