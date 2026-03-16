@@ -4,6 +4,8 @@ import { T } from '../../middleware/constants.js';
 const TABLE = 'market_data_log_runs';
 
 export class LogRunsService {
+  static TABLE = TABLE;
+
   static COMMON_MUTABLE_FIELDS = [
     { name: 'status', type: T.TEXT },
     { name: 'stage', type: T.TEXT },
