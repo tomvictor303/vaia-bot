@@ -421,7 +421,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     }
     // END MERGE_NEW_DATA_WITH_EXISTING_DATA
   } else {
-    mergedData = newData;
+    mergedData = newData; // If there is no existing data, use the new data entirely.
   }
   // END AI_MERGE_FOR_NEW_AND_EXISTING_DATA_BODY
 
