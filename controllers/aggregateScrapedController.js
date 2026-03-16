@@ -365,11 +365,11 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     const categoryStartedAtMs = Date.now();
     const tokensBefore = hotelLLMUsage.total_tokens || 0;
     newData[field.name] = await mergeAndRefineSnippets(field.name, fieldBuckets[field.name], hotelLLMUsage);
-    const mergedText = newData[field.name] || '';
+    const newFieldText = newData[field.name] || '';
     await logger.categoryLog(field.name, {
       snippets_count: (fieldBuckets[field.name] || []).length,
-      merged_text: mergedText,
-      output_hash: computeChecksum(mergedText),
+      merged_text: newFieldText,
+      output_hash: computeChecksum(newFieldText),
       total_tokens: Math.max(0, (hotelLLMUsage.total_tokens || 0) - tokensBefore),
       duration_ms: Date.now() - categoryStartedAtMs,
     });
@@ -415,6 +415,12 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
       const { isUpdate, mergedText } = await AIService.mergeTextsByLLM(existingData[fieldName], newData[fieldName], hotelLLMUsage);
       if (isUpdate && mergedText) {
         mergedData[fieldName] = mergedText;
+        await logger.updateCategoryLog(fieldName, {
+          snippets_count: (fieldBuckets[fieldName] || []).length,
+          is_updated: 1,
+          merged_text: mergedText,
+          output_hash: computeChecksum(mergedText),
+        });
       }
       // save for debug log
       DEBUG2_LOGS[fieldName] = {isUpdate, existingData: existingData[fieldName], newData: newData[fieldName], mergedText};
@@ -424,22 +430,6 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
     mergedData = newData; // If there is no existing data, use the new data entirely.
   }
   // END AI_MERGE_FOR_NEW_AND_EXISTING_DATA_BODY
-
-  // BEGIN DEBUG_LOG_FOR_UPDATED_CATEGORIES_DURING_MERGE
-  // DEBUG LOG: Save updated categories during merge to logging system.
-  for (const field of CATEGORY_FIELDS) {
-    const isUpdated = isFieldUpdated(field.name, mergedData);
-    const finalText = isUpdated
-      ? (mergedData[field.name] || '')
-      : (newData[field.name] || existingData?.[field.name] || '');
-    await logger.updateCategoryLog(field.name, {
-      snippets_count: (fieldBuckets[field.name] || []).length,
-      is_updated: isUpdated ? 1 : 0,
-      merged_text: finalText,
-      output_hash: computeChecksum(finalText),
-    });
-  }
-  // END DEBUG_LOG_FOR_UPDATED_CATEGORIES_DURING_MERGE
 
   await logger.event('ai_merge.completed');
   // END AI_MERGE_FOR_NEW_AND_EXISTING_DATA
