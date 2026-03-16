@@ -99,30 +99,35 @@ export class LogPagesService {
    * @returns {Promise<number>} row id
    */
   static async saveLog(run_id, hotelUuid, page_url, patch = {}) {
-    if (!run_id) throw new Error(`${TABLE}.saveLog requires run_id`);
-    if (!hotelUuid) throw new Error(`${TABLE}.saveLog requires hotelUuid`);
-    if (!page_url) throw new Error(`${TABLE}.saveLog requires page_url`);
+    try {
+      if (!run_id) throw new Error(`${TABLE}.saveLog requires run_id`);
+      if (!hotelUuid) throw new Error(`${TABLE}.saveLog requires hotelUuid`);
+      if (!page_url) throw new Error(`${TABLE}.saveLog requires page_url`);
 
-    const findQuery = `
-      SELECT id
-      FROM ${TABLE}
-      WHERE run_id = ? AND hotel_uuid = ? AND page_url = ?
-      ORDER BY id DESC
-      LIMIT 1
-    `;
-    const foundRows = await executeQuery(findQuery, [run_id, hotelUuid, page_url]);
-    const existingId = foundRows?.[0]?.id || 0;
+      const findQuery = `
+        SELECT id
+        FROM ${TABLE}
+        WHERE run_id = ? AND hotel_uuid = ? AND page_url = ?
+        ORDER BY id DESC
+        LIMIT 1
+      `;
+      const foundRows = await executeQuery(findQuery, [run_id, hotelUuid, page_url]);
+      const existingId = foundRows?.[0]?.id || 0;
 
-    if (existingId) {
-      await this.updateById(existingId, patch);
-      return existingId;
+      if (existingId) {
+        await this.updateById(existingId, patch);
+        return existingId;
+      }
+
+      return this.insert({
+        run_id,
+        hotel_uuid: hotelUuid,
+        page_url,
+        ...patch,
+      });
+    } catch (error) {
+      console.error(`⚠️ Failed to save page log for run ${run_id} (${page_url}):`, error.message);
+      return 0;
     }
-
-    return this.insert({
-      run_id,
-      hotel_uuid: hotelUuid,
-      page_url,
-      ...patch,
-    });
   }
 }
