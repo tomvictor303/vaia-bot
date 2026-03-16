@@ -87,4 +87,42 @@ export class LogPagesService {
     const result = await executeQuery(query, params);
     return result.affectedRows || 0;
   }
+
+  /**
+   * Upsert page log by (run_id, hotel_uuid, page_url).
+   * - If a row exists, apply partial update and return existing id.
+   * - If not found, insert a new row and return inserted id.
+   * @param {number} run_id
+   * @param {string} hotelUuid
+   * @param {string} page_url
+   * @param {Object} patch
+   * @returns {Promise<number>} row id
+   */
+  static async saveLog(run_id, hotelUuid, page_url, patch = {}) {
+    if (!run_id) throw new Error(`${TABLE}.saveLog requires run_id`);
+    if (!hotelUuid) throw new Error(`${TABLE}.saveLog requires hotelUuid`);
+    if (!page_url) throw new Error(`${TABLE}.saveLog requires page_url`);
+
+    const findQuery = `
+      SELECT id
+      FROM ${TABLE}
+      WHERE run_id = ? AND hotel_uuid = ? AND page_url = ?
+      ORDER BY id DESC
+      LIMIT 1
+    `;
+    const foundRows = await executeQuery(findQuery, [run_id, hotelUuid, page_url]);
+    const existingId = foundRows?.[0]?.id || 0;
+
+    if (existingId) {
+      await this.updateById(existingId, patch);
+      return existingId;
+    }
+
+    return this.insert({
+      run_id,
+      hotel_uuid: hotelUuid,
+      page_url,
+      ...patch,
+    });
+  }
 }
