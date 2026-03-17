@@ -93,6 +93,23 @@ export class LogRunsService {
     return result.affectedRows || 0;
   }
 
+  /**
+   * Load one run row by id.
+   * @param {number} id
+   * @returns {Promise<Object|null>} run row or null when not found
+   */
+  static async getById(id) {
+    if (!id) throw new Error(`${TABLE}.getById requires id`);
+    const query = `
+      SELECT *
+      FROM ${TABLE}
+      WHERE id = ?
+      LIMIT 1
+    `;
+    const rows = await executeQuery(query, [id]);
+    return rows?.[0] || null;
+  }
+
   static async logMarkStage(runId, stage) {
     if (!runId) return 0;
     try {

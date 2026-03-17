@@ -23,7 +23,14 @@ export class Logger {
   }
 
   static async loadLogger(runId, hotelUuid) {
-    return new Logger(runId, hotelUuid);
+    const runRow = await LogRunsService.getById(runId);
+    if (!runRow) {
+      throw new Error(`Logger.loadLogger cannot find run id ${runId}`);
+    }
+    if (hotelUuid && runRow.hotel_uuid !== hotelUuid) {
+      throw new Error(`Logger.loadLogger hotel_uuid mismatch for run id ${runId}`);
+    }
+    return new Logger(runId, runRow.hotel_uuid || hotelUuid, runRow.stage || '');
   }
 
   async markStage(stage) {
