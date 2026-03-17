@@ -294,7 +294,7 @@ async function waitForDomToSettle(page, {
  * @returns {Promise<Object>} Scraping statistics
  */
 export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
-  const logger = createLogger({ runId, hotelUuid });
+  const logger = await createLogger({ runId, hotelUuid });
   if (!hotelUrl || !hotelUrl.startsWith('http')) {
     throw new Error(`Invalid hotel URL: ${hotelUrl}`);
   }

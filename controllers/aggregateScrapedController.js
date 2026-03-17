@@ -271,7 +271,7 @@ export async function loadMarketDataFromScrapedPage(runId, hotelUuid, hotelName)
   if (!hotelUuid) throw new Error('hotelUuid is required');
 
   const unitTestAction = String(process.env.UNIT_TEST_ACTION || '').toLowerCase();
-  const logger = createLogger({ runId, hotelUuid });
+  const logger = await createLogger({ runId, hotelUuid });
   let pagesActive = 0;
   let pagesAnalyzed = 0;
   const hotelLLMUsage = { total_tokens: 0, input_tokens: 0, output_tokens: 0, cost: 0 };
