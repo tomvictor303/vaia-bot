@@ -3,28 +3,6 @@ import { T } from '../../middleware/constants.js';
 
 const TABLE = 'market_data_log_run_events';
 
-/**
- * Safe event logger wrapper for run-event inserts.
- * @param {number} runId
- * @param {string} hotelUuid
- * @param {string} stage
- * @param {string} eventType
- * @returns {Promise<number>} inserted row id (0 on failure)
- */
-export async function logRunEvent(runId, hotelUuid, stage, eventType) {
-  try {
-    return await LogRunEventsService.insert({
-      run_id: runId,
-      hotel_uuid: hotelUuid,
-      stage,
-      event_type: eventType,
-    });
-  } catch (error) {
-    console.error(`⚠️ Failed to log run event "${eventType}" for run ${runId}:`, error.message);
-    return 0;
-  }
-}
-
 export class LogRunEventsService {
   static TABLE = TABLE;
 
@@ -82,6 +60,16 @@ export class LogRunEventsService {
    * @returns {Promise<number>} inserted row id (0 on failure)
    */
   static async logRunEvent(runId, hotelUuid, stage, eventType) {
-    return logRunEvent(runId, hotelUuid, stage, eventType);
+    try {
+      return await LogRunEventsService.insert({
+        run_id: runId,
+        hotel_uuid: hotelUuid,
+        stage,
+        event_type: eventType,
+      });
+    } catch (error) {
+      console.error(`⚠️ Failed to log run event "${eventType}" for run ${runId}:`, error.message);
+      return 0;
+    }
   }
 }

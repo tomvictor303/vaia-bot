@@ -1,5 +1,5 @@
 import { LogRunsService, logMarkStage } from '../services/log/logRunsService.js';
-import { logRunEvent } from '../services/log/logRunEventsService.js';
+import { LogRunEventsService } from '../services/log/logRunEventsService.js';
 import { LogPagesService } from '../services/log/logPagesService.js';
 import { LogCategoriesService } from '../services/log/logCategoriesService.js';
 
@@ -13,7 +13,7 @@ export function createLogger({ runId, hotelUuid }) {
       // payload is reserved for future event payload logging
       void payload;
       const stage = String(eventType || '').split('.')[0] || '';
-      return logRunEvent(runId, hotelUuid, stage, eventType);
+      return LogRunEventsService.logRunEvent(runId, hotelUuid, stage, eventType);
     },
 
     async updateRun(data) {
@@ -46,7 +46,7 @@ export function createLogger({ runId, hotelUuid }) {
         error_message: errorMessage,
         finished_at: new Date(),
       });
-      await logRunEvent(runId, hotelUuid, stage, `${stage}.failed`);
+      await LogRunEventsService.logRunEvent(runId, hotelUuid, stage, `${stage}.failed`);
     },
   };
 }

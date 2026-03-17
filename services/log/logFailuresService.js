@@ -3,42 +3,6 @@ import { T } from '../../middleware/constants.js';
 
 const TABLE = 'market_data_log_failures';
 
-/**
- * Safe failure logger wrapper for failure inserts.
- * @param {number} runId
- * @param {string} hotelUuid
- * @param {string} stage
- * @param {string} errorClass
- * @param {string} errorMessage
- * @param {string|null} [pageUrl=null]
- * @param {string|null} [categoryName=null]
- * @returns {Promise<number>} inserted row id (0 on failure)
- */
-export async function logFailure(
-  runId,
-  hotelUuid,
-  stage,
-  errorClass,
-  errorMessage,
-  pageUrl = null,
-  categoryName = null
-) {
-  try {
-    return await LogFailuresService.insert({
-      run_id: runId,
-      hotel_uuid: hotelUuid,
-      stage,
-      error_class: errorClass,
-      error_message: errorMessage,
-      page_url: pageUrl,
-      category_name: categoryName,
-    });
-  } catch (error) {
-    console.error(`⚠️ Failed to log failure "${errorClass}" for run ${runId}:`, error.message);
-    return 0;
-  }
-}
-
 export class LogFailuresService {
   static TABLE = TABLE;
 
@@ -103,6 +67,19 @@ export class LogFailuresService {
     pageUrl = null,
     categoryName = null
   ) {
-    return logFailure(runId, hotelUuid, stage, errorClass, errorMessage, pageUrl, categoryName);
+    try {
+      return await LogFailuresService.insert({
+        run_id: runId,
+        hotel_uuid: hotelUuid,
+        stage,
+        error_class: errorClass,
+        error_message: errorMessage,
+        page_url: pageUrl,
+        category_name: categoryName,
+      });
+    } catch (error) {
+      console.error(`⚠️ Failed to log failure "${errorClass}" for run ${runId}:`, error.message);
+      return 0;
+    }
   }
 }
