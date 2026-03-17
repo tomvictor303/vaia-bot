@@ -255,17 +255,18 @@ function isFieldUpdated(fieldName, mergedData) {
 }
 // END isFieldUpdated
 
-// BEGIN aggregateScrapedData
+// BEGIN loadMarketDataFromScrapedPage
 /**
  * **Entry point** of this controller.
  * 
- * Aggregates scraped markdown pages into structured market data via LLM extraction and refinement.
+ * Loads and processes scraped markdown pages into market data.
+ * Runs AI extract/aggregate/merge/finalize stages and upserts when meaningful updates exist.
  * @param {number} runId - Run log id
  * @param {string} hotelUuid - Hotel UUID to process.
  * @param {string} hotelName - Hotel name for prompt context and logging.
- * @returns {Promise<Object>} Aggregated market data payload.
+ * @returns {Promise<Object|null>} Composed newData object, or null when stopped early (unit-test mode/no pages).
  */
-export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
+export async function loadMarketDataFromScrapedPage(runId, hotelUuid, hotelName) {
   if (!runId) throw new Error('runId is required');
   if (!hotelUuid) throw new Error('hotelUuid is required');
 
@@ -481,5 +482,5 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
 
   return newData;
 }
-// END aggregateScrapedData
+// END loadMarketDataFromScrapedPage
 

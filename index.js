@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { testConnection, closePool } from './config/database.js';
 import { HotelService } from './services/hotelService.js';
 import { scrapeHotel } from './controllers/scrapeController.js';
-import { aggregateScrapedData } from './controllers/aggregateScrapedController.js';
+import { loadMarketDataFromScrapedPage } from './controllers/aggregateScrapedController.js';
 import { LogRunsService } from './services/log/logRunsService.js';
 import { createLogger } from './middleware/logger.js';
 async function main() {
@@ -101,7 +101,7 @@ async function main() {
         // BEGIN AGGREGATE_SCRAPED_HOTEL_DATA
         if (shouldRunAggregate && scrapedSuccess) {
           // BEGIN AGGREGATE_SCRAPED_HOTEL_DATA_BODY
-          await aggregateScrapedData(runId, hotel.hotel_uuid, hotel.name);
+          await loadMarketDataFromScrapedPage(runId, hotel.hotel_uuid, hotel.name);
           // END AGGREGATE_SCRAPED_HOTEL_DATA_BODY
         }
         // END AGGREGATE_SCRAPED_HOTEL_DATA 
