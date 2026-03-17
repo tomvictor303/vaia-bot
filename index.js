@@ -58,9 +58,7 @@ async function main() {
         const startAt = new Date();
         const startMs = startAt.getTime();
         // Without runId, createLogger creates a new run log and returns a logger bound to that run.
-        const logger = await createLogger({
-          hotelUuid: hotel.hotel_uuid,
-        });
+        const logger = await createLogger(null, hotel.hotel_uuid);
         const runId = logger.runId;
         if (runId > 0) {
           console.log(`✅ Log run started with ID: ${runId}`);
