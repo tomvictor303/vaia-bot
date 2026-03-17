@@ -413,7 +413,7 @@ export async function loadMarketDataFromScrapedPage(runId, hotelUuid, hotelName)
         continue;
       }
       // Use LLM merge to determine if update is meaningful
-      const mergeTokensBefore = hotelLLMUsage.total_tokens || 0;
+      const tokensBefore = hotelLLMUsage.total_tokens || 0;
       const { isUpdate, mergedText } = await AIService.mergeTextsByLLM(existingData[fieldName], newData[fieldName], hotelLLMUsage);
       if (isUpdate && mergedText) {
         mergedData[fieldName] = mergedText;
@@ -422,7 +422,7 @@ export async function loadMarketDataFromScrapedPage(runId, hotelUuid, hotelName)
           is_updated: 1,
           merged_text: mergedText,
           output_hash: computeChecksum(mergedText),
-          total_tokens_merge: Math.max(0, (hotelLLMUsage.total_tokens || 0) - mergeTokensBefore),
+          total_tokens_merge: Math.max(0, (hotelLLMUsage.total_tokens || 0) - tokensBefore),
         });
       }
       // save for debug log
