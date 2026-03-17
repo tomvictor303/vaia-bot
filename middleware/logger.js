@@ -2,6 +2,7 @@ import { LogRunsService } from '../services/log/logRunsService.js';
 import { LogRunEventsService } from '../services/log/logRunEventsService.js';
 import { LogPagesService } from '../services/log/logPagesService.js';
 import { LogCategoriesService } from '../services/log/logCategoriesService.js';
+import { LogFailuresService } from '../services/log/logFailuresService.js';
 
 export function createLogger({ runId, hotelUuid }) {
   return {
@@ -40,13 +41,8 @@ export function createLogger({ runId, hotelUuid }) {
 
     async fail(stage, error) {
       const errorMessage = error?.message || String(error);
-      await LogRunsService.updateById(runId, {
-        status: 'fail',
-        stage,
-        error_message: errorMessage,
-        finished_at: new Date(),
-      });
-      await LogRunEventsService.logRunEvent(runId, hotelUuid, stage, `${stage}.failed`);
+      const errorClass = error?.error_class || 'system_error';
+      await LogFailuresService.logFailure(runId, hotelUuid, stage, errorClass, errorMessage);
     },
   };
 }
