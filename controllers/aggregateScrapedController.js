@@ -1,7 +1,7 @@
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
-import { createLogger } from '../middleware/logger.js';
+import { loadLogger } from '../middleware/logger.js';
 import { MD_CAT_FIELDS, TABLE_NAMES } from '../middleware/constants.js';
 import { llmOutputToJson, isValidStringMap, computeChecksum } from '../utils/custom.js';
 
@@ -271,7 +271,7 @@ export async function loadMarketDataFromScrapedPage(runId, hotelUuid, hotelName)
   if (!hotelUuid) throw new Error('hotelUuid is required');
 
   const unitTestAction = String(process.env.UNIT_TEST_ACTION || '').toLowerCase();
-  const logger = await createLogger(runId, hotelUuid);
+  const logger = await loadLogger(runId);
   let pagesActive = 0;
   let pagesAnalyzed = 0;
   const hotelLLMUsage = { total_tokens: 0, input_tokens: 0, output_tokens: 0, cost: 0 };

@@ -2,7 +2,7 @@ import { PlaywrightCrawler } from 'crawlee';
 import TurndownService from 'turndown';
 import { executeQuery } from '../config/database.js';
 import { TABLE_NAMES } from '../middleware/constants.js';
-import { createLogger } from '../middleware/logger.js';
+import { loadLogger } from '../middleware/logger.js';
 import { computeChecksum } from '../utils/custom.js';
 
 const { HOTEL_PAGE_DATA_TABLE } = TABLE_NAMES;
@@ -294,7 +294,7 @@ async function waitForDomToSettle(page, {
  * @returns {Promise<Object>} Scraping statistics
  */
 export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
-  const logger = await createLogger(runId, hotelUuid);
+  const logger = await loadLogger(runId);
   if (!hotelUrl || !hotelUrl.startsWith('http')) {
     throw new Error(`Invalid hotel URL: ${hotelUrl}`);
   }

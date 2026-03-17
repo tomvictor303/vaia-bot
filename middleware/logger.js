@@ -4,33 +4,13 @@ import { LogPagesService } from '../services/log/logPagesService.js';
 import { LogCategoriesService } from '../services/log/logCategoriesService.js';
 import { LogFailuresService } from '../services/log/logFailuresService.js';
 
+const INITIAL_STAGE = 'scrape';
+
 export class Logger {
   constructor(runId, hotelUuid, stage = '') {
     this.runId = runId;
     this.hotelUuid = hotelUuid;
     this.stage = stage;
-  }
-
-  static async initLogger(hotelUuid) {
-    // Without runId, createLogger creates a new run log and binds this logger to that run.
-    const runId = await LogRunsService.insert({
-      hotel_uuid: hotelUuid,
-      status: 'running',
-      stage: 'scrape',
-      started_at: new Date(),
-    });
-    return new Logger(runId, hotelUuid, 'scrape');
-  }
-
-  static async loadLogger(runId, hotelUuid) {
-    const runRow = await LogRunsService.getById(runId);
-    if (!runRow) {
-      throw new Error(`Logger.loadLogger cannot find run id ${runId}`);
-    }
-    if (hotelUuid && runRow.hotel_uuid !== hotelUuid) {
-      throw new Error(`Logger.loadLogger hotel_uuid mismatch for run id ${runId}`);
-    }
-    return new Logger(runId, runRow.hotel_uuid || hotelUuid, runRow.stage || '');
   }
 
   async markStage(stage) {
@@ -79,20 +59,21 @@ export class Logger {
   }
 }
 
-async function initLogger(_hotelUuid) {
-  return Logger.initLogger(_hotelUuid);
+export async function createLogger(hotelUuid) {
+  // Without runId, createLogger creates a new run log and binds this logger to that run.
+  const runId = await LogRunsService.insert({
+    hotel_uuid: hotelUuid,
+    status: 'running',
+    stage: INITIAL_STAGE,
+    started_at: new Date(),
+  });
+  return new Logger(runId, hotelUuid, INITIAL_STAGE);
 }
 
-async function loadLogger(_runId, _hotelUuid) {
-  return Logger.loadLogger(_runId, _hotelUuid);
-}
-
-export async function createLogger(_runId = null, _hotelUuid = null) {
-  if (!_hotelUuid) {
-    throw new Error('createLogger requires hotelUuid');
+export async function loadLogger(runId) {
+  const runRow = await LogRunsService.getById(runId);
+  if (!runRow) {
+    throw new Error(`loadLogger cannot find run id ${runId}`);
   }
-  if (_runId) {
-    return loadLogger(_runId, _hotelUuid);
-  }
-  return initLogger(_hotelUuid);
+  return new Logger(runId, runRow.hotel_uuid, runRow.stage || INITIAL_STAGE);
 }
