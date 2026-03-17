@@ -155,7 +155,7 @@ ${markdown}
 }
 // END extractFieldsFromPage
 
-// BEGIN mergeAndRefineSnippets
+// BEGIN aggregateAndRefineSnippets
 /**
  * Merge and refine snippets for a given field using LLM to remove duplicates and clean formatting.
  * @param {string} fieldName - Field name being refined.
@@ -165,7 +165,7 @@ ${markdown}
  */
 const SNIPPET_DELIM = '\n<<<<<\n\n';
 
-async function mergeAndRefineSnippets(fieldName, snippets, hotelLLMUsage) {
+async function aggregateAndRefineSnippets(fieldName, snippets, hotelLLMUsage) {
   const items = (snippets || []).filter((s) => s && s.value);
   const formatSnippet = (s, i) => {
     const value = String(s.value).trim();
@@ -200,7 +200,7 @@ ${joined}`;
 
   return text.trim() || '';
 }
-// END mergeAndRefineSnippets
+// END aggregateAndRefineSnippets
 
 // BEGIN toOtherStructuredJson
 /**
@@ -364,7 +364,7 @@ export async function aggregateScrapedData(runId, hotelUuid, hotelName) {
   for (const field of CATEGORY_FIELDS) {
     const categoryStartedAtMs = Date.now();
     const tokensBefore = hotelLLMUsage.total_tokens || 0;
-    newData[field.name] = await mergeAndRefineSnippets(field.name, fieldBuckets[field.name], hotelLLMUsage);
+    newData[field.name] = await aggregateAndRefineSnippets(field.name, fieldBuckets[field.name], hotelLLMUsage);
     const newFieldText = newData[field.name] || '';
     await logger.categoryLog(field.name, {
       snippets_count: (fieldBuckets[field.name] || []).length,
