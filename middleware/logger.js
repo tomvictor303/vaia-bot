@@ -1,4 +1,4 @@
-import { LogRunsService, logMarkStage } from '../services/log/logRunsService.js';
+import { LogRunsService } from '../services/log/logRunsService.js';
 import { LogRunEventsService } from '../services/log/logRunEventsService.js';
 import { LogPagesService } from '../services/log/logPagesService.js';
 import { LogCategoriesService } from '../services/log/logCategoriesService.js';
@@ -6,7 +6,7 @@ import { LogCategoriesService } from '../services/log/logCategoriesService.js';
 export function createLogger({ runId, hotelUuid }) {
   return {
     async markStage(stage) {
-      return logMarkStage(runId, stage);
+      return LogRunsService.logMarkStage(runId, stage);
     },
 
     async event(eventType, payload = null) {

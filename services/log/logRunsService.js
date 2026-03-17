@@ -3,23 +3,6 @@ import { T } from '../../middleware/constants.js';
 
 const TABLE = 'market_data_log_runs';
 
-/**
- * Mark pipeline stage for the given run id.
- * Soft-fails by returning 0 when runId is missing.
- * @param {number} runId
- * @param {string} stage
- * @returns {Promise<number>} affected rows
- */
-export async function logMarkStage(runId, stage) {
-  if (!runId) return 0;
-  try {
-    return await LogRunsService.updateById(runId, { stage });
-  } catch (error) {
-    console.error(`⚠️ Failed to mark run stage "${stage}" for run ${runId}:`, error.message);
-    return 0;
-  }
-}
-
 export class LogRunsService {
   static TABLE = TABLE;
 
@@ -111,6 +94,12 @@ export class LogRunsService {
   }
 
   static async logMarkStage(runId, stage) {
-    return logMarkStage(runId, stage);
+    if (!runId) return 0;
+    try {
+      return await LogRunsService.updateById(runId, { stage });
+    } catch (error) {
+      console.error(`⚠️ Failed to mark run stage "${stage}" for run ${runId}:`, error.message);
+      return 0;
+    }
   }
 }
