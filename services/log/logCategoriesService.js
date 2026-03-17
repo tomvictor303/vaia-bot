@@ -13,7 +13,8 @@ export class LogCategoriesService {
     { name: 'output_hash', type: T.TEXT },
     { name: 'snippets_count', type: T.NUMBER },
     { name: 'is_updated', type: T.BOOLEAN },
-    { name: 'total_tokens', type: T.NUMBER },
+    { name: 'total_tokens_aggregate', type: T.NUMBER },
+    { name: 'total_tokens_merge', type: T.NUMBER },
     { name: 'duration_ms', type: T.NUMBER },
     { name: 'created_at', type: T.TIMESTAMP },
   ];
