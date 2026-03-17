@@ -21,9 +21,7 @@ export class Logger {
   async event(eventType, payload = null) {
     // payload is reserved for future event payload logging
     void payload;
-    const stage = String(eventType || '').split('.')[0] || this.stage || '';
-    if (stage) this.stage = stage;
-    return LogRunEventsService.logRunEvent(this.runId, this.hotelUuid, stage, eventType);
+    return LogRunEventsService.logRunEvent(this.runId, this.hotelUuid, this.stage || '', eventType);
   }
 
   async updateRun(data) {
