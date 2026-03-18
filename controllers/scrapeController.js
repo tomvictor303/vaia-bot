@@ -2,7 +2,6 @@ import { PlaywrightCrawler } from 'crawlee';
 import TurndownService from 'turndown';
 import { executeQuery } from '../config/database.js';
 import { TABLE_NAMES } from '../middleware/constants.js';
-import { loadLogger } from '../middleware/logger.js';
 import { computeChecksum } from '../utils/custom.js';
 
 const { HOTEL_PAGE_DATA_TABLE } = TABLE_NAMES;
@@ -287,14 +286,14 @@ async function waitForDomToSettle(page, {
  * Scrape a hotel website using PlaywrightCrawler
  * Crawls all pages from the hotel's main URL (crawl all mode)
  * 
- * @param {number} runId - Run log id
+ * @param {Object} logger - Per-run logger instance
  * @param {string} hotelUrl - Starting URL for the hotel
  * @param {string} hotelUuid - Hotel UUID
  * @param {string} hotelName - Hotel name (for logging)
  * @returns {Promise<Object>} Scraping statistics
  */
-export async function scrapeHotel(runId, hotelUrl, hotelUuid, hotelName) {
-  const logger = await loadLogger(runId);
+export async function scrapeHotel(logger, hotelUrl, hotelUuid, hotelName) {
+  if (!logger?.runId) throw new Error('logger with runId is required');
   if (!hotelUrl || !hotelUrl.startsWith('http')) {
     throw new Error(`Invalid hotel URL: ${hotelUrl}`);
   }

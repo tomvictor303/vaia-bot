@@ -1,7 +1,6 @@
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
-import { loadLogger } from '../middleware/logger.js';
 import { MD_CAT_FIELDS, TABLE_NAMES } from '../middleware/constants.js';
 import { llmOutputToJson, isValidStringMap, computeChecksum } from '../utils/custom.js';
 
@@ -261,17 +260,16 @@ function isFieldUpdated(fieldName, mergedData) {
  * 
  * Loads and processes scraped markdown pages into market data.
  * Runs AI extract/aggregate/merge/finalize stages and upserts when meaningful updates exist.
- * @param {number} runId - Run log id
+ * @param {Object} logger - Per-run logger instance
  * @param {string} hotelUuid - Hotel UUID to process.
  * @param {string} hotelName - Hotel name for prompt context and logging.
  * @returns {Promise<Object|null>} Composed newData object, or null when stopped early (unit-test mode/no pages).
  */
-export async function loadMarketDataFromScrapedPage(runId, hotelUuid, hotelName) {
-  if (!runId) throw new Error('runId is required');
+export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName) {
+  if (!logger?.runId) throw new Error('logger with runId is required');
   if (!hotelUuid) throw new Error('hotelUuid is required');
 
   const unitTestAction = String(process.env.UNIT_TEST_ACTION || '').toLowerCase();
-  const logger = await loadLogger(runId);
   let pagesActive = 0;
   let pagesAnalyzed = 0;
   const hotelLLMUsage = { total_tokens: 0, input_tokens: 0, output_tokens: 0, cost: 0 };

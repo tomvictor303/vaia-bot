@@ -73,7 +73,7 @@ async function main() {
           // BEGIN SCRAPE_HOTEL_BODY
           try {
             await logger.event('scrape.started');
-            scrapeStats = await scrapeHotel(runId, hotel.hotel_url, hotel.hotel_uuid, hotel.name);
+            scrapeStats = await scrapeHotel(logger, hotel.hotel_url, hotel.hotel_uuid, hotel.name);
             await logger.updateRun({
               crawler_skipped: scrapeStats?.pagesSkipped ?? 0,
               crawler_errors: scrapeStats?.errors ?? 0,
@@ -96,7 +96,7 @@ async function main() {
         // BEGIN AGGREGATE_SCRAPED_HOTEL_DATA
         if (shouldRunAggregate && scrapedSuccess) {
           // BEGIN AGGREGATE_SCRAPED_HOTEL_DATA_BODY
-          await loadMarketDataFromScrapedPage(runId, hotel.hotel_uuid, hotel.name);
+          await loadMarketDataFromScrapedPage(logger, hotel.hotel_uuid, hotel.name);
           // END AGGREGATE_SCRAPED_HOTEL_DATA_BODY
         }
         // END AGGREGATE_SCRAPED_HOTEL_DATA 
