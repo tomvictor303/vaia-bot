@@ -34,6 +34,12 @@ export const STAGE_NAMES = {
 	SAVE: 'save',
 };
 
+export const RUN_STATUS_NAMES = {
+	RUNNING: 'running',
+	SUCCESS: 'success',
+	FAIL: 'fail',
+};
+
 // Category text fields (16 categories plus "other")
 export const MD_CAT_FIELDS = [
 	{

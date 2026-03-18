@@ -3,7 +3,7 @@ import { LogRunEventsService } from '../services/log/logRunEventsService.js';
 import { LogPagesService } from '../services/log/logPagesService.js';
 import { LogCategoriesService } from '../services/log/logCategoriesService.js';
 import { LogFailuresService } from '../services/log/logFailuresService.js';
-import { ERROR_CLASS } from './constants.js';
+import { ERROR_CLASS, RUN_STATUS_NAMES } from './constants.js';
 
 function autoClassifyErrorClass(error) {
   const msg = String(error?.message || error || '').toLowerCase();
@@ -79,7 +79,7 @@ export class Logger {
   }
 }
 
-export async function createLogger(hotelUuid, status = 'running', stage = '') {
+export async function createLogger(hotelUuid, status = RUN_STATUS_NAMES.RUNNING, stage = '') {
   // Without runId, createLogger creates a new run log and binds this logger to that run.
   const runId = await LogRunsService.insert({
     hotel_uuid: hotelUuid,

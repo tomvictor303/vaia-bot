@@ -4,7 +4,7 @@ import { HotelService } from './services/hotelService.js';
 import { scrapeHotel } from './controllers/scrapeController.js';
 import { loadMarketDataFromScrapedPage } from './controllers/aggregateScrapedController.js';
 import { createLogger } from './middleware/logger.js';
-import { STAGE_NAMES } from './middleware/constants.js';
+import { RUN_STATUS_NAMES, STAGE_NAMES } from './middleware/constants.js';
 async function main() {
   console.log("🚀 Starting Hotel Data Fetcher...");
 
@@ -59,7 +59,7 @@ async function main() {
         const startAt = new Date();
         const startMs = startAt.getTime();
         // Without runId, createLogger creates a new run log and returns a logger bound to that run.
-        const logger = await createLogger(hotel.hotel_uuid, 'running', STAGE_NAMES.SCRAPE);
+        const logger = await createLogger(hotel.hotel_uuid, RUN_STATUS_NAMES.RUNNING, STAGE_NAMES.SCRAPE);
         const runId = logger.runId;
         if (runId > 0) {
           console.log(`✅ Log run started with ID: ${runId}`);
@@ -108,7 +108,7 @@ async function main() {
         }
         // END AGGREGATE_SCRAPED_HOTEL_DATA 
         await logger.updateRun({
-          status: 'success', // NOTE: Do not mark stage as 'completed' here, cuz we want to track which stage the pipeline ends at.
+          status: RUN_STATUS_NAMES.SUCCESS, // NOTE: Do not mark stage as 'completed' here, cuz we want to track which stage the pipeline ends at.
           finished_at: new Date(),
           duration_ms: Date.now() - startMs,
         });
