@@ -3,8 +3,19 @@ import { LogRunEventsService } from '../services/log/logRunEventsService.js';
 import { LogPagesService } from '../services/log/logPagesService.js';
 import { LogCategoriesService } from '../services/log/logCategoriesService.js';
 import { LogFailuresService } from '../services/log/logFailuresService.js';
+import { ERROR_CLASS } from './constants.js';
 
 const INITIAL_STAGE = 'scrape';
+
+function autoClassifyErrorClass(error) {
+  const msg = String(error?.message || error || '').toLowerCase();
+  if (/timeout|timed out|etimedout/.test(msg)) return ERROR_CLASS.TIMEOUT;
+  if (/invalid|required|must be|validation/.test(msg)) return ERROR_CLASS.VALIDATION_ERROR;
+  if (/llm|openai|model|token/.test(msg)) return ERROR_CLASS.LLM_ERROR;
+  if (/parse|parsing|json/.test(msg)) return ERROR_CLASS.PARSING_ERROR;
+  if (/sql|mysql|database|query|db/.test(msg)) return ERROR_CLASS.DB_ERROR;
+  return ERROR_CLASS.SYSTEM_ERROR;
+}
 
 export class Logger {
   constructor(runId, hotelUuid, stage = '') {
@@ -65,7 +76,7 @@ export class Logger {
   async fail(stage, error) {
     this.stage = stage || this.stage;
     const errorMessage = error?.message || String(error);
-    const errorClass = error?.error_class || 'system_error';
+    const errorClass = error?.error_class || autoClassifyErrorClass(error);
     await LogFailuresService.logFailure(this.runId, this.hotelUuid, stage, errorClass, errorMessage);
   }
 }
