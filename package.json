@@ -11,7 +11,8 @@
         "dev:ai": "cross-env NODE_ENV=development UNIT_TEST=true UNIT_TEST_MODULE=ai node index.js",
         "dev:ai:extract": "cross-env NODE_ENV=development UNIT_TEST=true UNIT_TEST_MODULE=ai UNIT_TEST_ACTION=extract node index.js",
         "dev:ai:after_extract": "cross-env NODE_ENV=development UNIT_TEST=true UNIT_TEST_MODULE=ai UNIT_TEST_ACTION=after_extract node index.js",
-        "token-count": "node token_count.js"
+        "token-count": "node token_count.js",
+        "test:db": "node test_db.js"
     },
     "dependencies": {
         "crawlee": "^3.9.0",
