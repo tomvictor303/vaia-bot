@@ -59,6 +59,7 @@ async function main() {
         const startMs = startAt.getTime();
         // Without runId, createLogger creates a new run log and returns a logger bound to that run.
         const logger = await createLogger(hotel.hotel_uuid);
+        await logger.markStage('scrape');
         const runId = logger.runId;
         if (runId > 0) {
           console.log(`✅ Log run started with ID: ${runId}`);
