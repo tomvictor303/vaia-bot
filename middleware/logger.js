@@ -79,15 +79,15 @@ export class Logger {
   }
 }
 
-export async function createLogger(hotelUuid) {
+export async function createLogger(hotelUuid, status = 'running', stage = '') {
   // Without runId, createLogger creates a new run log and binds this logger to that run.
   const runId = await LogRunsService.insert({
     hotel_uuid: hotelUuid,
-    status: 'running',
-    stage: '',
+    status,
+    stage,
     started_at: new Date(),
   });
-  return new Logger(runId, hotelUuid, '');
+  return new Logger(runId, hotelUuid, stage);
 }
 
 export async function loadLogger(runId) {
