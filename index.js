@@ -84,7 +84,7 @@ async function main() {
             scrapedSuccess = true;
           } catch (error) {
             console.error(`❌ Error scraping ${hotel.name}:`, error.message);
-            await logger.fail('scrape', error);
+            await logger.fail(error);
             console.log("⏭️  Continuing with next hotel...");
           }
           // END SCRAPE_HOTEL_BODY
@@ -100,7 +100,7 @@ async function main() {
           try {
             await loadMarketDataFromScrapedPage(logger, hotel.hotel_uuid, hotel.name);
           } catch (error) {
-            await logger.fail('ai_aggregate', error);
+            await logger.fail(error);
             throw error;
           }
           // END AGGREGATE_SCRAPED_HOTEL_DATA_BODY

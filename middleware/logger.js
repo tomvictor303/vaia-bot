@@ -73,11 +73,11 @@ export class Logger {
     return LogCategoriesService.saveLog(this.runId, this.hotelUuid, categoryName, patch);
   }
 
-  async fail(stage, error) {
-    this.stage = stage || this.stage;
+  async fail(error, error_class = null) {
     const errorMessage = error?.message || String(error);
-    const errorClass = error?.error_class || autoClassifyErrorClass(error);
-    await LogFailuresService.logFailure(this.runId, this.hotelUuid, stage, errorClass, errorMessage);
+    const errorClass = error_class || autoClassifyErrorClass(error);
+    const failureStage = this.stage || INITIAL_STAGE;
+    await LogFailuresService.logFailure(this.runId, this.hotelUuid, failureStage, errorClass, errorMessage);
   }
 }
 
