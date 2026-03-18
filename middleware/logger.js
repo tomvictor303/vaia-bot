@@ -5,8 +5,6 @@ import { LogCategoriesService } from '../services/log/logCategoriesService.js';
 import { LogFailuresService } from '../services/log/logFailuresService.js';
 import { ERROR_CLASS } from './constants.js';
 
-const INITIAL_STAGE = 'scrape';
-
 function autoClassifyErrorClass(error) {
   const msg = String(error?.message || error || '').toLowerCase();
   if (/timeout|timed out|etimedout/.test(msg)) return ERROR_CLASS.TIMEOUT;
@@ -33,7 +31,7 @@ export class Logger {
       throw new Error(`Logger.reload cannot find run id ${this.runId}`);
     }
     this.hotelUuid = runRow.hotel_uuid;
-    this.stage = runRow.stage || INITIAL_STAGE;
+    this.stage = runRow.stage || '';
     return this;
   }
 
@@ -76,7 +74,7 @@ export class Logger {
   async fail(error, error_class = null) {
     const errorMessage = error?.message || String(error);
     const errorClass = error_class || autoClassifyErrorClass(error);
-    const failureStage = this.stage || INITIAL_STAGE;
+    const failureStage = this.stage || '';
     await LogFailuresService.logFailure(this.runId, this.hotelUuid, failureStage, errorClass, errorMessage);
   }
 }
@@ -86,10 +84,10 @@ export async function createLogger(hotelUuid) {
   const runId = await LogRunsService.insert({
     hotel_uuid: hotelUuid,
     status: 'running',
-    stage: INITIAL_STAGE,
+    stage: '',
     started_at: new Date(),
   });
-  return new Logger(runId, hotelUuid, INITIAL_STAGE);
+  return new Logger(runId, hotelUuid, '');
 }
 
 export async function loadLogger(runId) {
@@ -97,5 +95,5 @@ export async function loadLogger(runId) {
   if (!runRow) {
     throw new Error(`loadLogger cannot find run id ${runId}`);
   }
-  return new Logger(runId, runRow.hotel_uuid, runRow.stage || INITIAL_STAGE);
+  return new Logger(runId, runRow.hotel_uuid, runRow.stage || '');
 }
