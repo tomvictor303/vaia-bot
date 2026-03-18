@@ -13,6 +13,19 @@ export class Logger {
     this.stage = stage;
   }
 
+  async reload() {
+    if (!this.runId) {
+      throw new Error('Logger.reload requires runId');
+    }
+    const runRow = await LogRunsService.getById(this.runId);
+    if (!runRow) {
+      throw new Error(`Logger.reload cannot find run id ${this.runId}`);
+    }
+    this.hotelUuid = runRow.hotel_uuid;
+    this.stage = runRow.stage || INITIAL_STAGE;
+    return this;
+  }
+
   async markStage(stage) {
     this.stage = stage || this.stage;
     return LogRunsService.logMarkStage(this.runId, stage);
