@@ -4,6 +4,7 @@ import { HotelService } from './services/hotelService.js';
 import { scrapeHotel } from './controllers/scrapeController.js';
 import { loadMarketDataFromScrapedPage } from './controllers/aggregateScrapedController.js';
 import { createLogger } from './middleware/logger.js';
+import { STAGE_NAMES } from './middleware/constants.js';
 async function main() {
   console.log("🚀 Starting Hotel Data Fetcher...");
 
@@ -59,7 +60,7 @@ async function main() {
         const startMs = startAt.getTime();
         // Without runId, createLogger creates a new run log and returns a logger bound to that run.
         const logger = await createLogger(hotel.hotel_uuid);
-        await logger.markStage('scrape');
+        await logger.markStage(STAGE_NAMES.SCRAPE);
         const runId = logger.runId;
         if (runId > 0) {
           console.log(`✅ Log run started with ID: ${runId}`);

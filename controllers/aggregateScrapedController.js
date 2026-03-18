@@ -1,7 +1,7 @@
 import { executeQuery } from '../config/database.js';
 import { MarketDataService } from '../services/marketDataService.js';
 import { AIService } from '../services/aiService.js';
-import { MD_CAT_FIELDS, TABLE_NAMES } from '../middleware/constants.js';
+import { MD_CAT_FIELDS, TABLE_NAMES, STAGE_NAMES } from '../middleware/constants.js';
 import { llmOutputToJson, isValidStringMap, computeChecksum } from '../utils/custom.js';
 
 const { HOTEL_PAGE_DATA_TABLE } = TABLE_NAMES;
@@ -277,7 +277,7 @@ export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName
   const fieldBuckets = Object.fromEntries(CATEGORY_FIELDS.map((f) => [f.name, []]));
 
   // BEGIN EXTRACT_DATA_FROM_PAGES
-  await logger.markStage('ai_extract');
+  await logger.markStage(STAGE_NAMES.AI_EXTRACT);
   await logger.event('ai_extract.started');
   if (unitTestAction === 'after_extract') {
     // Load field buckets from cached outputs
@@ -356,7 +356,7 @@ export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName
   // BEGIN NEW_DATA_COMPOSE_BY_AI_AGGREGATE_OF_SNIPPETS
   // Per-field composition (Count(schema fields) LLM calls)
   // This is where the new data is composed from the extracted snippets (from multiple pages) by iterating each field.
-  await logger.markStage('ai_aggregate');
+  await logger.markStage(STAGE_NAMES.AI_AGGREGATE);
   await logger.event('ai_aggregate.started');
   console.log(`🔍 Composing new data from extracted fields...`);
   const newData = {};
@@ -389,7 +389,7 @@ export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName
 
   // BEGIN AI_MERGE_FOR_NEW_AND_EXISTING_DATA
   // Merge the new data with the existing data
-  await logger.markStage('ai_merge');
+  await logger.markStage(STAGE_NAMES.AI_MERGE);
   await logger.event('ai_merge.started');
   // BEGIN AI_MERGE_FOR_NEW_AND_EXISTING_DATA_BODY
   let mergedData = {};
@@ -447,7 +447,7 @@ export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName
   // END SAVE_DEBUG2_LOG
 
   // Track "other" changes in a single check
-  await logger.markStage('ai_finalize');
+  await logger.markStage(STAGE_NAMES.AI_FINALIZE);
   await logger.event('ai_finalize.started');
   const otherUpdated = isFieldUpdated('other', mergedData);
   console.log('otherUpdated', otherUpdated);
@@ -461,7 +461,7 @@ export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName
   await logger.event('ai_finalize.completed');
 
   // Guardrail: no meaningful updates
-  await logger.markStage('save');
+  await logger.markStage(STAGE_NAMES.SAVE);
   const updatedFieldsCount = Object.keys(mergedData).length;
   if (updatedFieldsCount === 0) {
     console.log(`⚠️ [${hotelName || hotelUuid}]: There is no significant new info to update.`);

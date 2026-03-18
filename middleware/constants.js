@@ -25,6 +25,15 @@ export const ERROR_CLASS = {
 	SYSTEM_ERROR: 'system_error',
 };
 
+export const STAGE_NAMES = {
+	SCRAPE: 'scrape',
+	AI_EXTRACT: 'ai_extract',
+	AI_AGGREGATE: 'ai_aggregate',
+	AI_MERGE: 'ai_merge',
+	AI_FINALIZE: 'ai_finalize',
+	SAVE: 'save',
+};
+
 // Category text fields (16 categories plus "other")
 export const MD_CAT_FIELDS = [
 	{
