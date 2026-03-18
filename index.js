@@ -4,6 +4,17 @@ import { HotelService } from './services/hotelService.js';
 import { scrapeHotel } from './controllers/scrapeController.js';
 import { loadMarketDataFromScrapedPage } from './controllers/aggregateScrapedController.js';
 import { createLogger } from './middleware/logger.js';
+import { ERROR_CLASS } from './middleware/constants.js';
+
+function classifyErrorClass(error) {
+  const msg = String(error?.message || error || '').toLowerCase();
+  if (/timeout|timed out|etimedout/.test(msg)) return ERROR_CLASS.TIMEOUT;
+  if (/invalid|required|must be|validation/.test(msg)) return ERROR_CLASS.VALIDATION_ERROR;
+  if (/llm|openai|model|token/.test(msg)) return ERROR_CLASS.LLM_ERROR;
+  if (/parse|parsing|json/.test(msg)) return ERROR_CLASS.PARSING_ERROR;
+  if (/sql|mysql|database|query|db/.test(msg)) return ERROR_CLASS.DB_ERROR;
+  return ERROR_CLASS.SYSTEM_ERROR;
+}
 async function main() {
   console.log("🚀 Starting Hotel Data Fetcher...");
 
@@ -84,6 +95,7 @@ async function main() {
             scrapedSuccess = true;
           } catch (error) {
             console.error(`❌ Error scraping ${hotel.name}:`, error.message);
+            await logger.fail('scrape', { ...error, error_class: classifyErrorClass(error) });
             console.log("⏭️  Continuing with next hotel...");
           }
           // END SCRAPE_HOTEL_BODY
@@ -96,7 +108,12 @@ async function main() {
         // BEGIN AGGREGATE_SCRAPED_HOTEL_DATA
         if (shouldRunAggregate && scrapedSuccess) {
           // BEGIN AGGREGATE_SCRAPED_HOTEL_DATA_BODY
-          await loadMarketDataFromScrapedPage(logger, hotel.hotel_uuid, hotel.name);
+          try {
+            await loadMarketDataFromScrapedPage(logger, hotel.hotel_uuid, hotel.name);
+          } catch (error) {
+            await logger.fail('ai_aggregate', { ...error, error_class: classifyErrorClass(error) });
+            throw error;
+          }
           // END AGGREGATE_SCRAPED_HOTEL_DATA_BODY
         }
         // END AGGREGATE_SCRAPED_HOTEL_DATA 

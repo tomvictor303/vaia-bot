@@ -16,6 +16,15 @@ export const T = {
 	TIMESTAMP: 'timestamp',
 };
 
+export const ERROR_CLASS = {
+	TIMEOUT: 'timeout',
+	VALIDATION_ERROR: 'validation_error',
+	LLM_ERROR: 'llm_error',
+	PARSING_ERROR: 'parsing_error',
+	DB_ERROR: 'db_error',
+	SYSTEM_ERROR: 'system_error',
+};
+
 // Category text fields (16 categories plus "other")
 export const MD_CAT_FIELDS = [
 	{
