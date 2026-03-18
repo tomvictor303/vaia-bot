@@ -41,7 +41,6 @@ export class LogRunsService {
     const base = { ...payload };
     if (!base.hotel_uuid) throw new Error(`${TABLE}.insert requires hotel_uuid`);
     if (!base.status) throw new Error(`${TABLE}.insert requires status`);
-    if (!base.stage) throw new Error(`${TABLE}.insert requires stage`);
 
     if (!base.started_at) {
       base.started_at = new Date();
