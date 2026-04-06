@@ -16,11 +16,11 @@ const CATEGORY_FIELDS = MD_CAT_FIELDS.map(f => ({
 /**
  * Fetch active markdown pages that have not been processed by the LLM (checksum diff).
  * @param {string} hotelUuid - Hotel UUID.
- * @returns {Promise<Array<{id: number, page_url: string, markdown: string, checksum: string, depth: number}>>}
+ * @returns {Promise<Array<{id: number, page_url: string, markdown: string, markdown_prev: string|null, checksum: string, depth: number}>>}
  */
 async function getActiveMarkdownPages(hotelUuid) {
   const query = `
-    SELECT id, page_url, markdown, checksum, depth
+    SELECT id, page_url, markdown, markdown_prev, checksum, depth
     FROM ${HOTEL_PAGE_DATA_TABLE}
     WHERE active = 1 AND hotel_uuid = ? AND markdown IS NOT NULL AND markdown != '' AND NOT (checksum <=> llm_input_checksum) 
   `;
@@ -316,13 +316,17 @@ export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName
             fieldBuckets[field.name].push({ page_url: page.page_url, value: val.trim() });
           }
         });
-        await markLLMInput(page.id, page.checksum, JSON.stringify(extracted));
+        const llmOutputJson = JSON.stringify(extracted);
+        await markLLMInput(page.id, page.checksum, llmOutputJson);
         await logger.updatePageLog(page.page_url, {
           page_depth: page.depth ?? 0,
           extraction_status: 'success',
           total_tokens: Math.max(0, (hotelLLMUsage.total_tokens || 0) - usedTokensBefore),
           duration_ms: Date.now() - pageStartedAtMs,
           error_message: '',
+          markdown: page.markdown,
+          markdown_prev: page.markdown_prev ?? '',
+          llm_output: llmOutputJson,
         });
         console.log(`✅ Extraction: processed page ${page.id} (${page.page_url})`);
       } catch (error) {
