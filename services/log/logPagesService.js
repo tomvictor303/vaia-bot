@@ -17,6 +17,9 @@ export class LogPagesService {
     { name: 'total_tokens', type: T.NUMBER },
     { name: 'duration_ms', type: T.NUMBER },
     { name: 'error_message', type: T.TEXT },
+    { name: 'markdown', type: T.TEXT },
+    { name: 'markdown_prev', type: T.TEXT },
+    { name: 'llm_output', type: T.TEXT },
     { name: 'created_at', type: T.TIMESTAMP },
   ];
 
