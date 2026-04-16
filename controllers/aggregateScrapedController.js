@@ -369,8 +369,12 @@ export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName
     const tokensBefore = hotelLLMUsage.total_tokens || 0;
     newData[field.name] = await aggregateAndRefineSnippets(field.name, fieldBuckets[field.name], hotelLLMUsage);
     const newFieldText = newData[field.name] || '';
+    const snippetsText = JSON.stringify(fieldBuckets[field.name] || []);
     await logger.categoryLog(field.name, {
       snippets_count: (fieldBuckets[field.name] || []).length,
+      snippets: snippetsText,
+      new_text: newFieldText,
+      old_text: '',
       merged_text: newFieldText,
       output_hash: computeChecksum(newFieldText),
       total_tokens_aggregate: Math.max(0, (hotelLLMUsage.total_tokens || 0) - tokensBefore),
@@ -421,6 +425,9 @@ export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName
         mergedData[fieldName] = mergedText;
         await logger.updateCategoryLog(fieldName, {
           snippets_count: (fieldBuckets[fieldName] || []).length,
+          snippets: JSON.stringify(fieldBuckets[fieldName] || []),
+          old_text: existingData[fieldName],
+          new_text: newData[fieldName],
           is_updated: 1,
           merged_text: mergedText,
           output_hash: computeChecksum(mergedText),
