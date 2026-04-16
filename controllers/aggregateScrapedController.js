@@ -376,7 +376,6 @@ export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName
       new_text: newFieldText,
       old_text: '',
       merged_text: '',
-      output_hash: computeChecksum(newFieldText),
       total_tokens_aggregate: Math.max(0, (hotelLLMUsage.total_tokens || 0) - tokensBefore),
       duration_ms: Date.now() - categoryStartedAtMs,
     });
@@ -446,6 +445,7 @@ export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName
       await logger.updateCategoryLog(fieldName, {
         is_updated: 1,
         merged_text: newText,
+        output_hash: computeChecksum(newText),
       });
     }
   }
