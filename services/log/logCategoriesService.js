@@ -9,13 +9,16 @@ export class LogCategoriesService {
   static RUNS_TABLE = LogRunsService.TABLE;
 
   static COMMON_MUTABLE_FIELDS = [
-    { name: 'merged_text', type: T.TEXT },
     { name: 'output_hash', type: T.TEXT },
     { name: 'snippets_count', type: T.NUMBER },
     { name: 'is_updated', type: T.BOOLEAN },
     { name: 'total_tokens_aggregate', type: T.NUMBER },
     { name: 'total_tokens_merge', type: T.NUMBER },
     { name: 'duration_ms', type: T.NUMBER },
+    { name: 'snippets', type: T.TEXT },
+    { name: 'new_text', type: T.TEXT },
+    { name: 'old_text', type: T.TEXT },
+    { name: 'merged_text', type: T.TEXT },
     { name: 'created_at', type: T.TIMESTAMP },
   ];
 
