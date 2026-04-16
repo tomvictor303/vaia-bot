@@ -440,6 +440,14 @@ export async function loadMarketDataFromScrapedPage(logger, hotelUuid, hotelName
     // END MERGE_NEW_DATA_WITH_EXISTING_DATA
   } else {
     mergedData = newData; // If there is no existing data, use the new data entirely.
+    for (const fieldName of Object.keys(newData)) {
+      const newText = newData[fieldName] || '';
+      if (!newText || newText === 'N/A') continue;
+      await logger.updateCategoryLog(fieldName, {
+        is_updated: 1,
+        merged_text: newText,
+      });
+    }
   }
   // END AI_MERGE_FOR_NEW_AND_EXISTING_DATA_BODY
 
