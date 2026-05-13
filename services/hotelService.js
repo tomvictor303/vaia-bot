@@ -7,7 +7,7 @@ export class HotelService {
     const query = `
       SELECT id, hotel_uuid, name, hotel_url 
       FROM hotel_list 
-      WHERE is_deleted = 0 
+      WHERE is_market_data_capture_enabled = 1 AND is_deleted = 0 
       ORDER BY id ASC
     `;
     
