@@ -103,6 +103,22 @@ async function loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets) {
 }
 // END loadFieldBucketsFromCachedOutputs
 
+// BEGIN refineMarkdownForExtraction
+/**
+ * Refine Markdown before including it in the extraction prompt.
+ * 
+ * We need to keep the original stored Markdown (including "[link]") for debugging.
+ * This function removes these markers only from the extraction prompt to avoid confusing the LLM,
+ * which may otherwise turn them into meaningless citation references like "[2][3][4]".
+ * 
+ * @param {string} markdown - Markdown content of the page.
+ * @returns {string} Refined Markdown for LLM extraction.
+ */
+function refineMarkdownForExtraction(markdown) {
+  return markdown.replace(/\[link\]/g, '');
+}
+// END refineMarkdownForExtraction
+
 // BEGIN extractFieldsFromPage
 /**
  * Extract category fields from a single markdown page via LLM.
@@ -114,6 +130,7 @@ async function loadFieldBucketsFromCachedOutputs(hotelUuid, fieldBuckets) {
  */
 async function extractFieldsFromPage(markdown, pageUrl, hotelNameLabel, hotelLLMUsage) {
   hotelNameLabel = hotelNameLabel || 'the hotel';
+  const markdownForExtraction = refineMarkdownForExtraction(markdown);
 
   const describedFields = CATEGORY_FIELDS.map((f) => {
     const desc = (f.description || '').replace(/\[hotelName\]/g, hotelNameLabel);
@@ -137,7 +154,7 @@ Rules:
 
 Markdown source (from ${pageUrl}):
 ---
-${markdown}
+${markdownForExtraction}
 ---`;
   const { text } = await AIService.askLLM({
     prompt,
