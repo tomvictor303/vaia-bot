@@ -5,7 +5,7 @@ export class HotelService {
   // Get all active hotels from hotel_list table
   static async getActiveHotels() {
     const query = `
-      SELECT id, hotel_uuid, name, hotel_url 
+      SELECT id, hotel_uuid, name, hotel_url, crawl_scope
       FROM hotel_list 
       WHERE is_market_data_capture_enabled = 1 AND is_deleted = 0 
       ORDER BY id ASC
@@ -24,7 +24,7 @@ export class HotelService {
   // Get hotel by UUID
   static async getHotelByUuid(hotelUuid) {
     const query = `
-      SELECT id, hotel_uuid, name, hotel_url 
+      SELECT id, hotel_uuid, name, hotel_url, crawl_scope
       FROM hotel_list 
       WHERE hotel_uuid = ? AND is_deleted = 0
     `;
@@ -38,4 +38,13 @@ export class HotelService {
     }
   }
 
+  static async getAdditionalUrls(hotelId) {
+    const rows = await executeQuery(`
+      SELECT url
+      FROM hotel_additional_urls
+      WHERE hotel_id = ? AND is_enabled = 1
+      ORDER BY id ASC
+    `, [hotelId]);
+    return rows.map(row => row.url);
+  }
 }

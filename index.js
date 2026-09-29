@@ -74,7 +74,11 @@ async function main() {
           // BEGIN SCRAPE_HOTEL_BODY
           try {
             await logger.event('scrape.started');
-            scrapeStats = await scrapeHotel(logger, hotel.hotel_url, hotel.hotel_uuid, hotel.name);
+            const additionalUrls = await HotelService.getAdditionalUrls(hotel.id);
+            scrapeStats = await scrapeHotel(logger, hotel.hotel_url, hotel.hotel_uuid, hotel.name, {
+              crawlScope: hotel.crawl_scope,
+              additionalUrls,
+            });
             await logger.updateRun({
               crawler_skipped: scrapeStats?.pagesSkipped ?? 0,
               crawler_errors: scrapeStats?.errors ?? 0,

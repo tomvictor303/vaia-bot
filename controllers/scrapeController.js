@@ -3,6 +3,7 @@ import TurndownService from 'turndown';
 import { executeQuery } from '../config/database.js';
 import { TABLE_NAMES } from '../middleware/constants.js';
 import { computeChecksum } from '../utils/custom.js';
+import { createCrawlScope } from '../utils/crawlScope.js';
 
 const { HOTEL_PAGE_DATA_TABLE } = TABLE_NAMES;
 
@@ -284,19 +285,21 @@ async function waitForDomToSettle(page, {
 
 /**
  * Scrape a hotel website using PlaywrightCrawler
- * Crawls all pages from the hotel's main URL (crawl all mode)
+ * Follows the hotel's configured scope and any explicitly included pages.
  * 
  * @param {Object} logger - Per-run logger instance
  * @param {string} hotelUrl - Starting URL for the hotel
  * @param {string} hotelUuid - Hotel UUID
  * @param {string} hotelName - Hotel name (for logging)
+ * @param {Object} options - crawlScope (site|subtree|page) and additionalUrls.
  * @returns {Promise<Object>} Scraping statistics
  */
-export async function scrapeHotel(logger, hotelUrl, hotelUuid, hotelName) {
+export async function scrapeHotel(logger, hotelUrl, hotelUuid, hotelName, options = {}) {
   if (!logger?.runId) throw new Error('logger with runId is required');
   if (!hotelUrl || !hotelUrl.startsWith('http')) {
     throw new Error(`Invalid hotel URL: ${hotelUrl}`);
   }
+  const scope = createCrawlScope(hotelUrl, options);
 
   const maxDepth = Number.isNaN(parseInt(process.env.CRAWLER_MAX_DEPTH ?? '', 10))
     ? Infinity
@@ -311,7 +314,7 @@ export async function scrapeHotel(logger, hotelUrl, hotelUuid, hotelName) {
   const stats = { scraped: 0, skipped: 0, errors: 0 };
   let pagesDeactivated = 0;
 
-  console.log(`\n🕷️  Crawl-all mode: ${hotelName}`);
+  console.log(`\n🕷️  Crawl scope: ${options.crawlScope ?? 'site'} (${hotelName})`);
   console.log(`📍 Start URL: ${hotelUrl}`);
   console.log(`📏 Max depth: ${maxDepth === Infinity ? 'unlimited' : maxDepth}`);
 
@@ -323,7 +326,7 @@ export async function scrapeHotel(logger, hotelUrl, hotelUuid, hotelName) {
 
     async requestHandler({ page, request, response, enqueueLinks, log }) {
       const currentDepth = request.userData?.depth ?? 0;
-      const pageUrl = response?.url() || request.url;
+      let pageUrl = page.url() || response?.url() || request.url;
       const pageStartedAtMs = Date.now();
       if (pageUrl !== request.url) {
         log.info(`🔁 Redirected: ${request.url} → ${pageUrl}`);
@@ -345,6 +348,15 @@ export async function scrapeHotel(logger, hotelUrl, hotelUuid, hotelName) {
       }
 
       try {
+        if (!scope.isAllowed(pageUrl)) {
+          stats.skipped += 1;
+          await logger.pageLog(pageUrl, {
+            page_depth: currentDepth,
+            scrape_status: 'skipped',
+            error_message: 'Redirected outside the hotel crawl scope',
+          });
+          return;
+        }
         await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
         await page.waitForSelector('body', { timeout: 5000 }).catch(() => {});
 
@@ -389,6 +401,18 @@ export async function scrapeHotel(logger, hotelUrl, hotelUuid, hotelName) {
           log.info(`⏳ DOM settle waited ${waitedSecs.toFixed(2)}s: ${pageUrl}`);
         }
         // END WAIT_FOR_ASYNC_CONTENT_TO_SETTLE
+
+        // Recheck after settling in case JavaScript navigated to another page.
+        pageUrl = page.url();
+        if (!scope.isAllowed(pageUrl)) {
+          stats.skipped += 1;
+          await logger.pageLog(pageUrl, {
+            page_depth: currentDepth,
+            scrape_status: 'skipped',
+            error_message: 'Redirected outside the hotel crawl scope',
+          });
+          return;
+        }
 
         const status = response?.status();
         const title = (await page.title().catch(() => '') || '').toLowerCase();
@@ -593,16 +617,21 @@ export async function scrapeHotel(logger, hotelUrl, hotelUuid, hotelName) {
         const urlsToEnqueue = rawLinks
           .map((href) => {
             try {
-              return new URL(href, pageUrl).toString();
+              const url = new URL(href, pageUrl);
+              url.hash = '';
+              return url.href;
             } catch {
               return '';
             }
           })
-          .filter(Boolean);
+          .filter(url => scope.isAllowed(url));
 
         if (urlsToEnqueue.length > 0) {
           await enqueueLinks({
             urls: urlsToEnqueue,
+            // URLs are already restricted by scope.isAllowed() above.
+            // Disable Crawlee's separate hostname filter to avoid conflicting scope rules.
+            strategy: 'all',
             transformRequestFunction: (newReq) => {
               if (!newReq?.url) return false;
 
@@ -646,7 +675,7 @@ export async function scrapeHotel(logger, hotelUrl, hotelUuid, hotelName) {
   });
 
   try {
-    await crawler.run([{ url: hotelUrl, userData: { depth: 0 } }]);
+    await crawler.run(scope.startUrls.map(url => ({ url, userData: { depth: 0 } })));
   } catch (error) {
     console.error(`❌ Fatal crawl error for ${hotelName}: ${error?.message || error}`);
     throw error;
@@ -654,7 +683,7 @@ export async function scrapeHotel(logger, hotelUrl, hotelUuid, hotelName) {
 
   // Deactivate pages that were present before but not scraped in this run
   const stalePageIds = Array.from(nonScrapedPageMap.values());
-  if (stalePageIds.length > 0) {
+  if (stats.scraped > 0 && stalePageIds.length > 0) {
     pagesDeactivated = await deactivatePagesByIds(stalePageIds);
     console.log(`🗂️  Deactivated ${pagesDeactivated} outdated page(s) for ${hotelName}`);
   }
