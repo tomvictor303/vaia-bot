@@ -5,8 +5,11 @@ import { scrapeHotel } from './controllers/scrapeController.js';
 import { loadMarketDataFromScrapedPage } from './controllers/aggregateScrapedController.js';
 import { createLogger } from './middleware/logger.js';
 import { RUN_STATUS_NAMES, STAGE_NAMES } from './middleware/constants.js';
+import { isCrawlDue, parseRunOptions } from './utils/crawlSchedule.js';
 async function main() {
   console.log("🚀 Starting Hotel Data Fetcher...");
+
+  const runOptions = parseRunOptions(process.argv.slice(2));
 
   const isUnitTest = String(process.env.UNIT_TEST || '').toLowerCase() === 'true';
   const unitTestModule = String(process.env.UNIT_TEST_MODULE || '').toLowerCase();
@@ -36,11 +39,29 @@ async function main() {
   });
 
   try {
-    // Get all active hotels from database
-    const hotels = await HotelService.getActiveHotels();
+    // Force modes bypass crawl_cycle but still use only enabled, non-deleted hotels.
+    const activeHotels = await HotelService.getActiveHotels();
+    let hotels;
+    if (runOptions.mode === 'all') {
+      hotels = activeHotels;
+      console.log('Run mode: all eligible hotels (crawl cycle ignored)');
+    } else if (runOptions.mode === 'hotel') {
+      hotels = activeHotels.filter((hotel) => hotel.hotel_uuid === runOptions.hotelUuid);
+      console.log(`Run mode: selected hotel ${runOptions.hotelUuid} (crawl cycle ignored)`);
+    } else {
+      const today = new Date();
+      hotels = activeHotels.filter((hotel) => isCrawlDue(hotel.crawl_cycle, today));
+      console.log(`Run mode: scheduled (${today.toLocaleDateString()})`);
+    }
     
     if (hotels.length === 0) {
-      console.log("📭 No active hotels found in database");
+      if (runOptions.mode === 'hotel') {
+        console.log(`No eligible hotel found for UUID: ${runOptions.hotelUuid}`);
+      } else if (runOptions.mode === 'scheduled') {
+        console.log('No hotels are due today');
+      } else {
+        console.log("📭 No active hotels found in database");
+      }
       return;
     }
 
