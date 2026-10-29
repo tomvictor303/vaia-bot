@@ -60,7 +60,7 @@ async function main() {
     
     if (hotels.length === 0) {
       if (runOptions.mode === 'hotel') {
-        console.log(`📭 No eligible hotel found for UUID: ${runOptions.hotelUuid}`);
+        console.log(`❌ No eligible hotel found for UUID: ${runOptions.hotelUuid}`);
       } else if (runOptions.mode === 'scheduled') {
         console.log('📭 No hotels are due today');
       } else {
