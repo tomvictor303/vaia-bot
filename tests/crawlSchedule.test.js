@@ -15,10 +15,18 @@ test('weekly is due on Sunday', () => {
   assert.equal(isCrawlDue('weekly', localDate(2026, 11, 2)), false);
 });
 
+test('weekly applies negative and positive day offsets', () => {
+  assert.equal(isCrawlDue('weekly', localDate(2026, 10, 31), -1), true);
+  assert.equal(isCrawlDue('weekly', localDate(2026, 11, 1), -1), false);
+  assert.equal(isCrawlDue('weekly', localDate(2026, 11, 2), 1), true);
+});
+
 test('every_2_weeks uses January 4, 1970 as its Sunday anchor', () => {
   assert.equal(isCrawlDue('every_2_weeks', localDate(1970, 1, 4)), true);
   assert.equal(isCrawlDue('every_2_weeks', localDate(1970, 1, 11)), false);
   assert.equal(isCrawlDue('every_2_weeks', localDate(1970, 1, 18)), true);
+  assert.equal(isCrawlDue('every_2_weeks', localDate(1970, 1, 3), -1), true);
+  assert.equal(isCrawlDue('every_2_weeks', localDate(1970, 1, 5), 1), true);
 });
 
 test('monthly is due on the first day of the month', () => {
@@ -27,10 +35,26 @@ test('monthly is due on the first day of the month', () => {
   assert.equal(isCrawlDue(null, localDate(2026, 10, 1)), true);
 });
 
+test('monthly offsets cross month boundaries', () => {
+  assert.equal(isCrawlDue('monthly', localDate(2026, 10, 31), -1), true);
+  assert.equal(isCrawlDue('monthly', localDate(2026, 11, 2), 1), true);
+  assert.equal(isCrawlDue('monthly', localDate(2027, 2, 28), -1), true);
+});
+
 test('every_2_months is due on the first day of odd-numbered months', () => {
   assert.equal(isCrawlDue('every_2_months', localDate(2026, 1, 1)), true);
   assert.equal(isCrawlDue('every_2_months', localDate(2026, 2, 1)), false);
   assert.equal(isCrawlDue('every_2_months', localDate(2026, 3, 1)), true);
+  assert.equal(isCrawlDue('every_2_months', localDate(2025, 12, 31), -1), true);
+  assert.equal(isCrawlDue('every_2_months', localDate(2026, 1, 2), 1), true);
+});
+
+test('daily remains due every day and invalid offsets are rejected', () => {
+  assert.equal(isCrawlDue('daily', localDate(2026, 10, 28), -10), true);
+  assert.throws(
+    () => isCrawlDue('weekly', localDate(2026, 11, 1), 1.5),
+    /Invalid crawl offset days/
+  );
 });
 
 test('parseRunOptions supports scheduled, all, and selected-hotel modes', () => {

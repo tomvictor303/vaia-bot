@@ -50,7 +50,11 @@ async function main() {
       console.log(`Run mode: selected hotel ${runOptions.hotelUuid} (crawl cycle ignored)`);
     } else {
       const today = new Date();
-      hotels = activeHotels.filter((hotel) => isCrawlDue(hotel.crawl_cycle, today));
+      hotels = activeHotels.filter((hotel) => isCrawlDue(
+        hotel.crawl_cycle,
+        today,
+        hotel.crawl_offset_days
+      ));
       console.log(`Run mode: scheduled (${today.toLocaleDateString()})`);
     }
     

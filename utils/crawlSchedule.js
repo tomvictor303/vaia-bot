@@ -16,11 +16,17 @@ export const CRAWL_CYCLES = Object.freeze([
  *
  * @param {string} crawlCycle
  * @param {Date} [date=new Date()]
+ * @param {number} [crawlOffsetDays=0] Signed days from the cycle anchor.
  * @returns {boolean}
  */
-export function isCrawlDue(crawlCycle, date = new Date()) {
+export function isCrawlDue(crawlCycle, date = new Date(), crawlOffsetDays = 0) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
     throw new Error('A valid date is required to evaluate the crawl cycle');
+  }
+
+  const offsetDays = Number(crawlOffsetDays ?? 0);
+  if (!Number.isInteger(offsetDays)) {
+    throw new Error(`Invalid crawl offset days: ${crawlOffsetDays}`);
   }
 
   const cycle = crawlCycle || 'monthly';
@@ -28,10 +34,17 @@ export function isCrawlDue(crawlCycle, date = new Date()) {
     throw new Error(`Unsupported crawl cycle: ${cycle}`);
   }
 
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const dayOfMonth = date.getDate();
-  const dayOfWeek = date.getDay();
+  // Invert the offset to find the cycle anchor that would produce this run date.
+  // UTC arithmetic is used only for calendar math, avoiding DST-length days.
+  const anchorCandidate = new Date(Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate() - offsetDays
+  ));
+  const year = anchorCandidate.getUTCFullYear();
+  const month = anchorCandidate.getUTCMonth();
+  const dayOfMonth = anchorCandidate.getUTCDate();
+  const dayOfWeek = anchorCandidate.getUTCDay();
 
   switch (cycle) {
     case 'daily':

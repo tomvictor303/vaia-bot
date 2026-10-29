@@ -9,13 +9,13 @@ that day according to `hotel_list.crawl_cycle`:
 node index.js
 ```
 
-Force all eligible hotels while ignoring their crawl cycles:
+Force all eligible hotels while ignoring their crawl schedules:
 
 ```sh
 node index.js --all
 ```
 
-Force one eligible hotel while ignoring its crawl cycle:
+Force one eligible hotel while ignoring its crawl schedule:
 
 ```sh
 node index.js --hotel <hotel_uuid>
@@ -34,11 +34,17 @@ Supported crawl cycles and their default run dates:
 | `every_2_months` | First day of January, March, May, July, September, and November |
 
 The default database value is `monthly`. Cycle evaluation uses the server's
-local calendar date. Crawl offsets are not currently applied.
+local calendar date.
+
+`crawl_offset_days` is a signed number of days added to the default run date.
+For a weekly cycle, `-1` runs on Saturday and `1` runs on Monday. For a monthly
+cycle, `-1` runs on the last day before the month and `1` runs on the second day
+of the month. The default is `0`. An offset does not change a daily schedule.
 
 ### Hotel crawl settings
 
-Requires the `hotel_list.crawl_scope` and `hotel_list.crawl_cycle` columns and
+Requires the `hotel_list.crawl_scope`, `hotel_list.crawl_cycle`, and
+`hotel_list.crawl_offset_days` columns and
 `hotel_additional_urls` table (`id`, `hotel_id`, `url`, `is_enabled`).
 
 - `site` (default): follow pages on the main URL's host.
