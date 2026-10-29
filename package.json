@@ -8,6 +8,7 @@
         "start": "node index.js",
         "dev": "cross-env NODE_ENV=development node index.js",
         "dev:all": "cross-env NODE_ENV=development node index.js --all",
+        "dev:hotel": "cross-env NODE_ENV=development node index.js --hotel",
         "dev:scrape": "cross-env NODE_ENV=development UNIT_TEST=true UNIT_TEST_MODULE=scrape node index.js --all",
         "dev:ai": "cross-env NODE_ENV=development UNIT_TEST=true UNIT_TEST_MODULE=ai node index.js --all",
         "dev:ai:extract": "cross-env NODE_ENV=development UNIT_TEST=true UNIT_TEST_MODULE=ai UNIT_TEST_ACTION=extract node index.js --all",
