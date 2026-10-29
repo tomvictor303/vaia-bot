@@ -13,12 +13,14 @@ Force all eligible hotels while ignoring their crawl schedules:
 
 ```sh
 node index.js --all
+npm run dev:all
 ```
 
 Force one eligible hotel while ignoring its crawl schedule:
 
 ```sh
 node index.js --hotel <hotel_uuid>
+npm run dev:hotel <hotel_uuid>
 ```
 
 All modes require `is_market_data_capture_enabled = 1` and `is_deleted = 0`.
